@@ -11,7 +11,15 @@ func main() {
 	r := gin.Default()
 
 	// GETリクエストを受け取るエンドポイントの定義
-	r.GET("/api/hello", func(c *gin.Context) {
+	r.GET("/authorize", func(c *gin.Context) {
+		// Get parameters
+		// response_type
+		// client_id
+		// scope
+		// redirect_uri
+		// state
+		// validate parameters
+		// redirect to authorization
 		// JSONレスポンスを返す
 		c.JSON(http.StatusOK, gin.H{"message": "Hello, World!"})
 	})
