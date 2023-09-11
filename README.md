@@ -3,7 +3,7 @@
 ## Endpoint
 
 - GET /authorize -> display authorization information
-- POST /authorize -> return authorization code
+- POST /authorization -> return authorization code
 - POST /token -> return token information
 
 ## Table structure

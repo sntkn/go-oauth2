@@ -9,6 +9,7 @@ import (
 func main() {
 	// Ginルーターの初期化
 	r := gin.Default()
+	r.LoadHTMLGlob("templates/*")
 
 	// GETリクエストを受け取るエンドポイントの定義
 	r.GET("/authorize", func(c *gin.Context) {
@@ -20,8 +21,7 @@ func main() {
 		// state
 		// validate parameters
 		// redirect to authorization
-		// JSONレスポンスを返す
-		c.JSON(http.StatusOK, gin.H{"message": "Hello, World!"})
+		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})
 
 	// サーバーをポート8080で起動
