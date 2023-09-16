@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,8 +10,10 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
 type AuthorizeInput struct {
@@ -50,6 +53,17 @@ func main() {
 
 	// セッションミドルウェアのセットアップ
 	r.Use(SessionMiddleware())
+
+	// PostgreSQLへの接続文字列を作成
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+
+	// PostgreSQLに接続
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 
 	// GETリクエストを受け取るエンドポイントの定義
 	r.GET("/authorize", func(c *gin.Context) {
@@ -105,7 +119,49 @@ func main() {
 	})
 
 	r.POST("/authorization", func(c *gin.Context) {
-		// login process
+
+		var input AuthorizationInput
+		// リクエストのJSONデータをAuthorizationInputにバインド
+		if err := c.BindJSON(&input); err != nil {
+			c.HTML(http.StatusBadRequest, "Could not bind JSON", gin.H{"error": err.Error()})
+			return
+		}
+
+		if input.Email == "" {
+			// TODO: redirect to autorize with parameters
+			c.HTML(http.StatusBadRequest, "Invalid email", nil)
+			return
+		}
+
+		if input.Password == "" {
+			// TODO: redirect to autorize with parameters
+			c.HTML(http.StatusBadRequest, "Invalid email", nil)
+			return
+		}
+
+		// validate user credentials
+		query := "SELECT id, email, password FROM users WHERE email = $1"
+		var user User
+
+		err = db.QueryRow(query, input.Email).Scan(&user.ID, &user.Email, &user.Password)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				// TODO: redirect to autorize with parameters
+				c.HTML(http.StatusBadRequest, "Could not Find User", gin.H{"error": err.Error()})
+			} else {
+				c.HTML(http.StatusInternalServerError, "Internal Server Error", gin.H{"error": err.Error()})
+			}
+			return
+		}
+
+		// パスワードを比較して認証
+		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
+		if err != nil {
+			// TODO: redirect to autorize with parameters
+			c.HTML(http.StatusBadRequest, "Invalid password", gin.H{"error": err.Error()})
+			return
+		}
+
 		sessionData, err := GetSessionData(c)
 		if err != nil {
 			fmt.Printf("%v\n", err)
@@ -180,4 +236,19 @@ func SetSessionData(c *gin.Context, sessionData any) error {
 
 	// Redisにセッションデータを書き込み
 	return redisClient.Set(c, sessionID, sessionData, 0).Err()
+}
+
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "your_username"
+	password = "your_password"
+	dbname   = "your_database_name"
+)
+
+type User struct {
+	ID       int
+	Email    string
+	Password string
+	// 他のユーザー属性をここに追加
 }
