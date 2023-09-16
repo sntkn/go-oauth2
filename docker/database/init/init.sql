@@ -13,7 +13,7 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT current_timestamp,
-    updated_at TIMESTAMP DEFAULT current_timestamp ON UPDATE current_timestamp
+    updated_at TIMESTAMP DEFAULT current_timestamp
 );
 
 -- oauth2_clients テーブル
@@ -22,7 +22,7 @@ CREATE TABLE oauth2_clients (
     name VARCHAR(255) NOT NULL,
     redirect_uris VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT current_timestamp,
-    updated_at TIMESTAMP DEFAULT current_timestamp ON UPDATE current_timestamp
+    updated_at TIMESTAMP DEFAULT current_timestamp
 );
 
 -- oauth2_codes テーブル
@@ -34,7 +34,7 @@ CREATE TABLE oauth2_codes (
     redirect_uri VARCHAR(255) NOT NULL,
     expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT current_timestamp,
-    updated_at TIMESTAMP DEFAULT current_timestamp ON UPDATE current_timestamp,
+    updated_at TIMESTAMP DEFAULT current_timestamp,
     FOREIGN KEY (client_id) REFERENCES oauth2_clients (id),
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
@@ -47,19 +47,19 @@ CREATE TABLE oauth2_tokens (
     scope VARCHAR(255) NOT NULL,
     expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT current_timestamp,
-    updated_at TIMESTAMP DEFAULT current_timestamp ON UPDATE current_timestamp,
+    updated_at TIMESTAMP DEFAULT current_timestamp,
     FOREIGN KEY (client_id) REFERENCES oauth2_clients (id),
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 -- oauth2_refresh_tokens テーブル
 CREATE TABLE oauth2_refresh_tokens (
-    access_token VARCHAR(255) PRIMARY KEY,
-    refresh_token VARCHAR(255) NOT NULL,
+    refresh_token VARCHAR(255) PRIMARY KEY,
+    access_token VARCHAR(255) NOT NULL,
     expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT current_timestamp,
-    updated_at TIMESTAMP DEFAULT current_timestamp ON UPDATE current_timestamp,
-    FOREIGN KEY (client_id) REFERENCES oauth2_clients (id),
+    updated_at TIMESTAMP DEFAULT current_timestamp,
+    FOREIGN KEY (access_token) REFERENCES oauth2_tokens (access_token)
 );
 
 --テーブルにデータを挿入
