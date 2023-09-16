@@ -21,6 +21,11 @@ type AuthorizeInput struct {
 	State        string `json:"State"`
 }
 
+type AuthorizationInput struct {
+	Email    string `json:"email,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
 var redisClient *redis.Client
 
 func init() {
@@ -48,10 +53,6 @@ func main() {
 
 	// GETリクエストを受け取るエンドポイントの定義
 	r.GET("/authorize", func(c *gin.Context) {
-
-		// セッションからデータを取得
-		sessionData := GetSessionData(c)
-		fmt.Printf("%v\n", sessionData)
 
 		// /authorize?response_type=code&client_id=abcdefg&scope=read&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fcallback&state=ok
 		input := AuthorizeInput{}
@@ -103,6 +104,27 @@ func main() {
 		c.HTML(http.StatusOK, "index.html", gin.H{"input": input})
 	})
 
+	r.POST("/authorization", func(c *gin.Context) {
+		// login process
+		sessionData, err := GetSessionData(c)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			c.HTML(http.StatusBadRequest, "Could not unmarshal session data", err)
+			return
+		}
+
+		var d AuthorizeInput
+		err = json.Unmarshal(sessionData, &d)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "Could not unmarshal session data", err)
+			return
+		}
+
+		// clear session data
+
+		c.Redirect(http.StatusTemporaryRedirect, d.RedirectURI)
+	})
+
 	// サーバーをポート8080で起動
 	r.Run(":8080")
 }
@@ -140,9 +162,12 @@ func GenerateSessionID() string {
 }
 
 // セッションデータを取得する関数
-func GetSessionData(c *gin.Context) string {
-	sessionData, _ := c.Get("sessionData")
-	return sessionData.(string)
+func GetSessionData(c *gin.Context) ([]byte, error) {
+	sessionID, err := c.Cookie("sessionID")
+	if err != nil {
+		return nil, err
+	}
+	return redisClient.Get(c, sessionID).Bytes()
 }
 
 // セッションデータをRedisに書き込む関数
