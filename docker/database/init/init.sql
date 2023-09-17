@@ -1,10 +1,10 @@
-CREATE USER app;
+CREATE USER app WITH PASSWORD 'pass';
 CREATE DATABASE auth;
+
+\c auth
+
 --ユーザーにDBの権限をまとめて付与
 GRANT ALL PRIVILEGES ON DATABASE auth TO app;
---ユーザーを切り替え
-\c auth
---テーブルを作成
 
 -- users テーブル
 CREATE TABLE users (
@@ -61,5 +61,8 @@ CREATE TABLE oauth2_refresh_tokens (
     updated_at TIMESTAMP DEFAULT current_timestamp,
     FOREIGN KEY (access_token) REFERENCES oauth2_tokens (access_token)
 );
+
+--ユーザーにテーブル操作権限をまとめて付与
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app;
 
 --テーブルにデータを挿入
