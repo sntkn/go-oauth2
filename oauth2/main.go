@@ -16,17 +16,25 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "app"
+	password = ""
+	dbname   = "auth"
+)
+
 type AuthorizeInput struct {
-	ResponseType string `json:"response_type"`
-	ClientId     string `json:"client_id"`
-	Scope        string `json:"Scope"`
-	RedirectURI  string `json:"redirect_uri"`
-	State        string `json:"State"`
+	ResponseType string `form:"response_type"`
+	ClientId     string `form:"client_id"`
+	Scope        string `form:"scope"`
+	RedirectURI  string `form:"redirect_uri"`
+	State        string `form:"state"`
 }
 
 type AuthorizationInput struct {
-	Email    string `json:"email,omitempty"`
-	Password string `json:"password,omitempty"`
+	Email    string `form:"email,omitempty"`
+	Password string `form:"password,omitempty"`
 }
 
 var redisClient *redis.Client
@@ -69,34 +77,33 @@ func main() {
 	r.GET("/authorize", func(c *gin.Context) {
 
 		// /authorize?response_type=code&client_id=abcdefg&scope=read&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fcallback&state=ok
-		input := AuthorizeInput{}
+		var input AuthorizeInput
+		// Query ParameterをAuthorizeInputにバインド
+		if err := c.BindQuery(&input); err != nil {
+			c.HTML(http.StatusBadRequest, "Could not bind JSON", gin.H{"error": err.Error()})
+			return
+		}
 
-		input.ResponseType = c.Query("response_type")
-		log.Printf("Response type: %s", c.Query("response_type"))
 		if input.ResponseType == "" {
 			c.HTML(http.StatusBadRequest, "Invalid response type", nil)
 			return
 		}
 
-		input.ClientId = c.Query("client_id")
 		if input.ClientId == "" {
 			c.HTML(http.StatusBadRequest, "Invalid client_id", nil)
 			return
 		}
 
-		input.Scope = c.Query("scope")
 		if input.Scope == "" {
 			c.HTML(http.StatusBadRequest, "Invalid scope", nil)
 			return
 		}
 
-		input.RedirectURI = c.Query("redirect_uri")
 		if input.RedirectURI == "" {
 			c.HTML(http.StatusBadRequest, "Invalid redirect_uri", nil)
 			return
 		}
 
-		input.State = c.Query("state")
 		if input.State == "" {
 			c.HTML(http.StatusBadRequest, "Invalid state", nil)
 			return
@@ -122,7 +129,7 @@ func main() {
 
 		var input AuthorizationInput
 		// リクエストのJSONデータをAuthorizationInputにバインド
-		if err := c.BindJSON(&input); err != nil {
+		if err := c.Bind(&input); err != nil {
 			c.HTML(http.StatusBadRequest, "Could not bind JSON", gin.H{"error": err.Error()})
 			return
 		}
@@ -237,14 +244,6 @@ func SetSessionData(c *gin.Context, sessionData any) error {
 	// Redisにセッションデータを書き込み
 	return redisClient.Set(c, sessionID, sessionData, 0).Err()
 }
-
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "your_username"
-	password = "your_password"
-	dbname   = "your_database_name"
-)
 
 type User struct {
 	ID       int
