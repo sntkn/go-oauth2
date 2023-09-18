@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,21 @@ const (
 	dbname   = "auth"
 )
 
+type User struct {
+	ID       int
+	Email    string
+	Password string
+	// 他のユーザー属性をここに追加
+}
+
+type Client struct {
+	ID           uuid.UUID `db:"id"`
+	Name         string    `db:"name"`
+	RedirectURIs string    `db:"redirect_uris"`
+	CreatedAt    time.Time `db:"created_at"`
+	UpdatedAt    time.Time `db:"updated_at"`
+}
+
 type AuthorizeInput struct {
 	ResponseType string `form:"response_type"`
 	ClientId     string `form:"client_id"`
@@ -33,8 +49,8 @@ type AuthorizeInput struct {
 }
 
 type AuthorizationInput struct {
-	Email    string `form:"email,omitempty"`
-	Password string `form:"password,omitempty"`
+	Email    string `form:"email"`
+	Password string `form:"password"`
 }
 
 var redisClient *redis.Client
@@ -76,7 +92,7 @@ func main() {
 	// GETリクエストを受け取るエンドポイントの定義
 	r.GET("/authorize", func(c *gin.Context) {
 
-		// /authorize?response_type=code&client_id=abcdefg&scope=read&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fcallback&state=ok
+		// /authorize?response_type=code&client_id=550e8400-e29b-41d4-a716-446655440000&scope=read&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fcallback&state=ok
 		var input AuthorizeInput
 		// Query ParameterをAuthorizeInputにバインド
 		if err := c.BindQuery(&input); err != nil {
@@ -88,9 +104,16 @@ func main() {
 			c.HTML(http.StatusBadRequest, "Invalid response type", nil)
 			return
 		}
+		if input.ResponseType != "code" {
+			c.HTML(http.StatusBadRequest, "Invalid response type", nil)
+		}
 
 		if input.ClientId == "" {
 			c.HTML(http.StatusBadRequest, "Invalid client_id", nil)
+			return
+		}
+		if IsValidUUID(input.ClientId) == false {
+			c.HTML(http.StatusBadRequest, "Invalid client_id. UUID must be a valid UUID", nil)
 			return
 		}
 
@@ -109,6 +132,26 @@ func main() {
 			return
 		}
 		log.Printf("%+v\n", input)
+
+		// check client
+		query := "SELECT id, redirect_uris FROM oauth2_clients WHERE id = $1"
+		var client Client
+
+		err = db.QueryRow(query, input.ClientId).Scan(&client.ID, &client.RedirectURIs)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			if err == sql.ErrNoRows {
+				c.HTML(http.StatusBadRequest, fmt.Sprintf("Could not Find Client: %s", input.ClientId), gin.H{"error": err.Error()})
+			} else {
+				c.HTML(http.StatusInternalServerError, "Internal Server Error", gin.H{"error": err.Error()})
+			}
+			return
+		}
+
+		if client.RedirectURIs != input.RedirectURI {
+			c.HTML(http.StatusBadRequest, "Redirect URI does not match", nil)
+			return
+		}
 
 		// セッションデータを書き込む
 		d, err := json.Marshal(input)
@@ -245,9 +288,7 @@ func SetSessionData(c *gin.Context, sessionData any) error {
 	return redisClient.Set(c, sessionID, sessionData, 0).Err()
 }
 
-type User struct {
-	ID       int
-	Email    string
-	Password string
-	// 他のユーザー属性をここに追加
+func IsValidUUID(u string) bool {
+	_, err := uuid.Parse(u)
+	return err == nil
 }
