@@ -59,7 +59,13 @@
 ```sql
 > docker compose exec database psql -U app auth
 > insert into oauth2_clients (id, name, redirect_uris, created_at, updated_at) values ('550e8400-e29b-41d4-a716-446655440000', 'test client', 'http://localhost:8080/callback', now(), now());
+> insert into users (id, name, email, password, created_at, updated_at) values ('4E77D89C-F28E-4232-BAC0-4ABB31B94590', 'test user', 'test@example.com', '$2a$10$LOzS79niq4E.hu8aib4GeuXVSII9OsYB.ReF/.BjqItfhaSnzWba6', now(), now());
 ```
+
+### input
+
+email: test@example.com  
+password: mypassword1234!
 
 ## Reference
 

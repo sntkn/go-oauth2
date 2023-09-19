@@ -26,9 +26,9 @@ const (
 )
 
 type User struct {
-	ID       int
-	Email    string
-	Password string
+	ID       uuid.UUID `db:"id"`
+	Email    string    `db:"email"`
+	Password string    `db:"password"`
 	// 他のユーザー属性をここに追加
 }
 
