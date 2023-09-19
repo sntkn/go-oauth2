@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -38,6 +41,17 @@ type Client struct {
 	RedirectURIs string    `db:"redirect_uris"`
 	CreatedAt    time.Time `db:"created_at"`
 	UpdatedAt    time.Time `db:"updated_at"`
+}
+
+type Code struct {
+	Code        string    `db:"code"`
+	ClientID    uuid.UUID `db:"client_id"`
+	UserID      uuid.UUID `db:"user_id"`
+	Scope       string    `db:"scope"`
+	RedirectURI string    `db:"redirect_uri"`
+	ExpiredAt   time.Time `db:"expired_at"`
+	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
 }
 
 type AuthorizeInput struct {
@@ -92,7 +106,7 @@ func main() {
 	// GETリクエストを受け取るエンドポイントの定義
 	r.GET("/authorize", func(c *gin.Context) {
 
-		// /authorize?response_type=code&client_id=550e8400-e29b-41d4-a716-446655440000&scope=read&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fcallback&state=ok
+		// /authorize?response_type=code&client_id=550e8400-e29b-41d4-a716-446655440000&scope=read&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fcallback&state=ok
 		var input AuthorizeInput
 		// Query ParameterをAuthorizeInputにバインド
 		if err := c.BindQuery(&input); err != nil {
@@ -213,7 +227,6 @@ func main() {
 
 		sessionData, err := GetSessionData(c)
 		if err != nil {
-			fmt.Printf("%v\n", err)
 			c.HTML(http.StatusBadRequest, "Could not unmarshal session data", err)
 			return
 		}
@@ -225,9 +238,28 @@ func main() {
 			return
 		}
 
-		// clear session data
+		// create code
+		expired := time.Now().AddDate(0, 0, 10)
+		randomString, err := generateRandomString(32)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "Could not generate code generate random string", err)
+			return
+		}
+		q := `
+			INSERT INTO oauth2_codes
+				(code, client_id, user_id, scope, redirect_uri, expires_at, created_at, updated_at)
+			VALUES
+				($1, $2, $3, $4, $5, $6, $7, $8)
+		`
+		_, err = db.Exec(q, randomString, d.ClientId, user.ID, d.Scope, d.RedirectURI, expired, time.Now(), time.Now())
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "Could not create code: %v\n", err)
+			return
+		}
 
-		c.Redirect(http.StatusTemporaryRedirect, d.RedirectURI)
+		// TODO: clear session data
+
+		c.Redirect(http.StatusFound, fmt.Sprintf("%s?code=%s", d.RedirectURI, randomString))
 	})
 
 	// サーバーをポート8080で起動
@@ -290,4 +322,18 @@ func SetSessionData(c *gin.Context, sessionData any) error {
 func IsValidUUID(u string) bool {
 	_, err := uuid.Parse(u)
 	return err == nil
+}
+
+func generateRandomString(length int) (string, error) {
+	// ランダムなバイト列を生成
+	randomBytes := make([]byte, length)
+	_, err := io.ReadFull(rand.Reader, randomBytes)
+	if err != nil {
+		return "", err
+	}
+
+	// URLセーフなBase64エンコード
+	encodedString := base64.URLEncoding.EncodeToString(randomBytes)
+
+	return encodedString, nil
 }
