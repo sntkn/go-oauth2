@@ -139,7 +139,6 @@ func main() {
 
 		err = db.QueryRow(query, input.ClientId).Scan(&client.ID, &client.RedirectURIs)
 		if err != nil {
-			fmt.Printf("%v\n", err)
 			if err == sql.ErrNoRows {
 				c.HTML(http.StatusBadRequest, fmt.Sprintf("Could not Find Client: %s", input.ClientId), gin.H{"error": err.Error()})
 			} else {
