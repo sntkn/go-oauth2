@@ -56,7 +56,7 @@ type Code struct {
 
 type AuthorizeInput struct {
 	ResponseType string `form:"response_type"`
-	ClientId     string `form:"client_id"`
+	ClientID     string `form:"client_id"`
 	Scope        string `form:"scope"`
 	RedirectURI  string `form:"redirect_uri"`
 	State        string `form:"state"`
@@ -122,11 +122,11 @@ func main() {
 			c.HTML(http.StatusBadRequest, "Invalid response type", nil)
 		}
 
-		if input.ClientId == "" {
+		if input.ClientID == "" {
 			c.HTML(http.StatusBadRequest, "Invalid client_id", nil)
 			return
 		}
-		if IsValidUUID(input.ClientId) == false {
+		if IsValidUUID(input.ClientID) == false {
 			c.HTML(http.StatusBadRequest, "Invalid client_id. UUID must be a valid UUID", nil)
 			return
 		}
@@ -151,10 +151,10 @@ func main() {
 		query := "SELECT id, redirect_uris FROM oauth2_clients WHERE id = $1"
 		var client Client
 
-		err = db.QueryRow(query, input.ClientId).Scan(&client.ID, &client.RedirectURIs)
+		err = db.QueryRow(query, input.ClientID).Scan(&client.ID, &client.RedirectURIs)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				c.HTML(http.StatusBadRequest, fmt.Sprintf("Could not Find Client: %s", input.ClientId), gin.H{"error": err.Error()})
+				c.HTML(http.StatusBadRequest, fmt.Sprintf("Could not Find Client: %s", input.ClientID), gin.H{"error": err.Error()})
 			} else {
 				c.HTML(http.StatusInternalServerError, "Internal Server Error", gin.H{"error": err.Error()})
 			}
@@ -251,7 +251,7 @@ func main() {
 			VALUES
 				($1, $2, $3, $4, $5, $6, $7, $8)
 		`
-		_, err = db.Exec(q, randomString, d.ClientId, user.ID, d.Scope, d.RedirectURI, expired, time.Now(), time.Now())
+		_, err = db.Exec(q, randomString, d.ClientID, user.ID, d.Scope, d.RedirectURI, expired, time.Now(), time.Now())
 		if err != nil {
 			c.HTML(http.StatusBadRequest, "Could not create code: %v\n", err)
 			return
