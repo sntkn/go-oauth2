@@ -66,6 +66,15 @@ type AuthorizationInput struct {
 	Email    string `form:"email"`
 	Password string `form:"password"`
 }
+type TokenInput struct {
+	Code string `form:"code"`
+}
+
+type TokenOutput struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	Expiry       string `json:"expiry"`
+}
 
 var redisClient *redis.Client
 
@@ -260,6 +269,19 @@ func main() {
 		// TODO: clear session data
 
 		c.Redirect(http.StatusFound, fmt.Sprintf("%s?code=%s", d.RedirectURI, randomString))
+	})
+
+	r.POST("/token", func(c *gin.Context) {
+		// grant_type = authorization_code
+		// code has expired
+		// revoke code
+		// create token and refresh token
+		output := TokenOutput{
+			AccessToken:  "token",
+			RefreshToken: "refresh_token",
+			Expiry:       "exp",
+		}
+		c.JSON(http.StatusOK, output)
 	})
 
 	// サーバーをポート8080で起動

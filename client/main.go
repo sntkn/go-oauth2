@@ -1,12 +1,73 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+type AuthCodeInput struct {
+	Code string `form:"code"`
+}
+
+type AuthCodeResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	Expiry       string `json:"expiry"`
+}
 
 func main() {
 	// Ginルーターの初期化
 	r := gin.Default()
 	r.GET("/callback", func(c *gin.Context) {
-		c.JSON(200, gin.H{"result": "OK"})
+		var input AuthCodeInput
+		if err := c.Bind(&input); err != nil {
+			c.JSON(http.StatusBadRequest, err)
+			return
+		}
+		// POSTリクエストを送信するURL
+		url := "http://localhost:8080/token"
+
+		// POSTデータを作成
+		postData := []byte(`{"code": "value1", "key2": "value2"}`)
+
+		// POSTリクエストを作成
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(postData))
+		if err != nil {
+			fmt.Println("リクエストの作成エラー:", err)
+			return
+		}
+
+		// リクエストヘッダーを設定（必要に応じて）
+		req.Header.Set("Content-Type", "application/json")
+
+		// HTTPクライアントを作成
+		client := &http.Client{}
+
+		// POSTリクエストを送信
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("リクエストの送信エラー:", err)
+			return
+		}
+		defer resp.Body.Close()
+		// レスポンスを読み取り
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("レスポンスの読み取りエラー:", err)
+			return
+		}
+		var d AuthCodeResponse
+		err = json.Unmarshal(body, &d)
+		if err != nil {
+			fmt.Println("Could not unmarshal auth code response:", err)
+			return
+		}
+		c.JSON(200, d)
 	})
 	r.Run(":8000")
 }
