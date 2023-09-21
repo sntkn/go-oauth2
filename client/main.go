@@ -14,6 +14,11 @@ type AuthCodeInput struct {
 	Code string `form:"code"`
 }
 
+type TokenRequest struct {
+	Code      string `json:"code"`
+	GrantType string `json:"grant_type"`
+}
+
 type AuthCodeResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
@@ -33,7 +38,16 @@ func main() {
 		url := "http://localhost:8080/token"
 
 		// POSTデータを作成
-		postData := []byte(`{"code": "value1", "key2": "value2"}`)
+		reqData := TokenRequest{
+			Code:      input.Code,
+			GrantType: "authorization_code",
+		}
+
+		postData, err := json.Marshal(reqData)
+		if err != nil {
+			fmt.Println("Could not marshal json:", err)
+			return
+		}
 
 		// POSTリクエストを作成
 		req, err := http.NewRequest("POST", url, bytes.NewBuffer(postData))

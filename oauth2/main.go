@@ -49,7 +49,7 @@ type Code struct {
 	UserID      uuid.UUID `db:"user_id"`
 	Scope       string    `db:"scope"`
 	RedirectURI string    `db:"redirect_uri"`
-	ExpiredAt   time.Time `db:"expired_at"`
+	ExpiresAt   time.Time `db:"expired_at"`
 	CreatedAt   time.Time `db:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
 }
@@ -67,7 +67,8 @@ type AuthorizationInput struct {
 	Password string `form:"password"`
 }
 type TokenInput struct {
-	Code string `form:"code"`
+	Code      string `json:"code"`
+	GrantType string `json:"grant_type"`
 }
 
 type TokenOutput struct {
@@ -272,8 +273,36 @@ func main() {
 	})
 
 	r.POST("/token", func(c *gin.Context) {
+		var input TokenInput
+		if err := c.BindJSON(&input); err != nil {
+			c.HTML(http.StatusBadRequest, "Could not bind JSON", gin.H{"error": err.Error()})
+			return
+		}
+
 		// grant_type = authorization_code
+		if input.GrantType != "authorization_code" {
+			c.HTML(http.StatusForbidden, fmt.Sprintf("Invalid grant type: %s", input.GrantType), nil)
+		}
 		// code has expired
+		query := "SELECT expires_at FROM oauth2_codes WHERE code = $1"
+		var code Code
+
+		err = db.QueryRow(query, input.Code).Scan(&code.ExpiresAt)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				// TODO: redirect to autorize with parameters
+				c.HTML(http.StatusForbidden, "Could not Find Code", gin.H{"error": err.Error()})
+			} else {
+				c.HTML(http.StatusInternalServerError, "Internal Server Error", gin.H{"error": err})
+			}
+			return
+		}
+		currentTime := time.Now()
+		if currentTime.After(code.ExpiresAt) {
+			c.HTML(http.StatusForbidden, "Authorization Code expired", nil)
+			return
+		}
+
 		// revoke code
 		// create token and refresh token
 		output := TokenOutput{
