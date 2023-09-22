@@ -41,7 +41,7 @@ CREATE TABLE oauth2_codes (
 
 -- oauth2_tokens テーブル
 CREATE TABLE oauth2_tokens (
-    access_token VARCHAR(255) PRIMARY KEY,
+    access_token VARCHAR(512) PRIMARY KEY,
     client_id UUID NOT NULL,
     user_id UUID NOT NULL,
     scope VARCHAR(255) NOT NULL,

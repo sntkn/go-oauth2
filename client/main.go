@@ -22,7 +22,7 @@ type TokenRequest struct {
 type AuthCodeResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
-	Expiry       string `json:"expiry"`
+	Expiry       int64  `json:"expiry"`
 }
 
 func main() {

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -74,8 +75,17 @@ type TokenInput struct {
 type TokenOutput struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
-	Expiry       string `json:"expiry"`
+	Expiry       int64  `json:"expiry"`
 }
+
+type TokenParams struct {
+	UserID    uuid.UUID
+	ClientID  uuid.UUID
+	Scope     string
+	ExpiresAt time.Time
+}
+
+var secretKey = []byte("test")
 
 var redisClient *redis.Client
 
@@ -284,10 +294,10 @@ func main() {
 			c.HTML(http.StatusForbidden, fmt.Sprintf("Invalid grant type: %s", input.GrantType), nil)
 		}
 		// code has expired
-		query := "SELECT expires_at FROM oauth2_codes WHERE code = $1"
+		query := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1"
 		var code Code
 
-		err = db.QueryRow(query, input.Code).Scan(&code.ExpiresAt)
+		err = db.QueryRow(query, input.Code).Scan(&code.UserID, &code.ClientID, &code.Scope, &code.ExpiresAt)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// TODO: redirect to autorize with parameters
@@ -303,12 +313,34 @@ func main() {
 			return
 		}
 
-		// revoke code
 		// create token and refresh token
+		expiration := time.Now().Add(10 * time.Minute)
+		t := TokenParams{
+			UserID:    code.UserID,
+			ClientID:  code.ClientID,
+			Scope:     code.Scope,
+			ExpiresAt: expiration,
+		}
+		token, err := generateAccessToken(t)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "Could not create access token:", err)
+			return
+		}
+
+		insertQuery := "INSERT INTO oauth2_tokens (access_token, client_id, user_id, scope, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+		_, err = db.Exec(insertQuery, token, code.ClientID, code.UserID, code.Scope, expiration, time.Now(), time.Now())
+		if err != nil {
+			errorMsg := fmt.Sprintf("Could not create code: %v", err)
+			c.HTML(http.StatusBadRequest, errorMsg, nil)
+			return
+		}
+
+		// revoke code
+
 		output := TokenOutput{
-			AccessToken:  "token",
+			AccessToken:  token,
 			RefreshToken: "refresh_token",
-			Expiry:       "exp",
+			Expiry:       expiration.Unix(),
 		}
 		c.JSON(http.StatusOK, output)
 	})
@@ -387,4 +419,26 @@ func generateRandomString(length int) (string, error) {
 	encodedString := base64.URLEncoding.EncodeToString(randomBytes)
 
 	return encodedString, nil
+}
+
+func generateAccessToken(p TokenParams) (string, error) {
+	// JWTのペイロード（クレーム）を設定
+	claims := jwt.MapClaims{
+		"user_id":   p.UserID.String(),
+		"client_id": p.ClientID.String(),
+		"scope":     p.Scope,
+		"exp":       p.ExpiresAt.Unix(),
+		"iat":       time.Now().Unix(),
+	}
+
+	// JWTトークンを作成
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// シークレットキーを使ってトークンを署名
+	accessToken, err := token.SignedString(secretKey)
+	if err != nil {
+		return "", err
+	}
+
+	return accessToken, nil
 }
