@@ -68,8 +68,9 @@ type AuthorizationInput struct {
 	Password string `form:"password"`
 }
 type TokenInput struct {
-	Code      string `json:"code"`
-	GrantType string `json:"grant_type"`
+	Code         string `json:"code"`
+	RefreshToken string `json:"refresh_token"`
+	GrantType    string `json:"grant_type"`
 }
 
 type TokenOutput struct {
@@ -290,80 +291,101 @@ func main() {
 		}
 
 		// grant_type = authorization_code
-		if input.GrantType != "authorization_code" {
+		if input.GrantType != "authorization_code" && input.GrantType != "refresh_token" {
 			c.HTML(http.StatusForbidden, fmt.Sprintf("Invalid grant type: %s", input.GrantType), nil)
 		}
-		// code has expired
-		query := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at > $2"
-		var code Code
 
-		err = db.QueryRow(query, input.Code, time.Now()).Scan(&code.UserID, &code.ClientID, &code.Scope, &code.ExpiresAt)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				// TODO: redirect to autorize with parameters
-				c.HTML(http.StatusForbidden, "Could not Find Code", gin.H{"error": err.Error()})
-			} else {
-				c.HTML(http.StatusInternalServerError, "Internal Server Error", gin.H{"error": err})
+		if input.GrantType == "authorization_code" {
+			// code has expired
+			query := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at > $2"
+			var code Code
+
+			err = db.QueryRow(query, input.Code, time.Now()).Scan(&code.UserID, &code.ClientID, &code.Scope, &code.ExpiresAt)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					// TODO: redirect to autorize with parameters
+					c.HTML(http.StatusForbidden, "Could not Find Code", gin.H{"error": err.Error()})
+				} else {
+					c.HTML(http.StatusInternalServerError, "Internal Server Error", gin.H{"error": err})
+				}
+				return
 			}
-			return
-		}
-		currentTime := time.Now()
-		if currentTime.After(code.ExpiresAt) {
-			c.HTML(http.StatusForbidden, "Authorization Code expired", nil)
-			return
-		}
+			currentTime := time.Now()
+			if currentTime.After(code.ExpiresAt) {
+				c.HTML(http.StatusForbidden, "Authorization Code expired", nil)
+				return
+			}
 
-		// create token and refresh token
-		expiration := time.Now().Add(10 * time.Minute)
-		t := TokenParams{
-			UserID:    code.UserID,
-			ClientID:  code.ClientID,
-			Scope:     code.Scope,
-			ExpiresAt: expiration,
-		}
-		token, err := generateAccessToken(t)
-		if err != nil {
-			c.HTML(http.StatusInternalServerError, "Could not create access token:", err)
-			return
-		}
+			// create token and refresh token
+			expiration := time.Now().Add(10 * time.Minute)
+			t := TokenParams{
+				UserID:    code.UserID,
+				ClientID:  code.ClientID,
+				Scope:     code.Scope,
+				ExpiresAt: expiration,
+			}
+			token, err := generateAccessToken(t)
+			if err != nil {
+				c.HTML(http.StatusInternalServerError, "Could not create access token:", err)
+				return
+			}
 
-		insertQuery := "INSERT INTO oauth2_tokens (access_token, client_id, user_id, scope, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
-		_, err = db.Exec(insertQuery, token, code.ClientID, code.UserID, code.Scope, expiration, time.Now(), time.Now())
-		if err != nil {
-			errorMsg := fmt.Sprintf("Could not create token: %v", err)
-			c.HTML(http.StatusInternalServerError, errorMsg, nil)
-			return
-		}
+			insertQuery := "INSERT INTO oauth2_tokens (access_token, client_id, user_id, scope, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+			_, err = db.Exec(insertQuery, token, code.ClientID, code.UserID, code.Scope, expiration, time.Now(), time.Now())
+			if err != nil {
+				errorMsg := fmt.Sprintf("Could not create token: %v", err)
+				c.HTML(http.StatusInternalServerError, errorMsg, nil)
+				return
+			}
 
-		randomString, err := generateRandomString(32)
-		refreshExpiration := time.Now().AddDate(0, 0, 10)
-		if err != nil {
-			c.HTML(http.StatusBadRequest, "Could not generate code generate random string", err)
-			return
-		}
-		refreshQuery := "INSERT INTO oauth2_refresh_tokens (refresh_token, access_token, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
-		_, err = db.Exec(refreshQuery, randomString, token, refreshExpiration, time.Now(), time.Now())
-		if err != nil {
-			errorMsg := fmt.Sprintf("Could not create refresh token: %v", err)
-			c.HTML(http.StatusInternalServerError, errorMsg, nil)
-			return
-		}
+			randomString, err := generateRandomString(32)
+			refreshExpiration := time.Now().AddDate(0, 0, 10)
+			if err != nil {
+				c.HTML(http.StatusBadRequest, "Could not generate code generate random string", err)
+				return
+			}
+			refreshQuery := "INSERT INTO oauth2_refresh_tokens (refresh_token, access_token, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
+			_, err = db.Exec(refreshQuery, randomString, token, refreshExpiration, time.Now(), time.Now())
+			if err != nil {
+				errorMsg := fmt.Sprintf("Could not create refresh token: %v", err)
+				c.HTML(http.StatusInternalServerError, errorMsg, nil)
+				return
+			}
 
-		// revoke code
-		updateQuery := "UPDATE oauth2_codes SET revoked_at = $1 WHERE code = $2"
-		_, err = db.Exec(updateQuery, time.Now(), input.Code)
-		if err != nil {
-			errorMsg := fmt.Sprintf("Could not revoke code: %v", err)
-			c.HTML(http.StatusInternalServerError, errorMsg, nil)
-			return
-		}
+			// revoke code
+			updateQuery := "UPDATE oauth2_codes SET revoked_at = $1 WHERE code = $2"
+			_, err = db.Exec(updateQuery, time.Now(), input.Code)
+			if err != nil {
+				errorMsg := fmt.Sprintf("Could not revoke code: %v", err)
+				c.HTML(http.StatusInternalServerError, errorMsg, nil)
+				return
+			}
 
-		output := TokenOutput{
-			AccessToken:  token,
-			RefreshToken: randomString,
-			Expiry:       expiration.Unix(),
+			output := TokenOutput{
+				AccessToken:  token,
+				RefreshToken: randomString,
+				Expiry:       expiration.Unix(),
+			}
+			c.JSON(http.StatusOK, output)
+		} else {
+			// TODO: check paramters
+			// TODO: find refresh token, if not expired
+			// TODO: find access token
+			// TODO: create token and refresh token
+			// TODO: revoke old token and refresh token
+
+			output := TokenOutput{
+				AccessToken:  "token",
+				RefreshToken: "refresh token",
+				Expiry:       0,
+			}
+			c.JSON(http.StatusOK, output)
 		}
-		c.JSON(http.StatusOK, output)
+	})
+
+	// token refresh
+	r.POST("/refresh", func(c *gin.Context) {
+
 	})
 
 	// サーバーをポート8080で起動
