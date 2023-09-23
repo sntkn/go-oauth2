@@ -134,42 +134,55 @@ func main() {
 		var input AuthorizeInput
 		// Query ParameterをAuthorizeInputにバインド
 		if err := c.BindQuery(&input); err != nil {
-			c.HTML(http.StatusBadRequest, "Could not bind JSON", gin.H{"error": err.Error()})
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
 		if input.ResponseType == "" {
-			c.HTML(http.StatusBadRequest, "Invalid response type", nil)
+			err := fmt.Errorf("Invalid response_type")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 		if input.ResponseType != "code" {
-			c.HTML(http.StatusBadRequest, "Invalid response type", nil)
+			err := fmt.Errorf("Invalid response_type: code must be 'code'")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		}
 
 		if input.ClientID == "" {
-			c.HTML(http.StatusBadRequest, "Invalid client_id", nil)
+			err := fmt.Errorf("Invalid client_id")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 		if IsValidUUID(input.ClientID) == false {
-			c.HTML(http.StatusBadRequest, "Invalid client_id. UUID must be a valid UUID", nil)
+			err := fmt.Errorf("Could not parse client_id")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
 		if input.Scope == "" {
-			c.HTML(http.StatusBadRequest, "Invalid scope", nil)
+			err := fmt.Errorf("Invalid scope")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
 		if input.RedirectURI == "" {
-			c.HTML(http.StatusBadRequest, "Invalid redirect_uri", nil)
+			err := fmt.Errorf("Invalid redirect_uri")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
 		if input.State == "" {
-			c.HTML(http.StatusBadRequest, "Invalid state", nil)
+			err := fmt.Errorf("Invalid state")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
-		log.Printf("%+v\n", input)
 
 		// check client
 		query := "SELECT id, redirect_uris FROM oauth2_clients WHERE id = $1"
@@ -178,27 +191,29 @@ func main() {
 		err = db.QueryRow(query, input.ClientID).Scan(&client.ID, &client.RedirectURIs)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				c.HTML(http.StatusBadRequest, fmt.Sprintf("Could not Find Client: %s", input.ClientID), gin.H{"error": err.Error()})
+				c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			} else {
-				c.HTML(http.StatusInternalServerError, "Internal Server Error", gin.H{"error": err.Error()})
+				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err})
 			}
 			return
 		}
 
 		if client.RedirectURIs != input.RedirectURI {
-			c.HTML(http.StatusBadRequest, "Redirect URI does not match", nil)
+			err := fmt.Errorf("Redirect URI does not match")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
 		// セッションデータを書き込む
 		d, err := json.Marshal(input)
 		if err != nil {
-			c.HTML(http.StatusBadRequest, "Could not marshal JSON", err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 		err = SetSessionData(c, d)
 		if err != nil {
-			c.HTML(http.StatusBadRequest, "Failed to set session data", err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
