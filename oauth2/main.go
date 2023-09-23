@@ -110,6 +110,9 @@ func main() {
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
+	// エラーログを出力するミドルウェアを追加
+	r.Use(ErrorLoggerMiddleware())
+
 	// セッションミドルウェアのセットアップ
 	r.Use(SessionMiddleware())
 
@@ -207,19 +210,25 @@ func main() {
 		var input AuthorizationInput
 		// リクエストのJSONデータをAuthorizationInputにバインド
 		if err := c.Bind(&input); err != nil {
-			c.HTML(http.StatusBadRequest, "Could not bind JSON", gin.H{"error": err.Error()})
+			err := fmt.Errorf("Could not bind JSON")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
 		if input.Email == "" {
 			// TODO: redirect to autorize with parameters
-			c.HTML(http.StatusBadRequest, "Invalid email", nil)
+			err := fmt.Errorf("Invalid email address")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
 		if input.Password == "" {
 			// TODO: redirect to autorize with parameters
-			c.HTML(http.StatusBadRequest, "Invalid password", nil)
+			err := fmt.Errorf("Invalid password")
+			c.Error(err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
@@ -231,9 +240,9 @@ func main() {
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// TODO: redirect to autorize with parameters
-				c.HTML(http.StatusBadRequest, "Could not Find User", gin.H{"error": err.Error()})
+				c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			} else {
-				c.HTML(http.StatusInternalServerError, "Internal Server Error", gin.H{"error": err.Error()})
+				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err})
 			}
 			return
 		}
@@ -242,20 +251,20 @@ func main() {
 		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
 		if err != nil {
 			// TODO: redirect to autorize with parameters
-			c.HTML(http.StatusBadRequest, "Invalid password", gin.H{"error": err.Error()})
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
 		sessionData, err := GetSessionData(c)
 		if err != nil {
-			c.HTML(http.StatusBadRequest, "Could not unmarshal session data", err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
 		var d AuthorizeInput
 		err = json.Unmarshal(sessionData, &d)
 		if err != nil {
-			c.HTML(http.StatusBadRequest, "Could not unmarshal session data", err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
@@ -263,7 +272,7 @@ func main() {
 		expired := time.Now().AddDate(0, 0, 10)
 		randomString, err := generateRandomString(32)
 		if err != nil {
-			c.HTML(http.StatusBadRequest, "Could not generate code generate random string", err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 		q := `
@@ -274,7 +283,7 @@ func main() {
 		`
 		_, err = db.Exec(q, randomString, d.ClientID, user.ID, d.Scope, d.RedirectURI, expired, time.Now(), time.Now())
 		if err != nil {
-			c.HTML(http.StatusBadRequest, "Could not create code: %v\n", err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
 
@@ -286,13 +295,16 @@ func main() {
 	r.POST("/token", func(c *gin.Context) {
 		var input TokenInput
 		if err := c.BindJSON(&input); err != nil {
-			c.HTML(http.StatusBadRequest, "Could not bind JSON", gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": err})
 			return
 		}
 
 		// grant_type = authorization_code
 		if input.GrantType != "authorization_code" && input.GrantType != "refresh_token" {
-			c.HTML(http.StatusForbidden, fmt.Sprintf("Invalid grant type: %s", input.GrantType), nil)
+			err := fmt.Errorf("Invalid grant type: %s", input.GrantType)
+			c.Error(err)
+			c.JSON(http.StatusForbidden, gin.H{"error": err})
+			return
 		}
 
 		if input.GrantType == "authorization_code" {
@@ -304,15 +316,17 @@ func main() {
 			if err != nil {
 				if err == sql.ErrNoRows {
 					// TODO: redirect to autorize with parameters
-					c.HTML(http.StatusForbidden, "Could not Find Code", gin.H{"error": err.Error()})
+					c.JSON(http.StatusForbidden, gin.H{"error": err})
 				} else {
-					c.HTML(http.StatusInternalServerError, "Internal Server Error", gin.H{"error": err})
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 				}
 				return
 			}
 			currentTime := time.Now()
 			if currentTime.After(code.ExpiresAt) {
-				c.HTML(http.StatusForbidden, "Authorization Code expired", nil)
+				err := fmt.Errorf("Authorization Code expired")
+				c.Error(err)
+				c.JSON(http.StatusForbidden, gin.H{"error": err})
 				return
 			}
 
@@ -326,29 +340,27 @@ func main() {
 			}
 			token, err := generateAccessToken(t)
 			if err != nil {
-				c.HTML(http.StatusInternalServerError, "Could not create access token:", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 				return
 			}
 
 			insertQuery := "INSERT INTO oauth2_tokens (access_token, client_id, user_id, scope, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
 			_, err = db.Exec(insertQuery, token, code.ClientID, code.UserID, code.Scope, expiration, time.Now(), time.Now())
 			if err != nil {
-				errorMsg := fmt.Sprintf("Could not create token: %v", err)
-				c.HTML(http.StatusInternalServerError, errorMsg, nil)
+				c.JSON(http.StatusInternalServerError, err)
 				return
 			}
 
 			randomString, err := generateRandomString(32)
 			refreshExpiration := time.Now().AddDate(0, 0, 10)
 			if err != nil {
-				c.HTML(http.StatusBadRequest, "Could not generate code generate random string", err)
+				c.JSON(http.StatusForbidden, err)
 				return
 			}
 			refreshQuery := "INSERT INTO oauth2_refresh_tokens (refresh_token, access_token, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
 			_, err = db.Exec(refreshQuery, randomString, token, refreshExpiration, time.Now(), time.Now())
 			if err != nil {
-				errorMsg := fmt.Sprintf("Could not create refresh token: %v", err)
-				c.HTML(http.StatusInternalServerError, errorMsg, nil)
+				c.JSON(http.StatusForbidden, err)
 				return
 			}
 
@@ -356,8 +368,7 @@ func main() {
 			updateQuery := "UPDATE oauth2_codes SET revoked_at = $1 WHERE code = $2"
 			_, err = db.Exec(updateQuery, time.Now(), input.Code)
 			if err != nil {
-				errorMsg := fmt.Sprintf("Could not revoke code: %v", err)
-				c.HTML(http.StatusInternalServerError, errorMsg, nil)
+				c.JSON(http.StatusForbidden, err)
 				return
 			}
 
@@ -390,6 +401,20 @@ func main() {
 
 	// サーバーをポート8080で起動
 	r.Run(":8080")
+}
+
+// ErrorLoggerMiddleware はエラーログを出力するためのミドルウェアです。
+func ErrorLoggerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next() // 次のミドルウェアまたはハンドラを呼び出します
+
+		// エラーが発生した場合はログに記録します
+		if len(c.Errors) > 0 {
+			for _, err := range c.Errors.Errors() {
+				fmt.Printf("Error: %v\n", err)
+			}
+		}
+	}
 }
 
 // セッションミドルウェアの定義
