@@ -294,7 +294,7 @@ func main() {
 			c.HTML(http.StatusForbidden, fmt.Sprintf("Invalid grant type: %s", input.GrantType), nil)
 		}
 		// code has expired
-		query := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at < $2"
+		query := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at > $2"
 		var code Code
 
 		err = db.QueryRow(query, input.Code, time.Now()).Scan(&code.UserID, &code.ClientID, &code.Scope, &code.ExpiresAt)
@@ -341,7 +341,7 @@ func main() {
 			c.HTML(http.StatusBadRequest, "Could not generate code generate random string", err)
 			return
 		}
-		refreshQuery := "INSERT INTO oauth2_refresh_tokens (refreash_token, access_token, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
+		refreshQuery := "INSERT INTO oauth2_refresh_tokens (refresh_token, access_token, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
 		_, err = db.Exec(refreshQuery, randomString, token, refreshExpiration, time.Now(), time.Now())
 		if err != nil {
 			errorMsg := fmt.Sprintf("Could not create refresh token: %v", err)
@@ -360,7 +360,7 @@ func main() {
 
 		output := TokenOutput{
 			AccessToken:  token,
-			RefreshToken: "refresh_token",
+			RefreshToken: randomString,
 			Expiry:       expiration.Unix(),
 		}
 		c.JSON(http.StatusOK, output)
