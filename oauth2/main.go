@@ -114,7 +114,7 @@ func main() {
 	r.Use(ErrorLoggerMiddleware())
 
 	// セッションミドルウェアのセットアップ
-	r.Use(SessionMiddleware())
+	//r.Use(SessionMiddleware())
 
 	// PostgreSQLへの接続文字列を作成
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -129,7 +129,7 @@ func main() {
 
 	// GETリクエストを受け取るエンドポイントの定義
 	r.GET("/authorize", func(c *gin.Context) {
-
+		s := NewSession(c)
 		// /authorize?response_type=code&client_id=550e8400-e29b-41d4-a716-446655440000&scope=read&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fcallback&state=ok
 		var input AuthorizeInput
 		// Query ParameterをAuthorizeInputにバインド
@@ -211,7 +211,7 @@ func main() {
 			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
-		err = SetSessionData(c, d)
+		err = s.SetSessionData(c, d)
 		if err != nil {
 			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
@@ -221,7 +221,7 @@ func main() {
 	})
 
 	r.POST("/authorization", func(c *gin.Context) {
-
+		s := NewSession(c)
 		var input AuthorizationInput
 		// リクエストのJSONデータをAuthorizationInputにバインド
 		if err := c.Bind(&input); err != nil {
@@ -270,7 +270,7 @@ func main() {
 			return
 		}
 
-		sessionData, err := GetSessionData(c)
+		sessionData, err := s.GetSessionData(c)
 		if err != nil {
 			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
@@ -432,30 +432,32 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 	}
 }
 
-// セッションミドルウェアの定義
-func SessionMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// セッションIDをクッキーから取得
-		sessionID, err := c.Cookie("sessionID")
-		if err != nil {
-			// セッションIDがない場合は新しいセッションIDを生成
-			sessionID = GenerateSessionID()
-			// クッキーにセッションIDをセット
-			c.SetCookie("sessionID", sessionID, 3600, "/", "localhost", false, true)
-		}
+type Session struct {
+	SessionID string
+}
 
-		// Redisからセッションデータを取得
-		sessionData, err := redisClient.Get(c, sessionID).Result()
-		if err != nil {
-			// セッションデータが存在しない場合は空のデータをセット
-			sessionData = ""
-		}
+func NewSession(c *gin.Context) *Session {
+	// セッションIDをクッキーから取得
+	sessionID, err := c.Cookie("sessionID")
+	if err != nil {
+		// セッションIDがない場合は新しいセッションIDを生成
+		sessionID = GenerateSessionID()
+		// クッキーにセッションIDをセット
+		c.SetCookie("sessionID", sessionID, 3600, "/", "localhost", false, true)
+	}
 
-		// セッションデータをコンテキストにセット
-		c.Set("sessionData", sessionData)
+	// Redisからセッションデータを取得
+	sessionData, err := redisClient.Get(c, sessionID).Result()
+	if err != nil {
+		// セッションデータが存在しない場合は空のデータをセット
+		sessionData = ""
+	}
 
-		// 次のハンドラを実行
-		c.Next()
+	// セッションデータをコンテキストにセット
+	c.Set("sessionData", sessionData)
+
+	return &Session{
+		SessionID: sessionID,
 	}
 }
 
@@ -465,24 +467,24 @@ func GenerateSessionID() string {
 }
 
 // セッションデータを取得する関数
-func GetSessionData(c *gin.Context) ([]byte, error) {
-	sessionID, err := c.Cookie("sessionID")
-	if err != nil {
-		return nil, err
-	}
-	return redisClient.Get(c, sessionID).Bytes()
+func (s *Session) GetSessionData(c *gin.Context) ([]byte, error) {
+	//sessionID, err := c.Cookie("sessionID")
+	//if err != nil {
+	//	return nil, err
+	//}
+	return redisClient.Get(c, s.SessionID).Bytes()
 }
 
 // セッションデータをRedisに書き込む関数
-func SetSessionData(c *gin.Context, sessionData any) error {
+func (s *Session) SetSessionData(c *gin.Context, sessionData any) error {
 	// セッションIDをクッキーから取得
-	sessionID, err := c.Cookie("sessionID")
-	if err != nil {
-		return err
-	}
+	// sessionID, err := c.Cookie("sessionID")
+	// if err != nil {
+	//	return err
+	//}
 
 	// Redisにセッションデータを書き込み
-	return redisClient.Set(c, sessionID, sessionData, 0).Err()
+	return redisClient.Set(c, s.SessionID, sessionData, 0).Err()
 }
 
 func IsValidUUID(u string) bool {
