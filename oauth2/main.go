@@ -15,6 +15,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gin-gonic/gin"
@@ -129,7 +130,7 @@ func main() {
 
 	// GETリクエストを受け取るエンドポイントの定義
 	r.GET("/authorize", func(c *gin.Context) {
-		s := NewSession(c)
+		s := session.NewSession(c, redisClient)
 		// /authorize?response_type=code&client_id=550e8400-e29b-41d4-a716-446655440000&scope=read&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fcallback&state=ok
 		var input AuthorizeInput
 		// Query ParameterをAuthorizeInputにバインド
@@ -221,7 +222,7 @@ func main() {
 	})
 
 	r.POST("/authorization", func(c *gin.Context) {
-		s := NewSession(c)
+		s := session.NewSession(c, redisClient)
 		var input AuthorizationInput
 		// リクエストのJSONデータをAuthorizationInputにバインド
 		if err := c.Bind(&input); err != nil {
@@ -430,61 +431,6 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 			}
 		}
 	}
-}
-
-type Session struct {
-	SessionID string
-}
-
-func NewSession(c *gin.Context) *Session {
-	// セッションIDをクッキーから取得
-	sessionID, err := c.Cookie("sessionID")
-	if err != nil {
-		// セッションIDがない場合は新しいセッションIDを生成
-		sessionID = GenerateSessionID()
-		// クッキーにセッションIDをセット
-		c.SetCookie("sessionID", sessionID, 3600, "/", "localhost", false, true)
-	}
-
-	// Redisからセッションデータを取得
-	sessionData, err := redisClient.Get(c, sessionID).Result()
-	if err != nil {
-		// セッションデータが存在しない場合は空のデータをセット
-		sessionData = ""
-	}
-
-	// セッションデータをコンテキストにセット
-	c.Set("sessionData", sessionData)
-
-	return &Session{
-		SessionID: sessionID,
-	}
-}
-
-// セッションIDを生成する関数
-func GenerateSessionID() string {
-	return time.Now().Format("20060102150405")
-}
-
-// セッションデータを取得する関数
-func (s *Session) GetSessionData(c *gin.Context) ([]byte, error) {
-	//sessionID, err := c.Cookie("sessionID")
-	//if err != nil {
-	//	return nil, err
-	//}
-	return redisClient.Get(c, s.SessionID).Bytes()
-}
-
-// セッションデータをRedisに書き込む関数
-func (s *Session) SetSessionData(c *gin.Context, sessionData any) error {
-	// セッションIDをクッキーから取得
-	// sessionID, err := c.Cookie("sessionID")
-	// if err != nil {
-	//	return err
-	//}
-
-	// Redisにセッションデータを書き込み
-	return redisClient.Set(c, s.SessionID, sessionData, 0).Err()
 }
 
 func IsValidUUID(u string) bool {
