@@ -57,7 +57,7 @@ CREATE TABLE oauth2_tokens (
 -- oauth2_refresh_tokens テーブル
 CREATE TABLE oauth2_refresh_tokens (
     refresh_token VARCHAR(255) PRIMARY KEY,
-    access_token VARCHAR(255) NOT NULL,
+    access_token VARCHAR(512) NOT NULL,
     expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT current_timestamp,
     updated_at TIMESTAMP DEFAULT current_timestamp,

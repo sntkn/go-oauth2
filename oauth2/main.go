@@ -218,7 +218,7 @@ func main() {
 
 		if input.Password == "" {
 			// TODO: redirect to autorize with parameters
-			c.HTML(http.StatusBadRequest, "Invalid email", nil)
+			c.HTML(http.StatusBadRequest, "Invalid password", nil)
 			return
 		}
 
@@ -331,6 +331,20 @@ func main() {
 		_, err = db.Exec(insertQuery, token, code.ClientID, code.UserID, code.Scope, expiration, time.Now(), time.Now())
 		if err != nil {
 			errorMsg := fmt.Sprintf("Could not create token: %v", err)
+			c.HTML(http.StatusInternalServerError, errorMsg, nil)
+			return
+		}
+
+		randomString, err := generateRandomString(32)
+		refreshExpiration := time.Now().AddDate(0, 0, 10)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "Could not generate code generate random string", err)
+			return
+		}
+		refreshQuery := "INSERT INTO oauth2_refresh_tokens (refreash_token, access_token, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
+		_, err = db.Exec(refreshQuery, randomString, token, refreshExpiration, time.Now(), time.Now())
+		if err != nil {
+			errorMsg := fmt.Sprintf("Could not create refresh token: %v", err)
 			c.HTML(http.StatusInternalServerError, errorMsg, nil)
 			return
 		}
