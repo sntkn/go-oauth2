@@ -294,10 +294,10 @@ func main() {
 			c.HTML(http.StatusForbidden, fmt.Sprintf("Invalid grant type: %s", input.GrantType), nil)
 		}
 		// code has expired
-		query := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1"
+		query := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at < $2"
 		var code Code
 
-		err = db.QueryRow(query, input.Code).Scan(&code.UserID, &code.ClientID, &code.Scope, &code.ExpiresAt)
+		err = db.QueryRow(query, input.Code, time.Now()).Scan(&code.UserID, &code.ClientID, &code.Scope, &code.ExpiresAt)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// TODO: redirect to autorize with parameters
@@ -330,12 +330,19 @@ func main() {
 		insertQuery := "INSERT INTO oauth2_tokens (access_token, client_id, user_id, scope, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
 		_, err = db.Exec(insertQuery, token, code.ClientID, code.UserID, code.Scope, expiration, time.Now(), time.Now())
 		if err != nil {
-			errorMsg := fmt.Sprintf("Could not create code: %v", err)
-			c.HTML(http.StatusBadRequest, errorMsg, nil)
+			errorMsg := fmt.Sprintf("Could not create token: %v", err)
+			c.HTML(http.StatusInternalServerError, errorMsg, nil)
 			return
 		}
 
 		// revoke code
+		updateQuery := "UPDATE oauth2_codes SET revoked_at = $1 WHERE code = $2"
+		_, err = db.Exec(updateQuery, time.Now(), input.Code)
+		if err != nil {
+			errorMsg := fmt.Sprintf("Could not revoke code: %v", err)
+			c.HTML(http.StatusInternalServerError, errorMsg, nil)
+			return
+		}
 
 		output := TokenOutput{
 			AccessToken:  token,
