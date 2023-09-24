@@ -91,6 +91,7 @@ func main() {
 		Password: password,
 		DBName:   dbname,
 	})
+	defer db.Close()
 
 	// GETリクエストを受け取るエンドポイントの定義
 	r.GET("/authorize", func(c *gin.Context) {

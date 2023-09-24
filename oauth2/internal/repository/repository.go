@@ -74,11 +74,14 @@ func NewClient(c Conn) (*Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
 
 	return &Repository{
 		db: db,
 	}, nil
+}
+
+func (c *Repository) Close() {
+	c.db.Close()
 }
 
 func (r *Repository) FindClientByClientID(clientID string) (Client, error) {
