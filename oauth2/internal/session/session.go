@@ -4,15 +4,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
+	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 )
 
 type Session struct {
 	SessionID    string
-	SessionStore *redis.Client
+	SessionStore *redis.RedisCli
 }
 
-func NewSession(c *gin.Context, r *redis.Client) *Session {
+func NewSession(c *gin.Context, r *redis.RedisCli) *Session {
 	// セッションIDをクッキーから取得
 	sessionID, err := c.Cookie("sessionID")
 	if err != nil {

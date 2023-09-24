@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"golang.org/x/crypto/bcrypt"
 
@@ -89,23 +89,6 @@ type TokenParams struct {
 
 var secretKey = []byte("test")
 
-var redisClient *redis.Client
-
-func init() {
-	// Redisクライアントの初期化
-	redisClient = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379", // Redisのアドレスとポート番号に合わせて変更してください
-		Password: "",               // Redisにパスワードが設定されている場合は設定してください
-		DB:       0,                // データベース番号
-	})
-
-	// ピングしてRedis接続を確認
-	_, err := redisClient.Ping(context.Background()).Result()
-	if err != nil {
-		panic(err)
-	}
-}
-
 func main() {
 	// Ginルーターの初期化
 	r := gin.Default()
@@ -114,8 +97,16 @@ func main() {
 	// エラーログを出力するミドルウェアを追加
 	r.Use(ErrorLoggerMiddleware())
 
-	// セッションミドルウェアのセットアップ
-	//r.Use(SessionMiddleware())
+	// Redis configuration
+	redisCli, err := redis.NewClient(context.Background(), redis.Options{
+		Addr:     "localhost:6379", // Redisのアドレスとポート番号に合わせて変更してください
+		Password: "",               // Redisにパスワードが設定されている場合は設定してください
+		DB:       0,                // データベース番号
+	})
+	if err != nil {
+		log.Printf("%v", err)
+		return
+	}
 
 	// PostgreSQLへの接続文字列を作成
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -130,7 +121,7 @@ func main() {
 
 	// GETリクエストを受け取るエンドポイントの定義
 	r.GET("/authorize", func(c *gin.Context) {
-		s := session.NewSession(c, redisClient)
+		s := session.NewSession(c, redisCli)
 		// /authorize?response_type=code&client_id=550e8400-e29b-41d4-a716-446655440000&scope=read&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fcallback&state=ok
 		var input AuthorizeInput
 		// Query ParameterをAuthorizeInputにバインド
@@ -222,7 +213,7 @@ func main() {
 	})
 
 	r.POST("/authorization", func(c *gin.Context) {
-		s := session.NewSession(c, redisClient)
+		s := session.NewSession(c, redisCli)
 		var input AuthorizationInput
 		// リクエストのJSONデータをAuthorizationInputにバインド
 		if err := c.Bind(&input); err != nil {
