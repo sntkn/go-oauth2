@@ -15,6 +15,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
+	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"golang.org/x/crypto/bcrypt"
 
@@ -29,32 +30,6 @@ const (
 	password = "pass"
 	dbname   = "auth"
 )
-
-type User struct {
-	ID       uuid.UUID `db:"id"`
-	Email    string    `db:"email"`
-	Password string    `db:"password"`
-	// 他のユーザー属性をここに追加
-}
-
-type Client struct {
-	ID           uuid.UUID `db:"id"`
-	Name         string    `db:"name"`
-	RedirectURIs string    `db:"redirect_uris"`
-	CreatedAt    time.Time `db:"created_at"`
-	UpdatedAt    time.Time `db:"updated_at"`
-}
-
-type Code struct {
-	Code        string    `db:"code"`
-	ClientID    uuid.UUID `db:"client_id"`
-	UserID      uuid.UUID `db:"user_id"`
-	Scope       string    `db:"scope"`
-	RedirectURI string    `db:"redirect_uri"`
-	ExpiresAt   time.Time `db:"expired_at"`
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
-}
 
 type AuthorizeInput struct {
 	ResponseType string `form:"response_type"`
@@ -108,16 +83,14 @@ func main() {
 		return
 	}
 
-	// PostgreSQLへの接続文字列を作成
-	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
-
 	// PostgreSQLに接続
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
+	db, err := repository.NewClient(repository.Conn{
+		Host:     host,
+		Port:     port,
+		User:     user,
+		Password: password,
+		DBName:   dbname,
+	})
 
 	// GETリクエストを受け取るエンドポイントの定義
 	r.GET("/authorize", func(c *gin.Context) {
@@ -177,10 +150,7 @@ func main() {
 		}
 
 		// check client
-		query := "SELECT id, redirect_uris FROM oauth2_clients WHERE id = $1"
-		var client Client
-
-		err = db.QueryRow(query, input.ClientID).Scan(&client.ID, &client.RedirectURIs)
+		client, err := db.FindClientByClientID(input.ClientID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
@@ -240,10 +210,7 @@ func main() {
 		}
 
 		// validate user credentials
-		query := "SELECT id, email, password FROM users WHERE email = $1"
-		var user User
-
-		err = db.QueryRow(query, input.Email).Scan(&user.ID, &user.Email, &user.Password)
+		user, err := db.FindUserByEmail(input.Email)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// TODO: redirect to autorize with parameters
@@ -282,13 +249,23 @@ func main() {
 			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
 		}
-		q := `
-			INSERT INTO oauth2_codes
-				(code, client_id, user_id, scope, redirect_uri, expires_at, created_at, updated_at)
-			VALUES
-				($1, $2, $3, $4, $5, $6, $7, $8)
-		`
-		_, err = db.Exec(q, randomString, d.ClientID, user.ID, d.Scope, d.RedirectURI, expired, time.Now(), time.Now())
+
+		clientID, err := uuid.Parse(d.ClientID)
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+			return
+		}
+
+		err = db.RegisterOAuth2Code(repository.Code{
+			Code:        randomString,
+			ClientID:    clientID,
+			UserID:      user.ID,
+			Scope:       d.Scope,
+			RedirectURI: d.RedirectURI,
+			ExpiresAt:   expired,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		})
 		if err != nil {
 			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 			return
@@ -316,10 +293,7 @@ func main() {
 
 		if input.GrantType == "authorization_code" {
 			// code has expired
-			query := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at > $2"
-			var code Code
-
-			err = db.QueryRow(query, input.Code, time.Now()).Scan(&code.UserID, &code.ClientID, &code.Scope, &code.ExpiresAt)
+			code, err := db.FindValidOAuth2Code(input.Code, time.Now())
 			if err != nil {
 				if err == sql.ErrNoRows {
 					// TODO: redirect to autorize with parameters
@@ -351,8 +325,13 @@ func main() {
 				return
 			}
 
-			insertQuery := "INSERT INTO oauth2_tokens (access_token, client_id, user_id, scope, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
-			_, err = db.Exec(insertQuery, token, code.ClientID, code.UserID, code.Scope, expiration, time.Now(), time.Now())
+			err = db.RegisterToken(repository.Token{
+				AccessToken: token,
+				ClientID:    code.ClientID,
+				UserID:      code.UserID,
+				Scope:       code.Scope,
+				ExpiresAt:   expiration,
+			})
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, err)
 				return
@@ -364,16 +343,18 @@ func main() {
 				c.JSON(http.StatusForbidden, err)
 				return
 			}
-			refreshQuery := "INSERT INTO oauth2_refresh_tokens (refresh_token, access_token, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
-			_, err = db.Exec(refreshQuery, randomString, token, refreshExpiration, time.Now(), time.Now())
+			err = db.RegesterRefreshToken(repository.RefreshToken{
+				RefreshToken: randomString,
+				AccessToken:  token,
+				ExpiresAt:    refreshExpiration,
+			})
 			if err != nil {
 				c.JSON(http.StatusForbidden, err)
 				return
 			}
 
 			// revoke code
-			updateQuery := "UPDATE oauth2_codes SET revoked_at = $1 WHERE code = $2"
-			_, err = db.Exec(updateQuery, time.Now(), input.Code)
+			err = db.RevokeCode(input.Code)
 			if err != nil {
 				c.JSON(http.StatusForbidden, err)
 				return
