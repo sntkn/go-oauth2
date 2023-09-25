@@ -150,6 +150,15 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 	// TODO: find refresh token, if not expired
+	refreshToken, err := u.db.FindValidRefreshToken(input.RefreshToken, time.Now())
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusForbidden, err)
+		} else {
+			c.JSON(http.StatusInternalServerError, err)
+		}
+		return
+	}
 	// TODO: find access token
 	// TODO: create token and refresh token
 	// TODO: revoke old token and refresh token

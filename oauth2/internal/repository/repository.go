@@ -136,3 +136,11 @@ func (r *Repository) RevokeCode(code string) error {
 	_, err := r.db.Exec(updateQuery, time.Now(), code)
 	return err
 }
+
+func (r *Repository) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (RefreshToken, error) {
+	q := "SELECT refresh_token FROM oauth2_refresh_tokens WHERE refresh_token = $1 AND expires_at > $2"
+	var rtkn RefreshToken
+
+	err := r.db.QueryRow(q, refreshToken, expiresAt).Scan(&rtkn.RefreshToken)
+	return rtkn, err
+}
