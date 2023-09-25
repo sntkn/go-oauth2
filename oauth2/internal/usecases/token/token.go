@@ -213,14 +213,21 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	// TODO: revoke old token and refresh token
+	if err = u.db.RevokeToken(tkn.AccessToken); err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	if err = u.db.RevokeRefreshToken(rt.RefreshToken); err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
 
 	output := TokenOutput{
-		AccessToken:  "token",
-		RefreshToken: "refresh token",
-		Expiry:       0,
+		AccessToken:  token,
+		RefreshToken: randomString,
+		Expiry:       expiration.Unix(),
 	}
 	c.JSON(http.StatusOK, output)
-
 }
 
 func generateAccessToken(p TokenParams) (string, error) {

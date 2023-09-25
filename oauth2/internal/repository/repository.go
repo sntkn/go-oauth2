@@ -152,3 +152,15 @@ func (r *Repository) FindToken(accessToken string) (Token, error) {
 	err := r.db.QueryRow(q, accessToken).Scan(&tkn.UserID, &tkn.ClientID, &tkn.Scope)
 	return tkn, err
 }
+
+func (r *Repository) RevokeToken(accessToken string) error {
+	updateQuery := "UPDATE oauth2_tokens SET revoked_at = $1 WHERE access_token = $2"
+	_, err := r.db.Exec(updateQuery, time.Now(), accessToken)
+	return err
+}
+
+func (r *Repository) RevokeRefreshToken(refreshToken string) error {
+	updateQuery := "UPDATE oauth2_refresh_tokens SET revoked_at = $1 WHERE refresh_token = $2"
+	_, err := r.db.Exec(updateQuery, time.Now(), refreshToken)
+	return err
+}
