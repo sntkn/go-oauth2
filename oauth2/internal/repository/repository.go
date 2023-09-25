@@ -138,9 +138,17 @@ func (r *Repository) RevokeCode(code string) error {
 }
 
 func (r *Repository) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (RefreshToken, error) {
-	q := "SELECT refresh_token FROM oauth2_refresh_tokens WHERE refresh_token = $1 AND expires_at > $2"
+	q := "SELECT access_token FROM oauth2_refresh_tokens WHERE refresh_token = $1 AND expires_at > $2"
 	var rtkn RefreshToken
 
 	err := r.db.QueryRow(q, refreshToken, expiresAt).Scan(&rtkn.RefreshToken)
 	return rtkn, err
+}
+
+func (r *Repository) FindToken(accessToken string) (Token, error) {
+	q := "SELECT user_id, client_id, scope FROM oauth2_tokens WHERE access_token = $1"
+	var tkn Token
+
+	err := r.db.QueryRow(q, accessToken).Scan(&tkn.UserID, &tkn.ClientID, &tkn.Scope)
+	return tkn, err
 }

@@ -150,7 +150,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 	// TODO: find refresh token, if not expired
-	refreshToken, err := u.db.FindValidRefreshToken(input.RefreshToken, time.Now())
+	rt, err := u.db.FindValidRefreshToken(input.RefreshToken, time.Now())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.JSON(http.StatusForbidden, err)
@@ -159,8 +159,59 @@ func (u *UseCase) Run(c *gin.Context) {
 		}
 		return
 	}
-	// TODO: find access token
+	// find access token
+
 	// TODO: create token and refresh token
+	tkn, err := u.db.FindToken(rt.AccessToken)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// TODO: redirect to autorize with parameters
+			c.JSON(http.StatusForbidden, gin.H{"error": err})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		}
+		return
+	}
+	expiration := time.Now().Add(10 * time.Minute)
+	t := TokenParams{
+		UserID:    tkn.UserID,
+		ClientID:  tkn.ClientID,
+		Scope:     tkn.Scope,
+		ExpiresAt: expiration,
+	}
+	token, err := generateAccessToken(t)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	err = u.db.RegisterToken(repository.Token{
+		AccessToken: token,
+		ClientID:    tkn.ClientID,
+		UserID:      tkn.UserID,
+		Scope:       tkn.Scope,
+		ExpiresAt:   expiration,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	randomString, err := generateRandomString(32)
+	refreshExpiration := time.Now().AddDate(0, 0, 10)
+	if err != nil {
+		c.JSON(http.StatusForbidden, err)
+		return
+	}
+	err = u.db.RegesterRefreshToken(repository.RefreshToken{
+		RefreshToken: randomString,
+		AccessToken:  token,
+		ExpiresAt:    refreshExpiration,
+	})
+	if err != nil {
+		c.JSON(http.StatusForbidden, err)
+		return
+	}
+
 	// TODO: revoke old token and refresh token
 
 	output := TokenOutput{
