@@ -60,7 +60,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	if input.GrantType != "authorization_code" && input.GrantType != "refresh_token" {
 		err := fmt.Errorf("Invalid grant type: %s", input.GrantType)
 		c.Error(err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
 
@@ -139,20 +139,28 @@ func (u *UseCase) Run(c *gin.Context) {
 			Expiry:       expiration.Unix(),
 		}
 		c.JSON(http.StatusOK, output)
-	} else {
-		// TODO: check paramters
-		// TODO: find refresh token, if not expired
-		// TODO: find access token
-		// TODO: create token and refresh token
-		// TODO: revoke old token and refresh token
-
-		output := TokenOutput{
-			AccessToken:  "token",
-			RefreshToken: "refresh token",
-			Expiry:       0,
-		}
-		c.JSON(http.StatusOK, output)
+		return
 	}
+
+	// check paramters
+	if input.RefreshToken == "" {
+		err := fmt.Errorf("Invalid refresh token")
+		c.Error(err)
+		c.JSON(http.StatusBadRequest, err)
+		return
+	}
+	// TODO: find refresh token, if not expired
+	// TODO: find access token
+	// TODO: create token and refresh token
+	// TODO: revoke old token and refresh token
+
+	output := TokenOutput{
+		AccessToken:  "token",
+		RefreshToken: "refresh token",
+		Expiry:       0,
+	}
+	c.JSON(http.StatusOK, output)
+
 }
 
 func generateAccessToken(p TokenParams) (string, error) {
