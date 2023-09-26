@@ -35,7 +35,7 @@ func main() {
 			return
 		}
 		// POSTリクエストを送信するURL
-		url := "http://localhost:8080/token"
+		uri := "http://localhost:8080/token"
 
 		// POSTデータを作成
 		reqData := TokenRequest{
@@ -50,7 +50,7 @@ func main() {
 		}
 
 		// POSTリクエストを作成
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer(postData))
+		req, err := http.NewRequest("POST", uri, bytes.NewBuffer(postData))
 		if err != nil {
 			fmt.Println("リクエストの作成エラー:", err)
 			return
@@ -81,7 +81,19 @@ func main() {
 			fmt.Println("Could not unmarshal auth code response:", err)
 			return
 		}
-		c.JSON(200, d)
+
+		c.SetCookie("access_token", d.AccessToken, 3600, "/", "localhost", false, true)
+		c.SetCookie("refresh_token", d.RefreshToken, 3600, "/", "localhost", false, true)
+		c.SetCookie("expiry", fmt.Sprintf("%d", d.Expiry), 3600, "/", "localhost", false, true)
+
+		c.Redirect(http.StatusFound, "/home")
 	})
+	r.GET("/home", func(c *gin.Context) {
+		// TODO: check cookie access token
+		// TODO: request user by token
+
+		c.JSON(http.StatusOK, "{}")
+	})
+
 	r.Run(":8000")
 }
