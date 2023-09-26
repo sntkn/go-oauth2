@@ -9,6 +9,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorization"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorize"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/me"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/token"
 
 	"github.com/gin-gonic/gin"
@@ -55,6 +56,7 @@ func main() {
 	r.GET("/authorize", authorize.NewUseCase(redisCli, db).Run)
 	r.POST("/authorization", authorization.NewUseCase(redisCli, db).Run)
 	r.POST("/token", token.NewUseCase(redisCli, db).Run)
+	r.GET("/me", me.NewUseCase(redisCli, db).Run)
 
 	// サーバーをポート8080で起動
 	r.Run(":8080")

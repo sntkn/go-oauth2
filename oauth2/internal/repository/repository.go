@@ -23,6 +23,7 @@ type Conn struct {
 
 type User struct {
 	ID       uuid.UUID `db:"id"`
+	Name     string    `db:"name"`
 	Email    string    `db:"email"`
 	Password string    `db:"password"`
 	// 他のユーザー属性をここに追加
@@ -163,4 +164,12 @@ func (r *Repository) RevokeRefreshToken(refreshToken string) error {
 	updateQuery := "UPDATE oauth2_refresh_tokens SET revoked_at = $1 WHERE refresh_token = $2"
 	_, err := r.db.Exec(updateQuery, time.Now(), refreshToken)
 	return err
+}
+
+func (r *Repository) FindUser(id uuid.UUID) (User, error) {
+	q := "SELECT id, name, email FROM users WHERE id = $1"
+	var u User
+
+	err := r.db.QueryRow(q, id).Scan(&u.ID, &u.Name, &u.Email)
+	return u, err
 }

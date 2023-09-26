@@ -139,6 +139,12 @@ func main() {
 			fmt.Println("レスポンスの読み取りエラー:", err)
 			return
 		}
+
+		if resp.StatusCode != http.StatusOK {
+			c.JSON(http.StatusUnauthorized, string(body))
+			return
+		}
+
 		var d UserResponse
 		err = json.Unmarshal(body, &d)
 		if err != nil {
