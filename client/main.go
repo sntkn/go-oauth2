@@ -25,9 +25,20 @@ type AuthCodeResponse struct {
 	Expiry       int64  `json:"expiry"`
 }
 
+type UserResponse struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
 func main() {
 	// Ginルーターの初期化
 	r := gin.Default()
+	r.LoadHTMLGlob("templates/*")
+
+	r.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.html", nil)
+	})
 	r.GET("/callback", func(c *gin.Context) {
 		var input AuthCodeInput
 		if err := c.Bind(&input); err != nil {
@@ -90,9 +101,51 @@ func main() {
 	})
 	r.GET("/home", func(c *gin.Context) {
 		// TODO: check cookie access token
-		// TODO: request user by token
+		token, err := c.Cookie("access_token")
+		if err != nil {
+			fmt.Println("Error getting access token")
+			c.Redirect(http.StatusFound, "/")
+			return
+		}
 
-		c.JSON(http.StatusOK, "{}")
+		// TODO: request user by token
+		// GETリクエストを送信するURL
+		uri := "http://localhost:8080/me"
+
+		// GETリクエストを作成
+		req, err := http.NewRequest("GET", uri, nil)
+		if err != nil {
+			fmt.Println("リクエストの作成エラー:", err)
+			return
+		}
+
+		// リクエストヘッダーを設定（必要に応じて）
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+		// HTTPクライアントを作成
+		client := &http.Client{}
+
+		// GETリクエストを送信
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("リクエストの送信エラー:", err)
+			return
+		}
+		defer resp.Body.Close()
+		// レスポンスを読み取り
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("レスポンスの読み取りエラー:", err)
+			return
+		}
+		var d UserResponse
+		err = json.Unmarshal(body, &d)
+		if err != nil {
+			fmt.Println("Could not unmarshal auth code response:", err)
+			return
+		}
+		c.JSON(http.StatusOK, d)
 	})
 
 	r.Run(":8000")
