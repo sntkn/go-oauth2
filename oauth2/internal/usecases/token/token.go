@@ -9,9 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 )
@@ -33,13 +32,6 @@ type TokenOutput struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	Expiry       int64  `json:"expiry"`
-}
-
-type TokenParams struct {
-	UserID    uuid.UUID
-	ClientID  uuid.UUID
-	Scope     string
-	ExpiresAt time.Time
 }
 
 func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
@@ -86,13 +78,13 @@ func (u *UseCase) Run(c *gin.Context) {
 
 		// create token and refresh token
 		expiration := time.Now().Add(10 * time.Minute)
-		t := TokenParams{
+		t := accesstoken.TokenParams{
 			UserID:    code.UserID,
 			ClientID:  code.ClientID,
 			Scope:     code.Scope,
 			ExpiresAt: expiration,
 		}
-		token, err := generateAccessToken(t)
+		token, err := accesstoken.Generate(t)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
@@ -173,13 +165,13 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 	expiration := time.Now().Add(10 * time.Minute)
-	t := TokenParams{
+	t := accesstoken.TokenParams{
 		UserID:    tkn.UserID,
 		ClientID:  tkn.ClientID,
 		Scope:     tkn.Scope,
 		ExpiresAt: expiration,
 	}
-	token, err := generateAccessToken(t)
+	token, err := accesstoken.Generate(t)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
@@ -228,28 +220,6 @@ func (u *UseCase) Run(c *gin.Context) {
 		Expiry:       expiration.Unix(),
 	}
 	c.JSON(http.StatusOK, output)
-}
-
-func generateAccessToken(p TokenParams) (string, error) {
-	// JWTのペイロード（クレーム）を設定
-	claims := jwt.MapClaims{
-		"user_id":   p.UserID.String(),
-		"client_id": p.ClientID.String(),
-		"scope":     p.Scope,
-		"exp":       p.ExpiresAt.Unix(),
-		"iat":       time.Now().Unix(),
-	}
-
-	// JWTトークンを作成
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// シークレットキーを使ってトークンを署名
-	accessToken, err := token.SignedString(secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	return accessToken, nil
 }
 
 func generateRandomString(length int) (string, error) {

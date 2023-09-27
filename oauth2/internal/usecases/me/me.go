@@ -1,33 +1,17 @@
 package me
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 )
 
 var secretKey = []byte("test")
-
-type TokenParams struct {
-	UserID    uuid.UUID
-	ClientID  uuid.UUID
-	Scope     string
-	ExpiresAt time.Time
-}
-type CustomClaims struct {
-	UserID    string `json:"user_id"`
-	ClientID  string `json:"client_id"`
-	Scope     string
-	ExpiresAt time.Time
-	jwt.StandardClaims
-}
 
 type UseCase struct {
 	redisCli *redis.RedisCli
@@ -54,21 +38,10 @@ func (u *UseCase) Run(c *gin.Context) {
 	// "Bearer " のプレフィックスを取り除いてトークンを抽出
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
-	// JWTトークンをパース
-	token, err := jwt.ParseWithClaims(tokenStr, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		// シークレットキーまたは公開鍵を返すことが必要です
-		return secretKey, nil
-	})
+	claims, err := accesstoken.Parse(tokenStr)
 
 	if err != nil {
-		fmt.Println("JWTパースエラー:", err)
-		return
-	}
-
-	// カスタムクレームを取得
-	claims, ok := token.Claims.(*CustomClaims)
-	if !ok || !token.Valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid Token"})
+		c.JSON(http.StatusUnauthorized, err)
 		return
 	}
 
