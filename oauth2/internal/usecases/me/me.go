@@ -68,7 +68,6 @@ func (u *UseCase) Run(c *gin.Context) {
 	// カスタムクレームを取得
 	claims, ok := token.Claims.(*CustomClaims)
 	if !ok || !token.Valid {
-		fmt.Println("JWTが無効です")
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid Token"})
 		return
 	}
