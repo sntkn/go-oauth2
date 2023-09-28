@@ -151,7 +151,7 @@ func main() {
 			fmt.Println("Could not unmarshal auth code response:", err)
 			return
 		}
-		c.JSON(http.StatusOK, d)
+		c.HTML(http.StatusOK, "home.html", gin.H{"data": d})
 	})
 
 	r.Run(":8000")
