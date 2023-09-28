@@ -195,6 +195,10 @@ func main() {
 			return
 		}
 
+		c.SetCookie("access_token", "", -1, "/", "localhost", false, true)
+		c.SetCookie("refresh_token", "", -1, "/", "localhost", false, true)
+		c.SetCookie("expiry", "", -1, "/", "localhost", false, true)
+
 		c.HTML(http.StatusOK, "logout.html", nil)
 	})
 
