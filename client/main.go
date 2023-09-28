@@ -154,5 +154,48 @@ func main() {
 		c.HTML(http.StatusOK, "home.html", gin.H{"data": d})
 	})
 
+	r.GET("/logout", func(c *gin.Context) {
+		// TODO: check cookie access token
+		token, err := c.Cookie("access_token")
+		if err != nil {
+			fmt.Println("Error getting access token")
+			c.Redirect(http.StatusFound, "/")
+			return
+		}
+
+		// TODO: request user by token
+		// DELETE リクエストを送信するURL
+		uri := "http://localhost:8080/token"
+
+		// DELETE リクエストを作成
+		req, err := http.NewRequest("DELETE", uri, nil)
+		if err != nil {
+			fmt.Println("リクエストの作成エラー:", err)
+			return
+		}
+
+		// リクエストヘッダーを設定（必要に応じて）
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+		// HTTPクライアントを作成
+		client := &http.Client{}
+
+		// GETリクエストを送信
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("リクエストの送信エラー:", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			c.JSON(http.StatusUnauthorized, nil)
+			return
+		}
+
+		c.HTML(http.StatusOK, "logout.html", nil)
+	})
+
 	r.Run(":8000")
 }

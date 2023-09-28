@@ -5,6 +5,8 @@
 - GET /authorize -> display authorization information
 - POST /authorization -> return authorization code
 - POST /token -> return token information
+- GET /me -> return user information
+- DELETE /token -> revoke token
 
 ## Table structure
 
