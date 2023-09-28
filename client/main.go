@@ -185,12 +185,13 @@ func main() {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("リクエストの送信エラー:", err)
+			c.HTML(http.StatusUnauthorized, "400.html", nil)
 			return
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			c.JSON(http.StatusUnauthorized, nil)
+			c.HTML(http.StatusUnauthorized, "400.html", nil)
 			return
 		}
 

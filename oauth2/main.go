@@ -9,6 +9,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorization"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorize"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/delete_token"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/me"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/token"
 
@@ -57,6 +58,7 @@ func main() {
 	r.POST("/authorization", authorization.NewUseCase(redisCli, db).Run)
 	r.POST("/token", token.NewUseCase(redisCli, db).Run)
 	r.GET("/me", me.NewUseCase(redisCli, db).Run)
+	r.DELETE("/token", delete_token.NewUseCase(redisCli, db).Run)
 
 	// サーバーをポート8080で起動
 	r.Run(":8080")
