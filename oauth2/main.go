@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
@@ -30,6 +30,8 @@ func main() {
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
+	slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	// エラーログを出力するミドルウェアを追加
 	r.Use(ErrorLoggerMiddleware())
 
@@ -40,7 +42,7 @@ func main() {
 		DB:       0,                // データベース番号
 	})
 	if err != nil {
-		log.Printf("%v", err)
+		slog.Error("Error: %v\n", err)
 		return
 	}
 
@@ -72,7 +74,7 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 		// エラーが発生した場合はログに記録します
 		if len(c.Errors) > 0 {
 			for _, err := range c.Errors.Errors() {
-				fmt.Printf("Error: %v\n", err)
+				slog.Error("%+v\n", err)
 			}
 		}
 	}
