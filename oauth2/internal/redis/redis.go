@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -27,7 +28,7 @@ func NewClient(ctx context.Context, o Options) (*RedisCli, error) {
 	// ピングしてRedis接続を確認
 	_, err := cli.Ping(ctx).Result()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &RedisCli{

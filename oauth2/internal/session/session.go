@@ -3,6 +3,7 @@ package session
 import (
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 )
@@ -45,11 +46,12 @@ func GenerateSessionID() string {
 
 // セッションデータを取得する関数
 func (s *Session) GetSessionData(c *gin.Context) ([]byte, error) {
-	return s.SessionStore.Get(c, s.SessionID).Bytes()
+	b, err := s.SessionStore.Get(c, s.SessionID).Bytes()
+	return b, errors.WithStack(err)
 }
 
 // セッションデータをRedisに書き込む関数
 func (s *Session) SetSessionData(c *gin.Context, sessionData any) error {
 	// Redisにセッションデータを書き込み
-	return s.SessionStore.Set(c, s.SessionID, sessionData, 0).Err()
+	return errors.WithStack(s.SessionStore.Set(c, s.SessionID, sessionData, 0).Err())
 }

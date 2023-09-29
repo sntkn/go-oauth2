@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/google/uuid"
@@ -74,7 +75,7 @@ func NewClient(c Conn) (*Repository, error) {
 	// PostgreSQLに接続
 	db, err := sqlx.Connect("postgres", connStr)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &Repository{
@@ -91,7 +92,7 @@ func (r *Repository) FindClientByClientID(clientID string) (Client, error) {
 	var c Client
 
 	err := r.db.Get(&c, q, clientID)
-	return c, err
+	return c, errors.WithStack(err)
 }
 
 func (r *Repository) FindUserByEmail(email string) (User, error) {
@@ -99,7 +100,7 @@ func (r *Repository) FindUserByEmail(email string) (User, error) {
 	var u User
 
 	err := r.db.Get(&u, q, email)
-	return u, err
+	return u, errors.WithStack(err)
 }
 
 func (r *Repository) RegisterOAuth2Code(c Code) error {
@@ -112,7 +113,7 @@ func (r *Repository) RegisterOAuth2Code(c Code) error {
 				(:code, :client_id, :user_id, :scope, :redirect_uri, :expires_at, :created_at, :updated_at)
 		`
 	_, err := r.db.NamedExec(q, c)
-	return err
+	return errors.WithStack(err)
 }
 
 func (r *Repository) FindValidOAuth2Code(code string, expiresAt time.Time) (Code, error) {
@@ -120,7 +121,7 @@ func (r *Repository) FindValidOAuth2Code(code string, expiresAt time.Time) (Code
 	var c Code
 
 	err := r.db.Get(&c, q, code, expiresAt)
-	return c, err
+	return c, errors.WithStack(err)
 }
 
 func (r *Repository) RegisterToken(t Token) error {
@@ -131,7 +132,7 @@ func (r *Repository) RegisterToken(t Token) error {
 		VALUES (:access_token, :client_id, :user_id, :scope, :expires_at, :created_at, :updated_at)
 	`
 	_, err := r.db.NamedExec(q, t)
-	return err
+	return errors.WithStack(err)
 }
 
 func (r *Repository) RegesterRefreshToken(t RefreshToken) error {
@@ -140,13 +141,13 @@ func (r *Repository) RegesterRefreshToken(t RefreshToken) error {
 	q := `INSERT INTO oauth2_refresh_tokens (refresh_token, access_token, expires_at, created_at, updated_at)
 	VALUES (:refresh_token, :access_token, :expires_at, :created_at, :updated_at)`
 	_, err := r.db.NamedExec(q, t)
-	return err
+	return errors.WithStack(err)
 }
 
 func (r *Repository) RevokeCode(code string) error {
 	updateQuery := "UPDATE oauth2_codes SET revoked_at = $1 WHERE code = $2"
 	_, err := r.db.Exec(updateQuery, time.Now(), code)
-	return err
+	return errors.WithStack(err)
 }
 
 func (r *Repository) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (RefreshToken, error) {
@@ -154,7 +155,7 @@ func (r *Repository) FindValidRefreshToken(refreshToken string, expiresAt time.T
 	var rtkn RefreshToken
 
 	err := r.db.Get(&rtkn, q, refreshToken, expiresAt)
-	return rtkn, err
+	return rtkn, errors.WithStack(err)
 }
 
 func (r *Repository) FindToken(accessToken string) (Token, error) {
@@ -162,19 +163,19 @@ func (r *Repository) FindToken(accessToken string) (Token, error) {
 	var tkn Token
 
 	err := r.db.Get(&tkn, q, accessToken)
-	return tkn, err
+	return tkn, errors.WithStack(err)
 }
 
 func (r *Repository) RevokeToken(accessToken string) error {
 	updateQuery := "UPDATE oauth2_tokens SET revoked_at = $1 WHERE access_token = $2"
 	_, err := r.db.Exec(updateQuery, time.Now(), accessToken)
-	return err
+	return errors.WithStack(err)
 }
 
 func (r *Repository) RevokeRefreshToken(refreshToken string) error {
 	updateQuery := "UPDATE oauth2_refresh_tokens SET revoked_at = $1 WHERE refresh_token = $2"
 	_, err := r.db.Exec(updateQuery, time.Now(), refreshToken)
-	return err
+	return errors.WithStack(err)
 }
 
 func (r *Repository) FindUser(id uuid.UUID) (User, error) {
@@ -182,5 +183,5 @@ func (r *Repository) FindUser(id uuid.UUID) (User, error) {
 	var u User
 
 	err := r.db.Get(&u, q, id)
-	return u, err
+	return u, errors.WithStack(err)
 }

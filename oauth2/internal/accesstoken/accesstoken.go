@@ -1,9 +1,9 @@
 package accesstoken
 
 import (
-	"errors"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 )
@@ -41,7 +41,7 @@ func Generate(p TokenParams) (string, error) {
 	// シークレットキーを使ってトークンを署名
 	accessToken, err := token.SignedString(secretKey)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	return accessToken, nil
@@ -61,7 +61,8 @@ func Parse(tokenStr string) (*CustomClaims, error) {
 	// カスタムクレームを取得
 	claims, ok := token.Claims.(*CustomClaims)
 	if !ok || !token.Valid {
-		return nil, errors.New("Invalid token")
+		err := errors.New("Invalid token")
+		return nil, errors.WithStack(err)
 	}
 
 	return claims, nil
