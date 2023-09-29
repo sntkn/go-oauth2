@@ -35,7 +35,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	if authHeader == "" {
 		err := fmt.Errorf("Missing or empty Authorization header")
 		c.Error(errors.WithStack(err))
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 

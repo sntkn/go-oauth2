@@ -46,7 +46,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	var input TokenInput
 	if err := c.BindJSON(&input); err != nil {
 		c.Error(errors.WithStack(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -54,7 +54,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	if input.GrantType != "authorization_code" && input.GrantType != "refresh_token" {
 		err := fmt.Errorf("Invalid grant type: %s", input.GrantType)
 		c.Error(errors.WithStack(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -65,10 +65,10 @@ func (u *UseCase) Run(c *gin.Context) {
 			if err == sql.ErrNoRows {
 				// TODO: redirect to autorize with parameters
 				c.Error(err)
-				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err})
+				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			} else {
 				c.Error(err)
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			}
 			return
 		}
@@ -76,7 +76,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		if currentTime.After(code.ExpiresAt) {
 			err := fmt.Errorf("Code has expired")
 			c.Error(errors.WithStack(err))
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -91,7 +91,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		token, err := accesstoken.Generate(t)
 		if err != nil {
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -104,7 +104,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		})
 		if err != nil {
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -112,7 +112,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		refreshExpiration := time.Now().AddDate(0, 0, 10)
 		if err != nil {
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		err = u.db.RegesterRefreshToken(repository.RefreshToken{
@@ -122,7 +122,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		})
 		if err != nil {
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -130,7 +130,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		err = u.db.RevokeCode(input.Code)
 		if err != nil {
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -147,7 +147,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	if input.RefreshToken == "" {
 		err := fmt.Errorf("Invalid refresh token")
 		c.Error(errors.WithStack(err))
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
 	// TODO: find refresh token, if not expired
@@ -155,10 +155,10 @@ func (u *UseCase) Run(c *gin.Context) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		} else {
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
 	}
@@ -170,10 +170,10 @@ func (u *UseCase) Run(c *gin.Context) {
 		if err == sql.ErrNoRows {
 			// TODO: redirect to autorize with parameters
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		} else {
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		}
 		return
 	}
@@ -187,7 +187,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	token, err := accesstoken.Generate(t)
 	if err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	err = u.db.RegisterToken(repository.Token{
@@ -199,7 +199,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	})
 	if err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -207,7 +207,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	refreshExpiration := time.Now().AddDate(0, 0, 10)
 	if err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	err = u.db.RegesterRefreshToken(repository.RefreshToken{
@@ -217,19 +217,19 @@ func (u *UseCase) Run(c *gin.Context) {
 	})
 	if err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	// TODO: revoke old token and refresh token
 	if err = u.db.RevokeToken(tkn.AccessToken); err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	if err = u.db.RevokeRefreshToken(rt.RefreshToken); err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

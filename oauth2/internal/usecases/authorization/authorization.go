@@ -51,7 +51,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	if err := c.Bind(&input); err != nil {
 		err := fmt.Errorf("Could not bind JSON")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -59,7 +59,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		// TODO: redirect to autorize with parameters
 		err := fmt.Errorf("Invalid email address")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -67,7 +67,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		// TODO: redirect to autorize with parameters
 		err := fmt.Errorf("Invalid password")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -77,10 +77,10 @@ func (u *UseCase) Run(c *gin.Context) {
 		if err == sql.ErrNoRows {
 			// TODO: redirect to autorize with parameters
 			c.Error(err)
-			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		} else {
 			c.Error(err)
-			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err})
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		}
 		return
 	}
@@ -90,14 +90,14 @@ func (u *UseCase) Run(c *gin.Context) {
 	if err != nil {
 		// TODO: redirect to autorize with parameters
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	sessionData, err := s.GetSessionData(c)
 	if err != nil {
 		c.Error(err)
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -105,7 +105,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	err = json.Unmarshal(sessionData, &d)
 	if err != nil {
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -114,14 +114,14 @@ func (u *UseCase) Run(c *gin.Context) {
 	randomString, err := generateRandomString(32)
 	if err != nil {
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	clientID, err := uuid.Parse(d.ClientID)
 	if err != nil {
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -137,7 +137,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	})
 	if err != nil {
 		c.Error(err)
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 

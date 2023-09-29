@@ -41,53 +41,53 @@ func (u *UseCase) Run(c *gin.Context) {
 	// Query ParameterをAuthorizeInputにバインド
 	if err := c.BindQuery(&input); err != nil {
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	if input.ResponseType == "" {
 		err := fmt.Errorf("Invalid response_type")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 	if input.ResponseType != "code" {
 		err := fmt.Errorf("Invalid response_type: code must be 'code'")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 	}
 
 	if input.ClientID == "" {
 		err := fmt.Errorf("Invalid client_id")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 	if IsValidUUID(input.ClientID) == false {
 		err := fmt.Errorf("Could not parse client_id")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	if input.Scope == "" {
 		err := fmt.Errorf("Invalid scope")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	if input.RedirectURI == "" {
 		err := fmt.Errorf("Invalid redirect_uri")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	if input.State == "" {
 		err := fmt.Errorf("Invalid state")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -96,10 +96,10 @@ func (u *UseCase) Run(c *gin.Context) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.Error(err)
-			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		} else {
 			c.Error(err)
-			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err})
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		}
 		return
 	}
@@ -107,7 +107,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	if client.RedirectURIs != input.RedirectURI {
 		err := fmt.Errorf("Redirect URI does not match")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -115,13 +115,13 @@ func (u *UseCase) Run(c *gin.Context) {
 	d, err := json.Marshal(input)
 	if err != nil {
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 	err = s.SetSessionData(c, d)
 	if err != nil {
 		c.Error(err)
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
