@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
@@ -37,6 +38,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
 	if err := u.db.RevokeToken(tokenStr); err != nil {
+		c.Error(errors.WithStack(err))
 		c.JSON(http.StatusUnauthorized, err)
 		return
 	}

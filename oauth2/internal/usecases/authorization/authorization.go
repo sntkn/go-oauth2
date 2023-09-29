@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
@@ -49,7 +50,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	// リクエストのJSONデータをAuthorizationInputにバインド
 	if err := c.Bind(&input); err != nil {
 		err := fmt.Errorf("Could not bind JSON")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
@@ -57,7 +58,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	if input.Email == "" {
 		// TODO: redirect to autorize with parameters
 		err := fmt.Errorf("Invalid email address")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
@@ -65,7 +66,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	if input.Password == "" {
 		// TODO: redirect to autorize with parameters
 		err := fmt.Errorf("Invalid password")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
@@ -75,8 +76,10 @@ func (u *UseCase) Run(c *gin.Context) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// TODO: redirect to autorize with parameters
+			c.Error(err)
 			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		} else {
+			c.Error(err)
 			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err})
 		}
 		return
@@ -86,12 +89,14 @@ func (u *UseCase) Run(c *gin.Context) {
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
 	if err != nil {
 		// TODO: redirect to autorize with parameters
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
 
 	sessionData, err := s.GetSessionData(c)
 	if err != nil {
+		c.Error(err)
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
@@ -99,6 +104,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	var d AuthorizeInput
 	err = json.Unmarshal(sessionData, &d)
 	if err != nil {
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
@@ -107,12 +113,14 @@ func (u *UseCase) Run(c *gin.Context) {
 	expired := time.Now().AddDate(0, 0, 10)
 	randomString, err := generateRandomString(32)
 	if err != nil {
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
 
 	clientID, err := uuid.Parse(d.ClientID)
 	if err != nil {
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
@@ -128,6 +136,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		UpdatedAt:   time.Now(),
 	})
 	if err != nil {
+		c.Error(err)
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
@@ -142,7 +151,7 @@ func generateRandomString(length int) (string, error) {
 	randomBytes := make([]byte, length)
 	_, err := io.ReadFull(rand.Reader, randomBytes)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	// URLセーフなBase64エンコード

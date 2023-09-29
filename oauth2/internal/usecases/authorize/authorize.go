@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
@@ -39,52 +40,53 @@ func (u *UseCase) Run(c *gin.Context) {
 	var input AuthorizeInput
 	// Query ParameterをAuthorizeInputにバインド
 	if err := c.BindQuery(&input); err != nil {
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
 
 	if input.ResponseType == "" {
 		err := fmt.Errorf("Invalid response_type")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
 	if input.ResponseType != "code" {
 		err := fmt.Errorf("Invalid response_type: code must be 'code'")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 	}
 
 	if input.ClientID == "" {
 		err := fmt.Errorf("Invalid client_id")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
 	if IsValidUUID(input.ClientID) == false {
 		err := fmt.Errorf("Could not parse client_id")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
 
 	if input.Scope == "" {
 		err := fmt.Errorf("Invalid scope")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
 
 	if input.RedirectURI == "" {
 		err := fmt.Errorf("Invalid redirect_uri")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
 
 	if input.State == "" {
 		err := fmt.Errorf("Invalid state")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
@@ -93,8 +95,10 @@ func (u *UseCase) Run(c *gin.Context) {
 	client, err := u.db.FindClientByClientID(input.ClientID)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			c.Error(err)
 			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		} else {
+			c.Error(err)
 			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err})
 		}
 		return
@@ -102,7 +106,7 @@ func (u *UseCase) Run(c *gin.Context) {
 
 	if client.RedirectURIs != input.RedirectURI {
 		err := fmt.Errorf("Redirect URI does not match")
-		c.Error(err)
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
@@ -110,11 +114,13 @@ func (u *UseCase) Run(c *gin.Context) {
 	// セッションデータを書き込む
 	d, err := json.Marshal(input)
 	if err != nil {
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
 	err = s.SetSessionData(c, d)
 	if err != nil {
+		c.Error(err)
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err})
 		return
 	}
