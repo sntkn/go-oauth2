@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
+	"github.com/sntkn/go-oauth2/oauth2/internal/logs"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 )
@@ -44,16 +46,18 @@ func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
 func (u *UseCase) Run(c *gin.Context) {
 	var input TokenInput
 	if err := c.BindJSON(&input); err != nil {
-		c.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		msg := "Error binding JSON input"
+		logs.ErrorWithWrap(err, msg)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 
 	// grant_type = authorization_code
 	if input.GrantType != "authorization_code" && input.GrantType != "refresh_token" {
-		err := fmt.Errorf("Invalid grant type: %s", input.GrantType)
-		c.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		msg := fmt.Sprintf("Invalid grant type: %s", input.GrantType)
+		err := errors.New(msg)
+		logs.ErrorWithStack(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 
@@ -63,19 +67,22 @@ func (u *UseCase) Run(c *gin.Context) {
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// TODO: redirect to autorize with parameters
-				c.Error(err)
-				c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+				msg := "Could not find oauth2 code"
+				logs.ErrorWithWrap(err, msg)
+				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": msg})
 			} else {
-				c.Error(err)
-				c.JSON(http.StatusInternalServerError, nil)
+				msg := "FindValidOAuth2Code Excecution error"
+				logs.ErrorWithWrap(err, msg)
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": msg})
 			}
 			return
 		}
 		currentTime := time.Now()
 		if currentTime.After(code.ExpiresAt) {
-			err := fmt.Errorf("Authorization Code expired")
-			c.Error(err)
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			msg := "Code has expired"
+			err := errors.New(msg)
+			logs.ErrorWithStack(err)
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": msg})
 			return
 		}
 
@@ -89,8 +96,9 @@ func (u *UseCase) Run(c *gin.Context) {
 		}
 		token, err := accesstoken.Generate(t)
 		if err != nil {
-			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			msg := "Could not generate token"
+			logs.ErrorWithWrap(err, msg)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": msg})
 			return
 		}
 
@@ -102,16 +110,18 @@ func (u *UseCase) Run(c *gin.Context) {
 			ExpiresAt:   expiration,
 		})
 		if err != nil {
-			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			msg := "Could not register token"
+			logs.ErrorWithWrap(err, msg)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": msg})
 			return
 		}
 
 		randomString, err := generateRandomString(32)
 		refreshExpiration := time.Now().AddDate(0, 0, 10)
 		if err != nil {
-			c.Error(err)
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			msg := "Could not generate refresh token"
+			logs.ErrorWithWrap(err, msg)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": msg})
 			return
 		}
 		err = u.db.RegesterRefreshToken(repository.RefreshToken{
@@ -120,16 +130,18 @@ func (u *UseCase) Run(c *gin.Context) {
 			ExpiresAt:    refreshExpiration,
 		})
 		if err != nil {
-			c.Error(err)
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			msg := "Could not register refresh token"
+			logs.ErrorWithWrap(err, msg)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": msg})
 			return
 		}
 
 		// revoke code
 		err = u.db.RevokeCode(input.Code)
 		if err != nil {
-			c.Error(err)
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			msg := "Could not revoke code"
+			logs.ErrorWithWrap(err, msg)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": msg})
 			return
 		}
 
@@ -144,20 +156,23 @@ func (u *UseCase) Run(c *gin.Context) {
 
 	// check paramters
 	if input.RefreshToken == "" {
-		err := fmt.Errorf("Invalid refresh token")
-		c.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		msg := "Invalid refresh token"
+		err := errors.New(msg)
+		logs.ErrorWithStack(err)
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": msg})
 		return
 	}
 	// TODO: find refresh token, if not expired
 	rt, err := u.db.FindValidRefreshToken(input.RefreshToken, time.Now())
 	if err != nil {
 		if err == sql.ErrNoRows {
-			c.Error(err)
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			msg := "Could not find refresh token"
+			logs.ErrorWithWrap(err, msg)
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": msg})
 		} else {
-			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			msg := "FindValidRefreshToken execution error"
+			logs.ErrorWithWrap(err, msg)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
 	}
@@ -168,11 +183,13 @@ func (u *UseCase) Run(c *gin.Context) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// TODO: redirect to autorize with parameters
-			c.Error(err)
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			msg := "Could not find token"
+			logs.ErrorWithWrap(err, msg)
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		} else {
-			c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			msg := "FindToken execution error"
+			logs.ErrorWithWrap(err, msg)
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		}
 		return
 	}
@@ -185,8 +202,9 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 	token, err := accesstoken.Generate(t)
 	if err != nil {
-		c.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		msg := "Could not generate token"
+		logs.ErrorWithWrap(err, msg)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	err = u.db.RegisterToken(repository.Token{
@@ -197,16 +215,18 @@ func (u *UseCase) Run(c *gin.Context) {
 		ExpiresAt:   expiration,
 	})
 	if err != nil {
-		c.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		msg := "Could not register token"
+		logs.ErrorWithWrap(err, msg)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	randomString, err := generateRandomString(32)
 	refreshExpiration := time.Now().AddDate(0, 0, 10)
 	if err != nil {
-		c.Error(err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		msg := "Could not generate refresh token"
+		logs.ErrorWithWrap(err, msg)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	err = u.db.RegesterRefreshToken(repository.RefreshToken{
@@ -215,20 +235,23 @@ func (u *UseCase) Run(c *gin.Context) {
 		ExpiresAt:    refreshExpiration,
 	})
 	if err != nil {
-		c.Error(err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		msg := "Could not register refresh token"
+		logs.ErrorWithWrap(err, msg)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	// TODO: revoke old token and refresh token
 	if err = u.db.RevokeToken(tkn.AccessToken); err != nil {
-		c.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		msg := "Could not revoke token"
+		logs.ErrorWithWrap(err, msg)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	if err = u.db.RevokeRefreshToken(rt.RefreshToken); err != nil {
-		c.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		msg := "Could not revoke refresh token"
+		logs.ErrorWithWrap(err, msg)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
