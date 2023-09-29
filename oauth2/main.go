@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -32,6 +33,9 @@ func main() {
 
 	slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
+	// エラーログを出力するミドルウェアを追加
+	r.Use(ErrorLoggerMiddleware())
+
 	// Redis configuration
 	redisCli, err := redis.NewClient(context.Background(), redis.Options{
 		Addr:     "localhost:6379", // Redisのアドレスとポート番号に合わせて変更してください
@@ -61,4 +65,17 @@ func main() {
 
 	// サーバーをポート8080で起動
 	r.Run(":8080")
+}
+
+// ErrorLoggerMiddleware はエラーログを出力するためのミドルウェアです。
+func ErrorLoggerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next() // 次のミドルウェアまたはハンドラを呼び出します
+
+		if len(c.Errors) > 0 {
+			for _, err := range c.Errors {
+				slog.Error(fmt.Sprintf("%+v\n", err.Err))
+			}
+		}
+	}
 }
