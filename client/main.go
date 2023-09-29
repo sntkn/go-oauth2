@@ -42,7 +42,7 @@ func main() {
 	r.GET("/callback", func(c *gin.Context) {
 		var input AuthCodeInput
 		if err := c.Bind(&input); err != nil {
-			c.JSON(http.StatusBadRequest, err)
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 			return
 		}
 		// POSTリクエストを送信するURL
@@ -57,6 +57,7 @@ func main() {
 		postData, err := json.Marshal(reqData)
 		if err != nil {
 			fmt.Println("Could not marshal json:", err)
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
 
@@ -64,6 +65,7 @@ func main() {
 		req, err := http.NewRequest("POST", uri, bytes.NewBuffer(postData))
 		if err != nil {
 			fmt.Println("リクエストの作成エラー:", err)
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
 
@@ -77,6 +79,7 @@ func main() {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("リクエストの送信エラー:", err)
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
 		defer resp.Body.Close()
@@ -84,12 +87,21 @@ func main() {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			fmt.Println("レスポンスの読み取りエラー:", err)
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
+		if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": string(body)})
+			return
+		} else if resp.StatusCode != 200 {
+			c.HTML(http.StatusInternalServerError, "400.html", gin.H{"error": string(body)})
 			return
 		}
 		var d AuthCodeResponse
 		err = json.Unmarshal(body, &d)
 		if err != nil {
 			fmt.Println("Could not unmarshal auth code response:", err)
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
 
@@ -116,6 +128,7 @@ func main() {
 		req, err := http.NewRequest("GET", uri, nil)
 		if err != nil {
 			fmt.Println("リクエストの作成エラー:", err)
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
 
@@ -130,6 +143,7 @@ func main() {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("リクエストの送信エラー:", err)
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
 		defer resp.Body.Close()
@@ -137,6 +151,15 @@ func main() {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			fmt.Println("レスポンスの読み取りエラー:", err)
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
+
+		if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": string(body)})
+			return
+		} else if resp.StatusCode != 200 {
+			c.HTML(http.StatusInternalServerError, "400.html", gin.H{"error": string(body)})
 			return
 		}
 
@@ -149,6 +172,7 @@ func main() {
 		err = json.Unmarshal(body, &d)
 		if err != nil {
 			fmt.Println("Could not unmarshal auth code response:", err)
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
 		c.HTML(http.StatusOK, "home.html", gin.H{"data": d})
@@ -158,7 +182,6 @@ func main() {
 		// TODO: check cookie access token
 		token, err := c.Cookie("access_token")
 		if err != nil {
-			fmt.Println("Error getting access token")
 			c.Redirect(http.StatusFound, "/")
 			return
 		}
@@ -171,6 +194,7 @@ func main() {
 		req, err := http.NewRequest("DELETE", uri, nil)
 		if err != nil {
 			fmt.Println("リクエストの作成エラー:", err)
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
 
