@@ -1,9 +1,11 @@
 package me
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
@@ -31,7 +33,9 @@ func (u *UseCase) Run(c *gin.Context) {
 
 	// "Authorization" ヘッダーが存在しない場合や、Bearer トークンでない場合はエラーを返す
 	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing or empty Authorization header"})
+		err := fmt.Errorf("Missing or empty Authorization header")
+		c.Error(errors.WithStack(err))
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err})
 		return
 	}
 
@@ -41,6 +45,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	claims, err := accesstoken.Parse(tokenStr)
 
 	if err != nil {
+		c.Error(err)
 		c.JSON(http.StatusUnauthorized, err)
 		return
 	}
@@ -48,12 +53,14 @@ func (u *UseCase) Run(c *gin.Context) {
 	// TODO: find user
 	userID, err := uuid.Parse(claims.UserID)
 	if err != nil {
+		c.Error(errors.WithStack(err))
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid UserID"})
 		return
 	}
 
 	user, err := u.db.FindUser(userID)
 	if err != nil {
+		c.Error(err)
 		c.JSON(http.StatusUnauthorized, err)
 		return
 	}
