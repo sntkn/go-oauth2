@@ -6,6 +6,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -24,11 +25,12 @@ type Conn struct {
 }
 
 type User struct {
-	ID       uuid.UUID `db:"id"`
-	Name     string    `db:"name"`
-	Email    string    `db:"email"`
-	Password string    `db:"password"`
-	// 他のユーザー属性をここに追加
+	ID        uuid.UUID `db:"id"`
+	Name      string    `db:"name"`
+	Email     string    `db:"email"`
+	Password  string    `db:"password"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 type Client struct {
@@ -184,4 +186,26 @@ func (r *Repository) FindUser(id uuid.UUID) (User, error) {
 
 	err := r.db.Get(&u, q, id)
 	return u, errors.WithStack(err)
+}
+
+func (r *Repository) ExistsUserByEmail(email string) (bool, error) {
+	q := "SELECT count(*) AS c FROM users WHERE email = $1"
+	var c uint8
+
+	err := r.db.QueryRow(q, email).Scan(&c)
+	return c > 0, errors.WithStack(err)
+}
+
+func (r *Repository) CreateUser(u User) error {
+	u.CreatedAt = time.Now()
+	u.UpdatedAt = time.Now()
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	u.Password = string(hashedPassword)
+	q := `INSERT INTO users (name, email, password, created_at, updated_at)
+	VALUES (:name, :email, :password, :created_at, :updated_at)`
+	_, err = r.db.NamedExec(q, u)
+	return errors.WithStack(err)
 }

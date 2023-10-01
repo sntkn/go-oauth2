@@ -11,8 +11,11 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorization"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorize"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/create_token"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/create_user"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/delete_token"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/me"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup_finished"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -62,6 +65,9 @@ func main() {
 	r.POST("/token", create_token.NewUseCase(redisCli, db).Run)
 	r.GET("/me", me.NewUseCase(redisCli, db).Run)
 	r.DELETE("/token", delete_token.NewUseCase(redisCli, db).Run)
+	r.GET("/signup", signup.NewUseCase().Run)
+	r.POST("/signup", create_user.NewUseCase(redisCli, db).Run)
+	r.GET("/signup-finished", signup_finished.NewUseCase().Run)
 
 	// サーバーをポート8080で起動
 	r.Run(":8080")
