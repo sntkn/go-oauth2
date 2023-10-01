@@ -1,4 +1,4 @@
-package token
+package create_token
 
 import (
 	"crypto/rand"
