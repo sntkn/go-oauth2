@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -94,17 +93,10 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	sessionData, err := s.GetSessionData(c)
+	var d AuthorizeInput
+	err = s.GetSessionData(c, "auth", &d)
 	if err != nil {
 		c.Error(err)
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	var d AuthorizeInput
-	err = json.Unmarshal(sessionData, &d)
-	if err != nil {
-		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}

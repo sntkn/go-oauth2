@@ -1,9 +1,10 @@
 package session
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
-	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 )
@@ -45,13 +46,22 @@ func GenerateSessionID() string {
 }
 
 // セッションデータを取得する関数
-func (s *Session) GetSessionData(c *gin.Context) ([]byte, error) {
-	b, err := s.SessionStore.Get(c, s.SessionID).Bytes()
-	return b, errors.WithStack(err)
+func (s *Session) GetSessionData(c *gin.Context, key string, d any) error {
+	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
+	b, err := s.SessionStore.Get(c, fullKey).Bytes()
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, &d)
 }
 
 // セッションデータをRedisに書き込む関数
-func (s *Session) SetSessionData(c *gin.Context, sessionData any) error {
+func (s *Session) SetSessionData(c *gin.Context, key string, input any) error {
+	d, err := json.Marshal(input)
+	if err != nil {
+		return err
+	}
+	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
 	// Redisにセッションデータを書き込み
-	return errors.WithStack(s.SessionStore.Set(c, s.SessionID, sessionData, 0).Err())
+	return s.SessionStore.Set(c, fullKey, d, 0).Err()
 }
