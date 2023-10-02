@@ -1,8 +1,6 @@
 CREATE USER app WITH PASSWORD 'pass';
 CREATE DATABASE auth;
 
-\c auth
-
 --ユーザーにDBの権限をまとめて付与
 GRANT ALL PRIVILEGES ON DATABASE auth TO app;
 
