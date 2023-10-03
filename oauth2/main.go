@@ -65,7 +65,7 @@ func main() {
 	r.POST("/token", create_token.NewUseCase(redisCli, db).Run)
 	r.GET("/me", me.NewUseCase(redisCli, db).Run)
 	r.DELETE("/token", delete_token.NewUseCase(redisCli, db).Run)
-	r.GET("/signup", signup.NewUseCase().Run)
+	r.GET("/signup", signup.NewUseCase(redisCli).Run)
 	r.POST("/signup", create_user.NewUseCase(redisCli, db).Run)
 	r.GET("/signup-finished", signup_finished.NewUseCase().Run)
 

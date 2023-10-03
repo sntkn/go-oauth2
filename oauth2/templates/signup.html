@@ -24,11 +24,11 @@
         <form method="post" action="./signup">
           <div class="control">
             <label for="nickname" class="control-label">Nickname</label>
-            <input type="text" name="name" value="" placeholder="Enter your nickname" id="nickname">
+            <input type="text" name="name" value="{{.f.Name}}" placeholder="Enter your nickname" id="nickname" value="">
           </div>
           <div class="control">
             <label for="email" class="control-label">Email</label>
-            <input type="text" name="email" value="" placeholder="Enter your email address" id="email" autocomplete="off">
+            <input type="text" name="email" value="{{.f.Email}}" placeholder="Enter your email address" id="email" autocomplete="off">
           </div>
           <div class="control">
             <label for="password" class="control-label">Password</label>

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 )
@@ -48,9 +49,9 @@ func GenerateSessionID() string {
 // セッションデータを取得する関数
 func (s *Session) GetSessionData(c *gin.Context, key string) ([]byte, error) {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
-	b, err := s.SessionStore.Get(c, fullKey).Bytes()
+	b, err := s.SessionStore.GetOrNil(c, fullKey)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return b, nil
 }

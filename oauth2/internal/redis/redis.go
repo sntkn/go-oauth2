@@ -43,3 +43,15 @@ func (r *RedisCli) Set(ctx context.Context, key string, value any, expiration ti
 func (r *RedisCli) Get(ctx context.Context, key string) *redis.StringCmd {
 	return r.cli.Get(ctx, key)
 }
+
+func (r *RedisCli) GetOrNil(ctx context.Context, key string) ([]byte, error) {
+	ret := r.cli.Get(ctx, key)
+	d, err := ret.Bytes()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return d, nil
+}

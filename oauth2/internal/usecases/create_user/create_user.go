@@ -1,7 +1,7 @@
 package create_user
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 
 	"github.com/cockroachdb/errors"
@@ -9,12 +9,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 )
 
 type SignupInput struct {
 	Name     string `form:"name"`
 	Email    string `form:"email"`
 	Password string `form:"password"`
+}
+
+type RegistrationForm struct {
+	Name  string `form:"name"`
+	Email string `form:"email"`
+	Error string
 }
 
 type UseCase struct {
@@ -30,32 +37,32 @@ func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
 }
 
 func (u *UseCase) Run(c *gin.Context) {
+	s := session.NewSession(c, u.redisCli)
 	var input SignupInput
 	// Query ParameterをAuthorizeInputにバインド
 	if err := c.Bind(&input); err != nil {
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 
+	u.SetSessionData(c, s, RegistrationForm{
+		Name:  input.Name,
+		Email: input.Email,
+	})
+
 	if input.Name == "" {
-		err := fmt.Errorf("Invalid name")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		c.Redirect(http.StatusFound, "/signup")
 		return
 	}
 
 	if input.Email == "" {
-		err := fmt.Errorf("Invalid email")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		c.Redirect(http.StatusFound, "/signup")
 		return
 	}
 
 	if input.Password == "" {
-		err := fmt.Errorf("Invalid password")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		c.Redirect(http.StatusFound, "/signup")
 		return
 	}
 
@@ -66,9 +73,8 @@ func (u *UseCase) Run(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	} else if eu {
-		err := fmt.Errorf("User %s already exists", input.Email)
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		//err := fmt.Errorf("User %s already exists", input.Email)
+		c.Redirect(http.StatusFound, "/signup")
 		return
 	}
 
@@ -90,4 +96,12 @@ func (u *UseCase) Run(c *gin.Context) {
 func IsValidUUID(u string) bool {
 	_, err := uuid.Parse(u)
 	return err == nil
+}
+
+func (u *UseCase) SetSessionData(c *gin.Context, s *session.Session, v any) error {
+	d, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	return s.SetSessionData(c, "create_user_form", d)
 }
