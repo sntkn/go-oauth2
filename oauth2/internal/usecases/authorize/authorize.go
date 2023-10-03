@@ -2,6 +2,7 @@ package authorize
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -111,7 +112,13 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	// セッションデータを書き込む
-	err = s.SetSessionData(c, "auth", input)
+	d, err := json.Marshal(input)
+	if err != nil {
+		c.Error(errors.WithStack(err))
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		return
+	}
+	err = s.SetSessionData(c, "auth", d)
 	if err != nil {
 		c.Error(err)
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})

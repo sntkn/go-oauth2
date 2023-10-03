@@ -46,22 +46,36 @@ func GenerateSessionID() string {
 }
 
 // セッションデータを取得する関数
-func (s *Session) GetSessionData(c *gin.Context, key string, d any) error {
+func (s *Session) GetSessionData(c *gin.Context, key string) ([]byte, error) {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
 	b, err := s.SessionStore.Get(c, fullKey).Bytes()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return json.Unmarshal(b, &d)
+	return b, nil
 }
 
 // セッションデータをRedisに書き込む関数
 func (s *Session) SetSessionData(c *gin.Context, key string, input any) error {
-	d, err := json.Marshal(input)
-	if err != nil {
-		return err
-	}
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
 	// Redisにセッションデータを書き込み
-	return s.SessionStore.Set(c, fullKey, d, 0).Err()
+	return s.SessionStore.Set(c, fullKey, input, 0).Err()
 }
+
+func (s *Session) GetSessionDataToType(c *gin.Context, key string, t any) (any, error) {
+	b, err := s.GetSessionData(c, key)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(b, &t)
+	return &t, err
+}
+
+//func GetSessionDataToType[T any](s *Session, c *gin.Context, key string, t T) (T, error) {
+//	b, err := s.GetSessionData(c, key)
+//	if err != nil {
+//		return t, err
+//	}
+//	err = json.Unmarshal(b, t)
+//	return t, err
+//}
