@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -60,7 +59,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	u.SetSessionData(c, s, SigninForm{
+	s.SetNamedSessionData(c, "signin_form", SigninForm{
 		Email: input.Email,
 	})
 
@@ -95,17 +94,9 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	sessData, err := s.GetSessionData(c, "auth")
-	if err != nil {
-		c.Error(err)
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
-	}
-
 	var d AuthorizeInput
-	err = json.Unmarshal(sessData, &d)
-	if err != nil {
-		c.Error(errors.WithStack(err))
+	if err = s.GetNamedSessionData(c, "auth", &d); err != nil {
+		c.Error(err)
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
@@ -159,12 +150,4 @@ func generateRandomString(length int) (string, error) {
 	encodedString := base64.URLEncoding.EncodeToString(randomBytes)
 
 	return encodedString, nil
-}
-
-func (u *UseCase) SetSessionData(c *gin.Context, s *session.Session, v any) error {
-	d, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-	return s.SetSessionData(c, "signin_form", d)
 }

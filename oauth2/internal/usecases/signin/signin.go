@@ -1,7 +1,7 @@
 package signin
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +9,14 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 )
+
+type AuthorizeInput struct {
+	ResponseType string `form:"response_type"`
+	ClientID     string `form:"client_id"`
+	Scope        string `form:"scope"`
+	RedirectURI  string `form:"redirect_uri"`
+	State        string `form:"state"`
+}
 
 type SigninForm struct {
 	Email string `form:"email"`
@@ -28,40 +36,25 @@ func NewUseCase(redisCli *redis.RedisCli) *UseCase {
 func (u *UseCase) Run(c *gin.Context) {
 	s := session.NewSession(c, u.redisCli)
 
-	ss, err := s.GetSessionData(c, "auth")
-	if err != nil {
+	var input AuthorizeInput
+	if err := s.GetNamedSessionData(c, "auth", &input); err != nil {
 		c.Error(err)
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	if len(ss) == 0 {
-		c.Error(err)
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	form, err := GetFormData(c, s)
-	if err != nil {
+	if input.ClientID == "" {
+		err := fmt.Errorf("Invalid client_id")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "500.html", gin.H{"error": err.Error()})
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	var form SigninForm
+	if err := s.GetNamedSessionData(c, "signin_form", &form); err != nil {
+		c.Error(errors.WithStack(err))
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 	c.HTML(http.StatusOK, "signin.html", gin.H{"f": form})
-}
-
-func GetFormData(c *gin.Context, s *session.Session) (*SigninForm, error) {
-	var d SigninForm
-	sessData, err := s.GetSessionData(c, "signin_form")
-	if err != nil {
-		return nil, err
-	} else if sessData == nil {
-		return &d, nil
-	}
-
-	err = json.Unmarshal(sessData, &d)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return &d, nil
 }

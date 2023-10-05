@@ -63,13 +63,23 @@ func (s *Session) SetSessionData(c *gin.Context, key string, input any) error {
 	return s.SessionStore.Set(c, fullKey, input, 0).Err()
 }
 
-func (s *Session) GetSessionDataToType(c *gin.Context, key string, t any) (any, error) {
+func (s *Session) GetNamedSessionData(c *gin.Context, key string, t any) error {
 	b, err := s.GetSessionData(c, key)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	err = json.Unmarshal(b, &t)
-	return &t, err
+	if err = json.Unmarshal(b, &t); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+func (s *Session) SetNamedSessionData(c *gin.Context, key string, v any) error {
+	d, err := json.Marshal(v)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return s.SetSessionData(c, key, d)
 }
 
 //func GetSessionDataToType[T any](s *Session, c *gin.Context, key string, t T) (T, error) {

@@ -1,7 +1,6 @@
 package create_user
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/cockroachdb/errors"
@@ -46,10 +45,14 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	u.SetSessionData(c, s, RegistrationForm{
+	if err := s.SetNamedSessionData(c, "signup_form", RegistrationForm{
 		Name:  input.Name,
 		Email: input.Email,
-	})
+	}); err != nil {
+		c.Error(errors.WithStack(err))
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
 
 	if input.Name == "" {
 		c.Redirect(http.StatusFound, "/signup")
@@ -96,12 +99,4 @@ func (u *UseCase) Run(c *gin.Context) {
 func IsValidUUID(u string) bool {
 	_, err := uuid.Parse(u)
 	return err == nil
-}
-
-func (u *UseCase) SetSessionData(c *gin.Context, s *session.Session, v any) error {
-	d, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-	return s.SetSessionData(c, "create_user_form", d)
 }

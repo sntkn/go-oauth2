@@ -1,7 +1,6 @@
 package signup
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -28,27 +27,11 @@ func NewUseCase(redisCli *redis.RedisCli) *UseCase {
 
 func (u *UseCase) Run(c *gin.Context) {
 	s := session.NewSession(c, u.redisCli)
-	form, err := GetFormData(c, s)
-	if err != nil {
+	var form RegistrationForm
+	if err := s.GetNamedSessionData(c, "signup_form", &form); err != nil {
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 	c.HTML(http.StatusOK, "signup.html", gin.H{"f": form})
-}
-
-func GetFormData(c *gin.Context, s *session.Session) (*RegistrationForm, error) {
-	var d RegistrationForm
-	sessData, err := s.GetSessionData(c, "create_user_form")
-	if err != nil {
-		return nil, err
-	} else if sessData == nil {
-		return &d, nil
-	}
-
-	err = json.Unmarshal(sessData, &d)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return &d, nil
 }
