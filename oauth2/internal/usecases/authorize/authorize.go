@@ -125,7 +125,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "index.html", gin.H{"input": input})
+	c.Redirect(http.StatusFound, "/signin")
 }
 
 func IsValidUUID(u string) bool {

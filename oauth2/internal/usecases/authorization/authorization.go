@@ -19,6 +19,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type SigninForm struct {
+	Email string `form:"email"`
+	Error string
+}
+
 type AuthorizationInput struct {
 	Email    string `form:"email"`
 	Password string `form:"password"`
@@ -55,19 +60,19 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
+	u.SetSessionData(c, s, SigninForm{
+		Email: input.Email,
+	})
+
 	if input.Email == "" {
-		// TODO: redirect to autorize with parameters
-		err := fmt.Errorf("Invalid email address")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		//err := fmt.Errorf("Invalid email address")
+		c.Redirect(http.StatusFound, "/signin")
 		return
 	}
 
 	if input.Password == "" {
-		// TODO: redirect to autorize with parameters
-		err := fmt.Errorf("Invalid password")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		//err := fmt.Errorf("Invalid password")
+		c.Redirect(http.StatusFound, "/signin")
 		return
 	}
 
@@ -75,9 +80,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	user, err := u.db.FindUserByEmail(input.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// TODO: redirect to autorize with parameters
-			c.Error(err)
-			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+			c.Redirect(http.StatusFound, "/signin")
 		} else {
 			c.Error(err)
 			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
@@ -88,9 +91,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	// パスワードを比較して認証
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
 	if err != nil {
-		// TODO: redirect to autorize with parameters
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		c.Redirect(http.StatusFound, "/signin")
 		return
 	}
 
@@ -158,4 +159,12 @@ func generateRandomString(length int) (string, error) {
 	encodedString := base64.URLEncoding.EncodeToString(randomBytes)
 
 	return encodedString, nil
+}
+
+func (u *UseCase) SetSessionData(c *gin.Context, s *session.Session, v any) error {
+	d, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	return s.SetSessionData(c, "signin_form", d)
 }

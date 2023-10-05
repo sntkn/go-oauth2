@@ -14,6 +14,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/create_user"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/delete_token"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/me"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup_finished"
 
@@ -60,6 +61,7 @@ func main() {
 	})
 	defer db.Close()
 
+	r.GET("/signin", signin.NewUseCase(redisCli).Run)
 	r.GET("/authorize", authorize.NewUseCase(redisCli, db).Run)
 	r.POST("/authorization", authorization.NewUseCase(redisCli, db).Run)
 	r.POST("/token", create_token.NewUseCase(redisCli, db).Run)

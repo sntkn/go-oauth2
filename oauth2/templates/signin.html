@@ -23,7 +23,7 @@
         <form method="post" action="./authorization">
           <div class="control">
             <label for="email" class="control-label">Email</label>
-            <input type="text" name="email" value="" placeholder="Enter your email address" id="email" autocomplete="off">
+            <input type="text" name="email" value="{{.f.Email}}" placeholder="Enter your email address" id="email" autocomplete="off">
           </div>
           <div class="control">
             <label for="password" class="control-label">Password</label>
@@ -31,7 +31,6 @@
           </div>
           <div class="control">
             <input type="submit" name="Login" id="login" value="Login">
-            {{ .input.State }}
           </div>
         </form>
       </div>
