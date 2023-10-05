@@ -78,7 +78,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	// validate user credentials
 	user, err := u.db.FindUserByEmail(input.Email)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			c.Redirect(http.StatusFound, "/signin")
 		} else {
 			c.Error(err)

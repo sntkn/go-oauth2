@@ -63,10 +63,18 @@ func (s *Session) SetSessionData(c *gin.Context, key string, input any) error {
 	return s.SessionStore.Set(c, fullKey, input, 0).Err()
 }
 
+func (s *Session) DelSessionData(c *gin.Context, key string) error {
+	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
+	return s.SessionStore.Del(c, fullKey).Err()
+}
+
 func (s *Session) GetNamedSessionData(c *gin.Context, key string, t any) error {
 	b, err := s.GetSessionData(c, key)
 	if err != nil {
 		return err
+	}
+	if b == nil {
+		return nil
 	}
 	if err = json.Unmarshal(b, &t); err != nil {
 		return errors.WithStack(err)
@@ -80,6 +88,16 @@ func (s *Session) SetNamedSessionData(c *gin.Context, key string, v any) error {
 		return errors.WithStack(err)
 	}
 	return s.SetSessionData(c, key, d)
+}
+
+func (s *Session) FlushNamedSessionData(c *gin.Context, key string, t any) error {
+	if err := s.GetNamedSessionData(c, key, t); err != nil {
+		return err
+	}
+	if err := s.DelSessionData(c, key); err != nil {
+		return err
+	}
+	return nil
 }
 
 //func GetSessionDataToType[T any](s *Session, c *gin.Context, key string, t T) (T, error) {

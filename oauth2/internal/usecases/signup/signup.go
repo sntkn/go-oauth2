@@ -28,7 +28,7 @@ func NewUseCase(redisCli *redis.RedisCli) *UseCase {
 func (u *UseCase) Run(c *gin.Context) {
 	s := session.NewSession(c, u.redisCli)
 	var form RegistrationForm
-	if err := s.GetNamedSessionData(c, "signup_form", &form); err != nil {
+	if err := s.FlushNamedSessionData(c, "signup_form", &form); err != nil {
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "500.html", gin.H{"error": err.Error()})
 		return

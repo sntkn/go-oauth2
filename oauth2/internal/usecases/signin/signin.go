@@ -51,7 +51,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	var form SigninForm
-	if err := s.GetNamedSessionData(c, "signin_form", &form); err != nil {
+	if err := s.FlushNamedSessionData(c, "signin_form", &form); err != nil {
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return

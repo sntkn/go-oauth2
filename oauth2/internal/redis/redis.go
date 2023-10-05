@@ -44,6 +44,10 @@ func (r *RedisCli) Get(ctx context.Context, key string) *redis.StringCmd {
 	return r.cli.Get(ctx, key)
 }
 
+func (r *RedisCli) Del(ctx context.Context, key string) *redis.IntCmd {
+	return r.cli.Del(ctx, key)
+}
+
 func (r *RedisCli) GetOrNil(ctx context.Context, key string) ([]byte, error) {
 	ret := r.cli.Get(ctx, key)
 	d, err := ret.Bytes()
