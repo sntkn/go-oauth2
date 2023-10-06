@@ -95,51 +95,48 @@ func (u *UseCase) Run(c *gin.Context) {
 			return
 		}
 
-		err = u.db.RegisterToken(repository.Token{
+		if err := u.db.RegisterToken(repository.Token{
 			AccessToken: token,
 			ClientID:    code.ClientID,
 			UserID:      code.UserID,
 			Scope:       code.Scope,
 			ExpiresAt:   expiration,
-		})
-		if err != nil {
+		}); err != nil {
 			c.Error(err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 		randomString, err := generateRandomString(32)
-		refreshExpiration := time.Now().AddDate(0, 0, 10)
 		if err != nil {
 			c.Error(err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		err = u.db.RegesterRefreshToken(repository.RefreshToken{
+		refreshExpiration := time.Now().AddDate(0, 0, 10)
+		if err := u.db.RegesterRefreshToken(repository.RefreshToken{
 			RefreshToken: randomString,
 			AccessToken:  token,
 			ExpiresAt:    refreshExpiration,
-		})
-		if err != nil {
+		}); err != nil {
 			c.Error(err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 		// revoke code
-		err = u.db.RevokeCode(input.Code)
-		if err != nil {
+		if err = u.db.RevokeCode(input.Code); err != nil {
 			c.Error(err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		output := TokenOutput{
+		c.JSON(http.StatusOK, TokenOutput{
 			AccessToken:  token,
 			RefreshToken: randomString,
 			Expiry:       expiration.Unix(),
-		}
-		c.JSON(http.StatusOK, output)
+		})
+
 		return
 	}
 
@@ -178,67 +175,66 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 	expiration := time.Now().Add(10 * time.Minute)
-	t := accesstoken.TokenParams{
+
+	token, err := accesstoken.Generate(accesstoken.TokenParams{
 		UserID:    tkn.UserID,
 		ClientID:  tkn.ClientID,
 		Scope:     tkn.Scope,
 		ExpiresAt: expiration,
-	}
-	token, err := accesstoken.Generate(t)
+	})
 	if err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	err = u.db.RegisterToken(repository.Token{
+
+	if err := u.db.RegisterToken(repository.Token{
 		AccessToken: token,
 		ClientID:    tkn.ClientID,
 		UserID:      tkn.UserID,
 		Scope:       tkn.Scope,
 		ExpiresAt:   expiration,
-	})
-	if err != nil {
+	}); err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	randomString, err := generateRandomString(32)
-	refreshExpiration := time.Now().AddDate(0, 0, 10)
 	if err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	err = u.db.RegesterRefreshToken(repository.RefreshToken{
+	refreshExpiration := time.Now().AddDate(0, 0, 10)
+
+	if err = u.db.RegesterRefreshToken(repository.RefreshToken{
 		RefreshToken: randomString,
 		AccessToken:  token,
 		ExpiresAt:    refreshExpiration,
-	})
-	if err != nil {
+	}); err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	// TODO: revoke old token and refresh token
-	if err = u.db.RevokeToken(tkn.AccessToken); err != nil {
+	if err := u.db.RevokeToken(tkn.AccessToken); err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if err = u.db.RevokeRefreshToken(rt.RefreshToken); err != nil {
+	if err := u.db.RevokeRefreshToken(rt.RefreshToken); err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	output := TokenOutput{
+	c.JSON(http.StatusOK, TokenOutput{
 		AccessToken:  token,
 		RefreshToken: randomString,
 		Expiry:       expiration.Unix(),
-	}
-	c.JSON(http.StatusOK, output)
+	})
 }
 
 func generateRandomString(length int) (string, error) {

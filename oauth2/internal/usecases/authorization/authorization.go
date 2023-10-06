@@ -133,7 +133,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	// TODO: clear session data
+	s.DelSessionData(c, "auth")
 
 	c.Redirect(http.StatusFound, fmt.Sprintf("%s?code=%s", d.RedirectURI, randomString))
 }
