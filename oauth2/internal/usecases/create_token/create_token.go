@@ -62,7 +62,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		// code has expired
 		code, err := u.db.FindValidOAuth2Code(input.Code, time.Now())
 		if err != nil {
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				// TODO: redirect to autorize with parameters
 				c.Error(err)
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -153,7 +153,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	// TODO: find refresh token, if not expired
 	rt, err := u.db.FindValidRefreshToken(input.RefreshToken, time.Now())
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			c.Error(err)
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		} else {
@@ -167,7 +167,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	// TODO: create token and refresh token
 	tkn, err := u.db.FindToken(rt.AccessToken)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// TODO: redirect to autorize with parameters
 			c.Error(err)
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})

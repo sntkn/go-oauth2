@@ -93,7 +93,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	// check client
 	client, err := u.db.FindClientByClientID(input.ClientID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			c.Error(err)
 			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		} else {
