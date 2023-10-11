@@ -55,7 +55,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	if err := c.Bind(&input); err != nil {
 		err := fmt.Errorf("Could not bind JSON")
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -97,7 +97,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	var d AuthorizeInput
 	if err = s.GetNamedSessionData(c, "auth", &d); err != nil {
 		c.Error(err)
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -106,14 +106,14 @@ func (u *UseCase) Run(c *gin.Context) {
 	randomString, err := generateRandomString(32)
 	if err != nil {
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	clientID, err := uuid.Parse(d.ClientID)
 	if err != nil {
 		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -129,11 +129,15 @@ func (u *UseCase) Run(c *gin.Context) {
 	})
 	if err != nil {
 		c.Error(err)
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	s.DelSessionData(c, "auth")
+	if err := s.DelSessionData(c, "auth"); err != nil {
+		c.Error(err)
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
 
 	c.Redirect(http.StatusFound, fmt.Sprintf("%s?code=%s", d.RedirectURI, randomString))
 }

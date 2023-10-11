@@ -93,6 +93,12 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
+	if err := s.DelSessionData(c, "signup_form"); err != nil {
+		c.Error(err)
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
+
 	c.Redirect(http.StatusFound, "/signup-finished")
 }
 
