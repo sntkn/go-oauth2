@@ -11,7 +11,7 @@ export default function Callback() {
 
     if (code) {
       // 認可コードが取得できた場合、アクセストークンの取得リクエストを送信
-      fetch('/api/getAccessToken', {
+      fetch('/api/fetchToken', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
