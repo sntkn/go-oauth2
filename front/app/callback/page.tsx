@@ -10,7 +10,9 @@ async function getData(code: string): Promise<Result> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ code }),
+    cache: 'no-cache',
   })
+
   return await res.json()
 }
 
