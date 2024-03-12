@@ -1,6 +1,6 @@
 module github.com/sntkn/go-oauth2/oauth2
 
-go 1.21.1
+go 1.22.1
 
 require (
 	github.com/cockroachdb/errors v1.11.1
