@@ -4,9 +4,11 @@ services:
   server:
     build:
       context: ./oauth2
-      target: final
+      target: development
     ports:
       - 8080:8080
+    volumes:
+      - ./oauth2:/src
     depends_on:
       - database
       - session
