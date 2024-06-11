@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	host     = "localhost"
+	host     = "database"
 	port     = 5432
 	user     = "app"
 	password = "pass"
@@ -42,12 +42,12 @@ func main() {
 
 	// Redis configuration
 	redisCli, err := redis.NewClient(context.Background(), redis.Options{
-		Addr:     "localhost:6379", // Redisのアドレスとポート番号に合わせて変更してください
-		Password: "",               // Redisにパスワードが設定されている場合は設定してください
-		DB:       0,                // データベース番号
+		Addr:     "session:6379", // Redisのアドレスとポート番号に合わせて変更してください
+		Password: "",             // Redisにパスワードが設定されている場合は設定してください
+		DB:       0,              // データベース番号
 	})
 	if err != nil {
-		slog.Error("Error: %v\n", err)
+		slog.Error("Session Error: %v\n", err)
 		return
 	}
 
@@ -59,6 +59,10 @@ func main() {
 		Password: password,
 		DBName:   dbname,
 	})
+	if err != nil {
+		slog.Error("Database Error: %v\n", err)
+		return
+	}
 	defer db.Close()
 
 	r.GET("/signin", signin.NewUseCase(redisCli).Run)
