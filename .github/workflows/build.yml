@@ -30,9 +30,9 @@ jobs:
           context: ./oauth2
           target: final
           push: true
-          tags: sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
-          secrets: |
-            GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          tags: sntkn/go-oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
+#          secrets: |
+#            GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
 #      - name: build
 #        run: |
