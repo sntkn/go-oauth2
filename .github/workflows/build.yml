@@ -30,7 +30,7 @@ jobs:
           context: ./oauth2
           target: final
           push: true
-          tags: sntkn/go-oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
+          tags: ghcr.io/${{ github.repository_owner }}/go-oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
 #          secrets: |
 #            GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
