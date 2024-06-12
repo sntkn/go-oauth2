@@ -20,3 +20,8 @@ jobs:
         run: go version
       - name: ls
         run: ls -l
+      - name: build
+        run: |
+          cd oauth2
+          docker build --target final -t sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }} .
+          docker push sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
