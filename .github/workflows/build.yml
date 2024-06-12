@@ -22,8 +22,15 @@ jobs:
         run: go version
       - name: ls
         run: ls -l
-      - name: build
-        run: |
-          cd oauth2
-          docker build --target final -t sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }} .
-          docker push sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./oauth2
+          target: final
+          push: true
+          tags: sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
+#      - name: build
+#        run: |
+#          cd oauth2
+#          docker build --target final -t sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }} .
+#          docker push sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
