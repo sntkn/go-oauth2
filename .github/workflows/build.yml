@@ -8,7 +8,9 @@ jobs:
     strategy:
       matrix:
         go-version: ["1.22.x"]
-
+    env:
+      BRANCH_NAME: $(echo ${{ github.ref_name }} | sed -e 's/\//\-/g')
+      COMMIT_HASH: ${GITHUB_SHA::7}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go ${{ matrix.go-version }}
