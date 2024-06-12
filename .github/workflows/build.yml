@@ -28,7 +28,7 @@ jobs:
           context: ./oauth2
           target: final
           push: true
-          tags: sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
+          tags: sntkn/oauth2:$(echo ${{ github.ref_name }} | sed -e 's/\//\-/g')-${{ env.COMMIT_HASH }}
 #      - name: build
 #        run: |
 #          cd oauth2
