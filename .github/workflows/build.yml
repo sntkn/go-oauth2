@@ -37,11 +37,3 @@ jobs:
           target: final
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/go-oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
-#          secrets: |
-#            GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
-
-#      - name: build
-#        run: |
-#          cd oauth2
-#          docker build --target final -t sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }} .
-#          docker push sntkn/oauth2:${{ env.BRANCH_NAME }}-${{ env.COMMIT_HASH }}
