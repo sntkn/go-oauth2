@@ -1,6 +1,11 @@
 name: BuildAndPush
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - oauth2/**
 
 jobs:
   build:
