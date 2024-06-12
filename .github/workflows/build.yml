@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "oauth2/**"
+      - ".github/**"
 
 jobs:
   build:
