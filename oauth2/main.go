@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	host     = "database"
+	host     = "localhost"
 	port     = 5432
 	user     = "app"
 	password = "pass"
@@ -90,4 +90,21 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 			}
 		}
 	}
+}
+
+func ping() (bool, error) {
+	db, err := repository.NewClient(repository.Conn{
+		Host:     host,
+		Port:     port,
+		User:     user,
+		Password: password,
+		DBName:   dbname,
+	})
+	if err != nil {
+		slog.Error("Database Error: %v\n", err)
+		return false, err
+	}
+	defer db.Close()
+
+	return true, nil
 }
