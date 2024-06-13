@@ -48,5 +48,5 @@ jobs:
           target: final
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/go-oauth2/oauth2:${{ env.BRANCH_NAME }}
-            ghcr.io/${{ github.repository_owner }}/go-oauth2/oauth2:${{ env.COMMIT_HASH }}
+            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.BRANCH_NAME }}
+            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.COMMIT_HASH }}
