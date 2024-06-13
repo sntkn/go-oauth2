@@ -1,0 +1,24 @@
+name: Lint
+
+on:
+  pull_request:
+    paths:
+      - "**.go/**"
+      - ".github/**"
+
+jobs:
+  golangci-lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+      - name: golangci-lint
+        uses: reviewdog/action-golangici-lint@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          golangci_lint_flags: "--config=.golangci.yml ---timeout=5m ./..."
+          fail_on_error: true
+          reporter: "github-pr-review"
