@@ -59,13 +59,13 @@ jobs:
       # 4. docker composeビルド/起動
       - name: docker compose build & up
         run: |
-          docker compose -f docker-compose.ci.yml build
-          docker compose -f docker-compose.ci.yml up -d
+          docker compose -f compose.ci.yml build
+          docker compose -f compose.ci.yml up -d
 
       # 5. テスト実行
       - name: Test
         run: |
-          docker compose -f docker-compose.ci.yml run --rm server go test -v ./...
+          docker compose -f compose.ci.yml run --rm server go test -v ./...
 
       # 6. 肥大化対策
       # https://github.com/docker/build-push-action/issues/252
