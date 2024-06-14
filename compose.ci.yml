@@ -1,0 +1,19 @@
+services:
+  server:
+    image: testapp-app-cached # Buildxのビルド時に指定したイメージ名
+    build:
+      context: ./oauth2
+    depends_on:
+      - database
+      - session
+  database:
+    container_name: database
+    image: testapp-database-cached # Buildxのビルド時に指定したイメージ名
+    build:
+      context: ./docker/database
+    ports:
+      - 5432:5432
+  session:
+    image: redis:latest
+    ports:
+      - 6379:6379
