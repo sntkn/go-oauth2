@@ -3,6 +3,7 @@ services:
     image: testapp-app-cached # Buildxのビルド時に指定したイメージ名
     build:
       context: ./oauth2
+      target: development
     depends_on:
       - database
       - session
