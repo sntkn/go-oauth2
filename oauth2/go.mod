@@ -3,6 +3,7 @@ module github.com/sntkn/go-oauth2/oauth2
 go 1.22.1
 
 require (
+	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/cockroachdb/errors v1.11.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.9.1
