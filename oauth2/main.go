@@ -47,7 +47,7 @@ func main() {
 		DB:       0,              // データベース番号
 	})
 	if err != nil {
-		slog.Error("Session Error", err)
+		slog.Error("Session Error", "message:", err)
 		return
 	}
 
@@ -60,7 +60,7 @@ func main() {
 		DBName:   dbname,
 	})
 	if err != nil {
-		slog.Error("Database Error", err)
+		slog.Error("Database Error", "message:", err)
 		return
 	}
 	defer db.Close()
@@ -101,7 +101,7 @@ func ping() (bool, error) {
 		DBName:   dbname,
 	})
 	if err != nil {
-		slog.Error("Database Error", err)
+		slog.Error("Database Error", "message:", err)
 		return false, err
 	}
 	defer db.Close()
