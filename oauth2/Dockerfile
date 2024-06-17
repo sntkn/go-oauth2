@@ -94,3 +94,15 @@ RUN go install github.com/air-verse/air@latest
 ARG TARGETARCH
 
 CMD ["air"]
+
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS test
+WORKDIR /src
+
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+    --mount=type=bind,source=go.sum,target=go.sum \
+    --mount=type=bind,source=go.mod,target=go.mod \
+    go mod download -x
+
+COPY . /src
+
+CMD ["go", "run", "main.go"]

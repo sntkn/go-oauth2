@@ -3,27 +3,35 @@ services:
     build:
       context: ./oauth2
       target: development
+    container_name: server
     ports:
       - 8080:8080
+    environment:
+      DBHost: database
+      DBPort: "5432"
+      DBUser: app
+      DBPassword: pass
+      DBName: auth
     volumes:
       - ./oauth2:/src
     depends_on:
       - database
       - session
   database:
-    image: postgres:latest
+    build:
+      context: ./docker/database
     container_name: database
     restart: always
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./docker/database/init:/docker-entrypoint-initdb.d
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
     ports:
       - 5432:5432
   session:
-    image: redis:latest
+    build:
+      context: ./docker/session
     ports:
       - 6379:6379
     volumes:

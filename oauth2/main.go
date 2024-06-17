@@ -22,14 +22,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
-	host     = "database"
-	port     = 5432
-	user     = "app"
-	password = "pass"
-	dbname   = "auth"
-)
-
 func main() {
 	// Ginルーターの初期化
 	r := gin.Default()
@@ -40,6 +32,12 @@ func main() {
 	// エラーログを出力するミドルウェアを追加
 	r.Use(ErrorLoggerMiddleware())
 
+	config, err := GetEnv()
+	if err != nil {
+		slog.Error("Config Load Error", "message:", err)
+		return
+	}
+
 	// Redis configuration
 	redisCli, err := redis.NewClient(context.Background(), redis.Options{
 		Addr:     "session:6379", // Redisのアドレスとポート番号に合わせて変更してください
@@ -47,20 +45,20 @@ func main() {
 		DB:       0,              // データベース番号
 	})
 	if err != nil {
-		slog.Error("Session Error: %v\n", err)
+		slog.Error("Session Error", "message:", err)
 		return
 	}
 
 	// PostgreSQLに接続
 	db, err := repository.NewClient(repository.Conn{
-		Host:     host,
-		Port:     port,
-		User:     user,
-		Password: password,
-		DBName:   dbname,
+		Host:     config.DBHost,
+		Port:     uint32(config.DBPort),
+		User:     config.DBUser,
+		Password: config.DBPassword,
+		DBName:   config.DBName,
 	})
 	if err != nil {
-		slog.Error("Database Error: %v\n", err)
+		slog.Error("Database Error", "message:", err)
 		return
 	}
 	defer db.Close()
@@ -90,4 +88,27 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 			}
 		}
 	}
+}
+
+func ping() (bool, error) {
+	config, err := GetEnv()
+	if err != nil {
+		slog.Error("Config Load Error", "message:", err)
+		return false, err
+	}
+
+	db, err := repository.NewClient(repository.Conn{
+		Host:     config.DBHost,
+		Port:     uint32(config.DBPort),
+		User:     config.DBUser,
+		Password: config.DBPassword,
+		DBName:   config.DBName,
+	})
+	if err != nil {
+		slog.Error("Database Error", "message:", err)
+		return false, err
+	}
+	defer db.Close()
+
+	return true, nil
 }
