@@ -56,6 +56,17 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache-database # キャッシュを指定
           cache-to: type=local,dest=/tmp/.buildx-cache-new-database # キャッシュを指定
 
+      - name: Build images - Session
+        uses: docker/build-push-action@v5
+        with:
+          push: false
+          builder: ${{ steps.buildx.outputs.name }} # Buildxでビルドすることを指定
+          tags: testapp-session-cached:latest # イメージ名を指定/docker-compose.ymlで参照する名前
+          load: true
+          context: ./docker/session
+          cache-from: type=local,src=/tmp/.buildx-cache-session # キャッシュを指定
+          cache-to: type=local,dest=/tmp/.buildx-cache-new-session # キャッシュを指定
+
       # 4. docker composeビルド/起動
       - name: docker compose build & up
         run: |
@@ -74,5 +85,7 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache-app
           rm -rf /tmp/.buildx-cache-database
+          rm -rf /tmp/.buildx-cache-session
           mv /tmp/.buildx-cache-new-app /tmp/.buildx-cache-app
           mv /tmp/.buildx-cache-new-database /tmp/.buildx-cache-database
+          mv /tmp/.buildx-cache-new-session /tmp/.buildx-cache-session

@@ -30,7 +30,8 @@ services:
     ports:
       - 5432:5432
   session:
-    image: redis:latest
+    build:
+      context: ./docker/session
     ports:
       - 6379:6379
     volumes:

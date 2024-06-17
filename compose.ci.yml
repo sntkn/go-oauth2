@@ -21,6 +21,8 @@ services:
     ports:
       - 5432:5432
   session:
-    image: redis:latest
+    image: testapp-session-cached # Buildxのビルド時に指定したイメージ名
+    build:
+      context: ./docker/database
     ports:
       - 6379:6379
