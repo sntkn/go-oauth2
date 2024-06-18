@@ -10,7 +10,7 @@ type TokenResponse = {
 
 export async function POST(req: NextRequest) {
   const data = await req.json();
-  const code = data.code;
+  const refreshToken = data.refreshToken;
 
   const res = await fetch('http://localhost:8080/token', {
     method: 'POST',
@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      grant_type: 'authorization_code',
-      code,
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
     })
   })
 
