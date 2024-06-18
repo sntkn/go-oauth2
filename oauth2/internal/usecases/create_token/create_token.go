@@ -1,4 +1,4 @@
-package create_token
+package createToken
 
 import (
 	"crypto/rand"
@@ -15,8 +15,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 )
-
-var secretKey = []byte("test")
 
 type UseCase struct {
 	redisCli *redis.RedisCli
@@ -52,7 +50,7 @@ func (u *UseCase) Run(c *gin.Context) {
 
 	// grant_type = authorization_code
 	if input.GrantType != "authorization_code" && input.GrantType != "refresh_token" {
-		err := fmt.Errorf("Invalid grant type: %s", input.GrantType)
+		err := fmt.Errorf("invalid grant type: %s", input.GrantType)
 		c.Error(errors.WithStack(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -74,7 +72,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		}
 		currentTime := time.Now()
 		if currentTime.After(code.ExpiresAt) {
-			err := fmt.Errorf("Code has expired")
+			err = fmt.Errorf("code has expired")
 			c.Error(errors.WithStack(err))
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
@@ -95,7 +93,7 @@ func (u *UseCase) Run(c *gin.Context) {
 			return
 		}
 
-		if err := u.db.RegisterToken(repository.Token{
+		if err = u.db.RegisterToken(repository.Token{
 			AccessToken: token,
 			ClientID:    code.ClientID,
 			UserID:      code.UserID,
@@ -114,7 +112,7 @@ func (u *UseCase) Run(c *gin.Context) {
 			return
 		}
 		refreshExpiration := time.Now().AddDate(0, 0, 10)
-		if err := u.db.RegesterRefreshToken(repository.RefreshToken{
+		if err = u.db.RegesterRefreshToken(repository.RefreshToken{
 			RefreshToken: randomString,
 			AccessToken:  token,
 			ExpiresAt:    refreshExpiration,
@@ -142,7 +140,7 @@ func (u *UseCase) Run(c *gin.Context) {
 
 	// check parameters
 	if input.RefreshToken == "" {
-		err := fmt.Errorf("Invalid refresh token")
+		err := fmt.Errorf("invalid refresh token")
 		c.Error(errors.WithStack(err))
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
@@ -170,7 +168,7 @@ func (u *UseCase) Run(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		} else {
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
 	}
@@ -188,7 +186,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	if err := u.db.RegisterToken(repository.Token{
+	if err = u.db.RegisterToken(repository.Token{
 		AccessToken: token,
 		ClientID:    tkn.ClientID,
 		UserID:      tkn.UserID,
@@ -219,12 +217,12 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	// TODO: revoke old token and refresh token
-	if err := u.db.RevokeToken(tkn.AccessToken); err != nil {
+	if err = u.db.RevokeToken(tkn.AccessToken); err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if err := u.db.RevokeRefreshToken(rt.RefreshToken); err != nil {
+	if err = u.db.RevokeRefreshToken(rt.RefreshToken); err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

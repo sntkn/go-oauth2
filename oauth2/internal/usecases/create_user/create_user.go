@@ -1,4 +1,4 @@
-package create_user
+package createUser
 
 import (
 	"net/http"

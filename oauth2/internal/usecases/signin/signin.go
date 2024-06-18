@@ -44,7 +44,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	if input.ClientID == "" {
-		err := fmt.Errorf("Invalid client_id")
+		err := fmt.Errorf("invalid client_id")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return

@@ -13,8 +13,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 )
 
-var secretKey = []byte("test")
-
 type UseCase struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
@@ -33,9 +31,8 @@ func (u *UseCase) Run(c *gin.Context) {
 
 	// "Authorization" ヘッダーが存在しない場合や、Bearer トークンでない場合はエラーを返す
 	if authHeader == "" {
-		err := fmt.Errorf("Missing or empty Authorization header")
-		c.Error(errors.WithStack(err))
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		err := fmt.Errorf("missing or empty authorization header")
+		c.Error(errors.WithStack(err)).SetType(gin.ErrorTypePublic).SetMeta(http.StatusUnauthorized)
 		return
 	}
 

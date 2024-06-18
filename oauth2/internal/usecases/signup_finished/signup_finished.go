@@ -1,4 +1,4 @@
-package signup_finished
+package signupFinished
 
 import (
 	"net/http"
@@ -12,6 +12,6 @@ func NewUseCase() *UseCase {
 	return &UseCase{}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
+func (*UseCase) Run(c *gin.Context) {
 	c.HTML(http.StatusOK, "signup_finished.html", nil)
 }

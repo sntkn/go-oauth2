@@ -1,4 +1,4 @@
-package delete_token
+package deleteToken
 
 import (
 	"net/http"
@@ -9,8 +9,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 )
-
-var secretKey = []byte("test")
 
 type UseCase struct {
 	redisCli *redis.RedisCli
