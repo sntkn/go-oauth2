@@ -76,7 +76,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	} else if eu {
-		//err := fmt.Errorf("User %s already exists", input.Email)
+		// err := fmt.Errorf("User %s already exists", input.Email)
 		c.Redirect(http.StatusFound, "/signup")
 		return
 	}

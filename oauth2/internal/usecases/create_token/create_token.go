@@ -140,7 +140,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	// check paramters
+	// check parameters
 	if input.RefreshToken == "" {
 		err := fmt.Errorf("Invalid refresh token")
 		c.Error(errors.WithStack(err))

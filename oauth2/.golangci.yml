@@ -201,7 +201,12 @@ issues:
     - path: pkg/golinters/unused/unused.go
       linters: [gocritic]
       text: "rangeValCopy: each iteration copies 160 bytes \\(consider pointers or indexing\\)"
-
+    - linters:
+        - errcheck
+      text: "`c.Error` is not checked"
+    - linters:
+        - errcheck
+      text: "SetMeta` is not checked"
   exclude-dirs:
     - test/testdata_etc # test files
     - internal/cache # extracted from Go code

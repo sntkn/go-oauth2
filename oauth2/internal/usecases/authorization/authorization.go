@@ -64,13 +64,13 @@ func (u *UseCase) Run(c *gin.Context) {
 	})
 
 	if input.Email == "" {
-		//err := fmt.Errorf("Invalid email address")
+		// err := fmt.Errorf("Invalid email address")
 		c.Redirect(http.StatusFound, "/signin")
 		return
 	}
 
 	if input.Password == "" {
-		//err := fmt.Errorf("Invalid password")
+		// err := fmt.Errorf("Invalid password")
 		c.Redirect(http.StatusFound, "/signin")
 		return
 	}

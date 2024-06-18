@@ -100,7 +100,7 @@ func (s *Session) FlushNamedSessionData(c *gin.Context, key string, t any) error
 	return nil
 }
 
-//func GetSessionDataToType[T any](s *Session, c *gin.Context, key string, t T) (T, error) {
+// func GetSessionDataToType[T any](s *Session, c *gin.Context, key string, t T) (T, error) {
 //	b, err := s.GetSessionData(c, key)
 //	if err != nil {
 //		return t, err
