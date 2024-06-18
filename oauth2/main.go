@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
@@ -86,6 +87,18 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 			for _, err := range c.Errors {
 				slog.Error(fmt.Sprintf("%+v\n", err.Err))
 			}
+		}
+
+		err := c.Errors.ByType(gin.ErrorTypePublic).Last()
+		if err != nil {
+			// 短縮して型アサーションとデフォルト値の設定を一行で
+			statusCode := func() int {
+				if sc, ok := err.Meta.(int); ok {
+					return sc
+				}
+				return http.StatusInternalServerError
+			}()
+			c.JSON(statusCode, gin.H{"error": err.Error()})
 		}
 	}
 }

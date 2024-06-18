@@ -38,8 +38,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
 	if err := u.db.RevokeToken(tokenStr); err != nil {
-		c.Error(errors.WithStack(err))
-		c.JSON(http.StatusUnauthorized, err)
+		c.Error(errors.WithStack(err)).SetType(gin.ErrorTypePublic).SetMeta(http.StatusInternalServerError)
 		return
 	}
 
