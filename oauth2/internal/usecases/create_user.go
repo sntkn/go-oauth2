@@ -1,11 +1,10 @@
-package createuser
+package usecases
 
 import (
 	"net/http"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
@@ -17,25 +16,19 @@ type SignupInput struct {
 	Password string `form:"password"`
 }
 
-type RegistrationForm struct {
-	Name  string `form:"name"`
-	Email string `form:"email"`
-	Error string
-}
-
-type UseCase struct {
+type CreateUser struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
-	return &UseCase{
+func NewCreateUser(redisCli *redis.RedisCli, db *repository.Repository) *CreateUser {
+	return &CreateUser{
 		redisCli: redisCli,
 		db:       db,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
+func (u *CreateUser) Invoke(c *gin.Context) {
 	s := session.NewSession(c, u.redisCli)
 	var input SignupInput
 	// Query ParameterをAuthorizeInputにバインド
@@ -99,9 +92,4 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusFound, "/signup-finished")
-}
-
-func IsValidUUID(u string) bool {
-	_, err := uuid.Parse(u)
-	return err == nil
 }

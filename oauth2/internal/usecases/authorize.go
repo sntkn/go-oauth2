@@ -1,4 +1,4 @@
-package authorize
+package usecases
 
 import (
 	"database/sql"
@@ -21,19 +21,19 @@ type AuthorizeInput struct {
 	State        string `form:"state"`
 }
 
-type UseCase struct {
+type Authorize struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
-	return &UseCase{
+func NewAuthorize(redisCli *redis.RedisCli, db *repository.Repository) *Authorize {
+	return &Authorize{
 		redisCli: redisCli,
 		db:       db,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
+func (u *Authorize) Invoke(c *gin.Context) {
 	s := session.NewSession(c, u.redisCli)
 	var input AuthorizeInput
 	// Query ParameterをAuthorizeInputにバインド

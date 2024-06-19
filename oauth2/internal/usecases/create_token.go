@@ -1,11 +1,8 @@
-package createtoken
+package usecases
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -16,7 +13,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 )
 
-type UseCase struct {
+type CreateToken struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
 }
@@ -33,14 +30,14 @@ type TokenOutput struct {
 	Expiry       int64  `json:"expiry"`
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
-	return &UseCase{
+func NewCreateToken(redisCli *redis.RedisCli, db *repository.Repository) *CreateToken {
+	return &CreateToken{
 		redisCli: redisCli,
 		db:       db,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
+func (u *CreateToken) Invoke(c *gin.Context) {
 	var input TokenInput
 	if err := c.BindJSON(&input); err != nil {
 		c.Error(errors.WithStack(err))
@@ -232,18 +229,4 @@ func (u *UseCase) Run(c *gin.Context) {
 		RefreshToken: randomString,
 		Expiry:       expiration.Unix(),
 	})
-}
-
-func generateRandomString(length int) (string, error) {
-	// ランダムなバイト列を生成
-	randomBytes := make([]byte, length)
-	_, err := io.ReadFull(rand.Reader, randomBytes)
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
-
-	// URLセーフなBase64エンコード
-	encodedString := base64.URLEncoding.EncodeToString(randomBytes)
-
-	return encodedString, nil
 }

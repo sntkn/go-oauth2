@@ -1,4 +1,4 @@
-package me
+package usecases
 
 import (
 	"fmt"
@@ -13,19 +13,19 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 )
 
-type UseCase struct {
+type GetUser struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
-	return &UseCase{
+func NewGetUser(redisCli *redis.RedisCli, db *repository.Repository) *GetUser {
+	return &GetUser{
 		redisCli: redisCli,
 		db:       db,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
+func (u *GetUser) Invoke(c *gin.Context) {
 	// "Authorization" ヘッダーを取得
 	authHeader := c.GetHeader("Authorization")
 

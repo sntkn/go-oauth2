@@ -10,14 +10,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 )
 
-type AuthorizeInput struct {
-	ResponseType string `form:"response_type"`
-	ClientID     string `form:"client_id"`
-	Scope        string `form:"scope"`
-	RedirectURI  string `form:"redirect_uri"`
-	State        string `form:"state"`
-}
-
 type SigninForm struct {
 	Email string `form:"email"`
 	Error string

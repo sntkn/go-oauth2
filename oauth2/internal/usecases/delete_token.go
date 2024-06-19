@@ -1,4 +1,4 @@
-package deletetoken
+package usecases
 
 import (
 	"net/http"
@@ -10,19 +10,19 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 )
 
-type UseCase struct {
+type DeleteToken struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
-	return &UseCase{
+func NewDeleteToken(redisCli *redis.RedisCli, db *repository.Repository) *DeleteToken {
+	return &DeleteToken{
 		redisCli: redisCli,
 		db:       db,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
+func (u *DeleteToken) Invoke(c *gin.Context) {
 	// "Authorization" ヘッダーを取得
 	authHeader := c.GetHeader("Authorization")
 

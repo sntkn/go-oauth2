@@ -12,16 +12,9 @@ import (
 	"time"
 
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
+	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorization"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorize"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/createtoken"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/createuser"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/deletetoken"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/me"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signupfinished"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 
 	"github.com/gin-gonic/gin"
@@ -75,14 +68,14 @@ func main() {
 	defer db.Close()
 
 	r.GET("/signin", auth.SigninHandler(redisCli))
-	r.GET("/authorize", authorize.NewUseCase(redisCli, db).Run)
-	r.POST("/authorization", authorization.NewUseCase(redisCli, db, cfg).Run)
-	r.POST("/token", createtoken.NewUseCase(redisCli, db).Run)
-	r.GET("/me", me.NewUseCase(redisCli, db).Run)
-	r.DELETE("/token", deletetoken.NewUseCase(redisCli, db).Run)
-	r.GET("/signup", signup.NewUseCase(redisCli).Run)
-	r.POST("/signup", createuser.NewUseCase(redisCli, db).Run)
-	r.GET("/signup-finished", signupfinished.NewUseCase().Run)
+	r.GET("/authorize", auth.AuthrozeHandler(redisCli, db))
+	r.POST("/authorization", auth.AuthrozationHandler(redisCli, db, cfg))
+	r.POST("/token", auth.CreateTokenHandler(redisCli, db))
+	r.DELETE("/token", auth.DeleteTokenHandler(redisCli, db))
+	r.GET("/me", user.GetUserHandler(redisCli, db))
+	r.GET("/signup", user.SignupHandler(redisCli))
+	r.POST("/signup", user.CreateUserHandler(redisCli, db))
+	r.GET("/signup-finished", user.SignupFinishedHandler())
 
 	// サーバーの設定
 	srv := &http.Server{

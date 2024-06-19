@@ -1,4 +1,4 @@
-package signup
+package usecases
 
 import (
 	"net/http"
@@ -15,17 +15,17 @@ type RegistrationForm struct {
 	Error string
 }
 
-type UseCase struct {
+type Signup struct {
 	redisCli *redis.RedisCli
 }
 
-func NewUseCase(redisCli *redis.RedisCli) *UseCase {
-	return &UseCase{
+func NewSignup(redisCli *redis.RedisCli) *Signup {
+	return &Signup{
 		redisCli: redisCli,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
+func (u *Signup) Invoke(c *gin.Context) {
 	s := session.NewSession(c, u.redisCli)
 	var form RegistrationForm
 	if err := s.FlushNamedSessionData(c, "signup_form", &form); err != nil {

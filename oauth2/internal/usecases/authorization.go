@@ -1,4 +1,4 @@
-package authorization
+package usecases
 
 import (
 	"crypto/rand"
@@ -19,39 +19,26 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type SigninForm struct {
-	Email string `form:"email"`
-	Error string
-}
-
 type AuthorizationInput struct {
 	Email    string `form:"email"`
 	Password string `form:"password"`
 }
 
-type AuthorizeInput struct {
-	ResponseType string `form:"response_type"`
-	ClientID     string `form:"client_id"`
-	Scope        string `form:"scope"`
-	RedirectURI  string `form:"redirect_uri"`
-	State        string `form:"state"`
-}
-
-type UseCase struct {
+type Authorization struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
 	cfg      *config.Config
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) *UseCase {
-	return &UseCase{
+func NewAuthorization(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) *Authorization {
+	return &Authorization{
 		redisCli: redisCli,
 		db:       db,
 		cfg:      cfg,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
+func (u *Authorization) Invoke(c *gin.Context) {
 	s := session.NewSession(c, u.redisCli)
 	var input AuthorizationInput
 	// リクエストのJSONデータをAuthorizationInputにバインド
