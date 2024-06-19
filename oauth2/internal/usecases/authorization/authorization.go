@@ -15,6 +15,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -39,12 +40,14 @@ type AuthorizeInput struct {
 type UseCase struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
+	cfg      *config.Config
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
+func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) *UseCase {
 	return &UseCase{
 		redisCli: redisCli,
 		db:       db,
+		cfg:      cfg,
 	}
 }
 
@@ -53,24 +56,25 @@ func (u *UseCase) Run(c *gin.Context) {
 	var input AuthorizationInput
 	// リクエストのJSONデータをAuthorizationInputにバインド
 	if err := c.Bind(&input); err != nil {
-		err := fmt.Errorf("Could not bind JSON")
+		err := fmt.Errorf("could not bind JSON")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	s.SetNamedSessionData(c, "signin_form", SigninForm{
+	if err := s.SetNamedSessionData(c, "signin_form", SigninForm{
 		Email: input.Email,
-	})
+	}); err != nil {
+		c.Error(errors.WithStack(err))
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+	}
 
 	if input.Email == "" {
-		// err := fmt.Errorf("Invalid email address")
 		c.Redirect(http.StatusFound, "/signin")
 		return
 	}
 
 	if input.Password == "" {
-		// err := fmt.Errorf("Invalid password")
 		c.Redirect(http.StatusFound, "/signin")
 		return
 	}
@@ -102,8 +106,9 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	// create code
-	expired := time.Now().AddDate(0, 0, 10)
-	randomString, err := generateRandomString(32)
+	expired := time.Now().Add(u.cfg.AuthCodeExpires * time.Second)
+	randomStringLen := 32
+	randomString, err := generateRandomString(randomStringLen)
 	if err != nil {
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})

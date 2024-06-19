@@ -18,6 +18,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup"
 	signupFinished "github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup_finished"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -33,7 +34,7 @@ func main() {
 	// エラーログを出力するミドルウェアを追加
 	r.Use(ErrorLoggerMiddleware())
 
-	config, err := GetEnv()
+	cfg, err := config.GetEnv()
 	if err != nil {
 		slog.Error("Config Load Error", "message:", err)
 		return
@@ -52,11 +53,11 @@ func main() {
 
 	// PostgreSQLに接続
 	db, err := repository.NewClient(repository.Conn{
-		Host:     config.DBHost,
-		Port:     uint32(config.DBPort),
-		User:     config.DBUser,
-		Password: config.DBPassword,
-		DBName:   config.DBName,
+		Host:     cfg.DBHost,
+		Port:     uint32(cfg.DBPort),
+		User:     cfg.DBUser,
+		Password: cfg.DBPassword,
+		DBName:   cfg.DBName,
 	})
 	if err != nil {
 		slog.Error("Database Error", "message:", err)
@@ -66,7 +67,7 @@ func main() {
 
 	r.GET("/signin", signin.NewUseCase(redisCli).Run)
 	r.GET("/authorize", authorize.NewUseCase(redisCli, db).Run)
-	r.POST("/authorization", authorization.NewUseCase(redisCli, db).Run)
+	r.POST("/authorization", authorization.NewUseCase(redisCli, db, cfg).Run)
 	r.POST("/token", createToken.NewUseCase(redisCli, db).Run)
 	r.GET("/me", me.NewUseCase(redisCli, db).Run)
 	r.DELETE("/token", deleteToken.NewUseCase(redisCli, db).Run)
@@ -104,18 +105,18 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 }
 
 func ping() (bool, error) {
-	config, err := GetEnv()
+	cfg, err := config.GetEnv()
 	if err != nil {
 		slog.Error("Config Load Error", "message:", err)
 		return false, err
 	}
 
 	db, err := repository.NewClient(repository.Conn{
-		Host:     config.DBHost,
-		Port:     uint32(config.DBPort),
-		User:     config.DBUser,
-		Password: config.DBPassword,
-		DBName:   config.DBName,
+		Host:     cfg.DBHost,
+		Port:     uint32(cfg.DBPort),
+		User:     cfg.DBUser,
+		Password: cfg.DBPassword,
+		DBName:   cfg.DBName,
 	})
 	if err != nil {
 		slog.Error("Database Error", "message:", err)
