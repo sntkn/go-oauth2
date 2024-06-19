@@ -1,4 +1,4 @@
-package signupFinished
+package signupfinished
 
 import (
 	"net/http"

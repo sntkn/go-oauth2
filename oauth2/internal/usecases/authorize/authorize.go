@@ -35,7 +35,6 @@ func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
 
 func (u *UseCase) Run(c *gin.Context) {
 	s := session.NewSession(c, u.redisCli)
-	// /authorize?response_type=code&client_id=550e8400-e29b-41d4-a716-446655440000&scope=read&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fcallback&state=ok
 	var input AuthorizeInput
 	// Query ParameterをAuthorizeInputにバインド
 	if err := c.BindQuery(&input); err != nil {
@@ -45,46 +44,46 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	if input.ResponseType == "" {
-		err := fmt.Errorf("Invalid response_type")
+		err := fmt.Errorf("invalid response_type")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 	if input.ResponseType != "code" {
-		err := fmt.Errorf("Invalid response_type: code must be 'code'")
+		err := fmt.Errorf("invalid response_type: code must be 'code'")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 	}
 
 	if input.ClientID == "" {
-		err := fmt.Errorf("Invalid client_id")
+		err := fmt.Errorf("invalid client_id")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
-	if IsValidUUID(input.ClientID) == false {
-		err := fmt.Errorf("Could not parse client_id")
+	if !IsValidUUID(input.ClientID) {
+		err := fmt.Errorf("could not parse client_id")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	if input.Scope == "" {
-		err := fmt.Errorf("Invalid scope")
+		err := fmt.Errorf("invalid scope")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	if input.RedirectURI == "" {
-		err := fmt.Errorf("Invalid redirect_uri")
+		err := fmt.Errorf("invalid redirect_uri")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	if input.State == "" {
-		err := fmt.Errorf("Invalid state")
+		err := fmt.Errorf("invalid state")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
@@ -104,7 +103,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	if client.RedirectURIs != input.RedirectURI {
-		err := fmt.Errorf("Redirect URI does not match")
+		err = fmt.Errorf("redirect uri does not match")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return

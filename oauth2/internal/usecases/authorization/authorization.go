@@ -122,7 +122,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	err = u.db.RegisterOAuth2Code(repository.Code{
+	err = u.db.RegisterOAuth2Code(&repository.Code{
 		Code:        randomString,
 		ClientID:    clientID,
 		UserID:      user.ID,

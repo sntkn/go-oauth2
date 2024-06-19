@@ -3,25 +3,34 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorization"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorize"
-	createToken "github.com/sntkn/go-oauth2/oauth2/internal/usecases/create_token"
-	createUser "github.com/sntkn/go-oauth2/oauth2/internal/usecases/create_user"
-	deleteToken "github.com/sntkn/go-oauth2/oauth2/internal/usecases/delete_token"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/createtoken"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/createuser"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/deletetoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/me"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup"
-	signupFinished "github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup_finished"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signupfinished"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+)
+
+const (
+	readHederTimeout      = 5 * time.Second
+	shutdownTimeoutSecond = 5 * time.Second
 )
 
 func main() {
@@ -68,15 +77,46 @@ func main() {
 	r.GET("/signin", signin.NewUseCase(redisCli).Run)
 	r.GET("/authorize", authorize.NewUseCase(redisCli, db).Run)
 	r.POST("/authorization", authorization.NewUseCase(redisCli, db, cfg).Run)
-	r.POST("/token", createToken.NewUseCase(redisCli, db).Run)
+	r.POST("/token", createtoken.NewUseCase(redisCli, db).Run)
 	r.GET("/me", me.NewUseCase(redisCli, db).Run)
-	r.DELETE("/token", deleteToken.NewUseCase(redisCli, db).Run)
+	r.DELETE("/token", deletetoken.NewUseCase(redisCli, db).Run)
 	r.GET("/signup", signup.NewUseCase(redisCli).Run)
-	r.POST("/signup", createUser.NewUseCase(redisCli, db).Run)
-	r.GET("/signup-finished", signupFinished.NewUseCase().Run)
+	r.POST("/signup", createuser.NewUseCase(redisCli, db).Run)
+	r.GET("/signup-finished", signupfinished.NewUseCase().Run)
 
-	// サーバーをポート8080で起動
-	r.Run(":8080")
+	// サーバーの設定
+	srv := &http.Server{
+		Addr:              ":8080",
+		Handler:           r,
+		ReadHeaderTimeout: readHederTimeout,
+	}
+
+	// サーバーを非同期で起動
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	// シグナル受信のためのチャネルを作成
+	quit := make(chan os.Signal, 1)
+	// SIGINT（Ctrl+C）およびSIGTERMを受け取る
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	// タイムアウト付きのコンテキストを設定
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeoutSecond)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("Server forced to shutdown: %+v\n", err)
+	}
+
+	// ctx.Done() をキャッチする。5秒間のタイムアウト。
+	<-ctx.Done()
+	log.Println("timeout of 5 seconds.")
+
+	log.Println("Server exiting")
 }
 
 // ErrorLoggerMiddleware はエラーログを出力するためのミドルウェアです。

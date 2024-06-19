@@ -1,4 +1,4 @@
-package createUser
+package createuser
 
 import (
 	"net/http"
@@ -80,7 +80,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	user := repository.User{
+	user := &repository.User{
 		Name:     input.Name,
 		Email:    input.Email,
 		Password: input.Password,

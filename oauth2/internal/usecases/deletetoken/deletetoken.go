@@ -1,4 +1,4 @@
-package deleteToken
+package deletetoken
 
 import (
 	"net/http"

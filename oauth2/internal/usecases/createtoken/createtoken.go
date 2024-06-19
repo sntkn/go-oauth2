@@ -1,4 +1,4 @@
-package createToken
+package createtoken
 
 import (
 	"crypto/rand"
@@ -48,7 +48,6 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	// grant_type = authorization_code
 	if input.GrantType != "authorization_code" && input.GrantType != "refresh_token" {
 		err := fmt.Errorf("invalid grant type: %s", input.GrantType)
 		c.Error(errors.WithStack(err))
@@ -93,7 +92,7 @@ func (u *UseCase) Run(c *gin.Context) {
 			return
 		}
 
-		if err = u.db.RegisterToken(repository.Token{
+		if err = u.db.RegisterToken(&repository.Token{
 			AccessToken: token,
 			ClientID:    code.ClientID,
 			UserID:      code.UserID,
@@ -112,7 +111,7 @@ func (u *UseCase) Run(c *gin.Context) {
 			return
 		}
 		refreshExpiration := time.Now().AddDate(0, 0, 10)
-		if err = u.db.RegesterRefreshToken(repository.RefreshToken{
+		if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
 			RefreshToken: randomString,
 			AccessToken:  token,
 			ExpiresAt:    refreshExpiration,
@@ -186,7 +185,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	if err = u.db.RegisterToken(repository.Token{
+	if err = u.db.RegisterToken(&repository.Token{
 		AccessToken: token,
 		ClientID:    tkn.ClientID,
 		UserID:      tkn.UserID,
@@ -206,7 +205,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 	refreshExpiration := time.Now().AddDate(0, 0, 10)
 
-	if err = u.db.RegesterRefreshToken(repository.RefreshToken{
+	if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
 		RefreshToken: randomString,
 		AccessToken:  token,
 		ExpiresAt:    refreshExpiration,
