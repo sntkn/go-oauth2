@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorization"
@@ -19,7 +20,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/createuser"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/deletetoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/me"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signupfinished"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
@@ -74,7 +74,7 @@ func main() {
 	}
 	defer db.Close()
 
-	r.GET("/signin", signin.NewUseCase(redisCli).Run)
+	r.GET("/signin", auth.SigninHandler(redisCli))
 	r.GET("/authorize", authorize.NewUseCase(redisCli, db).Run)
 	r.POST("/authorization", authorization.NewUseCase(redisCli, db, cfg).Run)
 	r.POST("/token", createtoken.NewUseCase(redisCli, db).Run)
