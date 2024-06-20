@@ -15,11 +15,11 @@ import (
 )
 
 type AuthorizeInput struct {
-	ResponseType string `form:"response_type"`
-	ClientID     string `form:"client_id"`
-	Scope        string `form:"scope"`
-	RedirectURI  string `form:"redirect_uri"`
-	State        string `form:"state"`
+	ResponseType string `form:"response_type" binding:"required"`
+	ClientID     string `form:"client_id" binding:"required"`
+	Scope        string `form:"scope" binding:"required"`
+	RedirectURI  string `form:"redirect_uri" binding:"required"`
+	State        string `form:"state" binding:"required"`
 }
 
 type Authorize struct {
@@ -39,54 +39,20 @@ func NewAuthorize(redisCli *redis.RedisCli, db *repository.Repository, cfg *conf
 func (u *Authorize) Invoke(c *gin.Context) {
 	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 	var input AuthorizeInput
-	// Query ParameterをAuthorizeInputにバインド
-	if err := c.BindQuery(&input); err != nil {
-		c.Error(errors.WithStack(err))
+
+	if err := c.ShouldBind(&input); err != nil {
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	if input.ResponseType == "" {
-		err := fmt.Errorf("invalid response_type")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
-	}
 	if input.ResponseType != "code" {
 		err := fmt.Errorf("invalid response_type: code must be 'code'")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 	}
 
-	if input.ClientID == "" {
-		err := fmt.Errorf("invalid client_id")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
-	}
 	if !IsValidUUID(input.ClientID) {
 		err := fmt.Errorf("could not parse client_id")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	if input.Scope == "" {
-		err := fmt.Errorf("invalid scope")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	if input.RedirectURI == "" {
-		err := fmt.Errorf("invalid redirect_uri")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	if input.State == "" {
-		err := fmt.Errorf("invalid state")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return

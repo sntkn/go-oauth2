@@ -20,8 +20,8 @@ import (
 )
 
 type AuthorizationInput struct {
-	Email    string `form:"email"`
-	Password string `form:"password"`
+	Email    string `form:"email" binding:"required,email"`
+	Password string `form:"password" binding:"required"`
 }
 
 type Authorization struct {
@@ -39,31 +39,20 @@ func NewAuthorization(redisCli *redis.RedisCli, db *repository.Repository, cfg *
 }
 
 func (u *Authorization) Invoke(c *gin.Context) {
-	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 	var input AuthorizationInput
-	// リクエストのJSONデータをAuthorizationInputにバインド
-	if err := c.Bind(&input); err != nil {
-		err := fmt.Errorf("could not bind JSON")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+
+	if err := c.ShouldBind(&input); err != nil {
+		c.Redirect(http.StatusFound, "/signin")
 		return
 	}
+
+	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 
 	if err := s.SetNamedSessionData(c, "signin_form", SigninForm{
 		Email: input.Email,
 	}); err != nil {
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-	}
-
-	if input.Email == "" {
-		c.Redirect(http.StatusFound, "/signin")
-		return
-	}
-
-	if input.Password == "" {
-		c.Redirect(http.StatusFound, "/signin")
-		return
 	}
 
 	// validate user credentials

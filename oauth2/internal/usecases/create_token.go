@@ -61,84 +61,7 @@ func (u *CreateToken) Invoke(c *gin.Context) {
 	}
 
 	if input.GrantType == "authorization_code" {
-		// code has expired
-		code, err := u.db.FindValidOAuth2Code(input.Code, time.Now())
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				// TODO: redirect to autorize with parameters
-				c.Error(err)
-				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			} else {
-				c.Error(err)
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			}
-			return
-		}
-		currentTime := time.Now()
-		if currentTime.After(code.ExpiresAt) {
-			err = fmt.Errorf("code has expired")
-			c.Error(errors.WithStack(err))
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
-			return
-		}
-
-		// create token and refresh token
-		expiration := time.Now().Add(u.cfg.AuthTokenExpiresMin * time.Minute)
-		t := accesstoken.TokenParams{
-			UserID:    code.UserID,
-			ClientID:  code.ClientID,
-			Scope:     code.Scope,
-			ExpiresAt: expiration,
-		}
-		token, err := accesstoken.Generate(t)
-		if err != nil {
-			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		if err = u.db.RegisterToken(&repository.Token{
-			AccessToken: token,
-			ClientID:    code.ClientID,
-			UserID:      code.UserID,
-			Scope:       code.Scope,
-			ExpiresAt:   expiration,
-		}); err != nil {
-			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		randomString, err := generateRandomString(randomStringLen)
-		if err != nil {
-			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		refreshExpiration := time.Now().Add(u.cfg.AuthRefreshTokenExpiresDay * day)
-		if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
-			RefreshToken: randomString,
-			AccessToken:  token,
-			ExpiresAt:    refreshExpiration,
-		}); err != nil {
-			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		// revoke code
-		if err = u.db.RevokeCode(input.Code); err != nil {
-			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, TokenOutput{
-			AccessToken:  token,
-			RefreshToken: randomString,
-			Expiry:       expiration.Unix(),
-		})
-
+		u.createTokenByCode(c, &input)
 		return
 	}
 
@@ -149,6 +72,90 @@ func (u *CreateToken) Invoke(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
+
+	u.CreateTokenByRefereshToken(c, &input)
+}
+
+func (u *CreateToken) createTokenByCode(c *gin.Context, input *TokenInput) {
+	code, err := u.db.FindValidOAuth2Code(input.Code, time.Now())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// TODO: redirect to autorize with parameters
+			c.Error(err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		} else {
+			c.Error(err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+	currentTime := time.Now()
+	if currentTime.After(code.ExpiresAt) {
+		err = fmt.Errorf("code has expired")
+		c.Error(errors.WithStack(err))
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
+
+	// create token and refresh token
+	expiration := time.Now().Add(u.cfg.AuthTokenExpiresMin * time.Minute)
+	t := accesstoken.TokenParams{
+		UserID:    code.UserID,
+		ClientID:  code.ClientID,
+		Scope:     code.Scope,
+		ExpiresAt: expiration,
+	}
+	token, err := accesstoken.Generate(t)
+	if err != nil {
+		c.Error(err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err = u.db.RegisterToken(&repository.Token{
+		AccessToken: token,
+		ClientID:    code.ClientID,
+		UserID:      code.UserID,
+		Scope:       code.Scope,
+		ExpiresAt:   expiration,
+	}); err != nil {
+		c.Error(err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	randomString, err := generateRandomString(randomStringLen)
+	if err != nil {
+		c.Error(err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	refreshExpiration := time.Now().Add(u.cfg.AuthRefreshTokenExpiresDay * day)
+	if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
+		RefreshToken: randomString,
+		AccessToken:  token,
+		ExpiresAt:    refreshExpiration,
+	}); err != nil {
+		c.Error(err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// revoke code
+	if err = u.db.RevokeCode(input.Code); err != nil {
+		c.Error(err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, TokenOutput{
+		AccessToken:  token,
+		RefreshToken: randomString,
+		Expiry:       expiration.Unix(),
+	})
+}
+
+func (u *CreateToken) CreateTokenByRefereshToken(c *gin.Context, input *TokenInput) {
 	// TODO: find refresh token, if not expired
 	rt, err := u.db.FindValidRefreshToken(input.RefreshToken, time.Now())
 	if err != nil {
