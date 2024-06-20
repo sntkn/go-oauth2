@@ -2,8 +2,8 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 func SigninHandler(redisCli *redis.RedisCli) gin.HandlerFunc {

@@ -6,8 +6,8 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type DeleteToken struct {

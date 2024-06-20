@@ -13,9 +13,9 @@ import (
 
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
