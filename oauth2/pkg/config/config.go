@@ -13,8 +13,8 @@ type Config struct {
 	DBPassword                 string        `env:"DBPassword" envDefault:"pass"`
 	DBName                     string        `env:"DBName" envDefault:"auth"`
 	AuthCodeExpires            time.Duration `env:"AuthCodeExpires" envDefault:"120"`
-	AuthTokenExpiresMin        int           `env:"AuthTokenExpiresMin" envDefault:"60"`
-	AuthRefreshTokenExpiresDay int           `env:"AuthRefreshTokenExpiresDay" envDefault:"30"`
+	AuthTokenExpiresMin        time.Duration `env:"AuthTokenExpiresMin" envDefault:"60"`
+	AuthRefreshTokenExpiresDay time.Duration `env:"AuthRefreshTokenExpiresDay" envDefault:"30"`
 	SessionExpires             int           `env:"SessionExpires" envDefault:"3600"`
 }
 

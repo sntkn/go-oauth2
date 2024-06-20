@@ -70,7 +70,7 @@ func main() {
 	r.GET("/signin", auth.SigninHandler(redisCli, cfg))
 	r.GET("/authorize", auth.AuthrozeHandler(redisCli, db, cfg))
 	r.POST("/authorization", auth.AuthrozationHandler(redisCli, db, cfg))
-	r.POST("/token", auth.CreateTokenHandler(redisCli, db))
+	r.POST("/token", auth.CreateTokenHandler(redisCli, db, cfg))
 	r.DELETE("/token", auth.DeleteTokenHandler(redisCli, db))
 	r.GET("/me", user.GetUserHandler(redisCli, db))
 	r.GET("/signup", user.SignupHandler(redisCli, cfg))

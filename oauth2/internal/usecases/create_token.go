@@ -10,12 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type CreateToken struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
+	cfg      *config.Config
 }
 
 type TokenInput struct {
@@ -30,12 +32,18 @@ type TokenOutput struct {
 	Expiry       int64  `json:"expiry"`
 }
 
-func NewCreateToken(redisCli *redis.RedisCli, db *repository.Repository) *CreateToken {
+func NewCreateToken(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) *CreateToken {
 	return &CreateToken{
 		redisCli: redisCli,
 		db:       db,
+		cfg:      cfg,
 	}
 }
+
+const (
+	randomStringLen = 32
+	day             = 24 * time.Hour
+)
 
 func (u *CreateToken) Invoke(c *gin.Context) {
 	var input TokenInput
@@ -75,7 +83,7 @@ func (u *CreateToken) Invoke(c *gin.Context) {
 		}
 
 		// create token and refresh token
-		expiration := time.Now().Add(10 * time.Minute)
+		expiration := time.Now().Add(u.cfg.AuthTokenExpiresMin * time.Minute)
 		t := accesstoken.TokenParams{
 			UserID:    code.UserID,
 			ClientID:  code.ClientID,
@@ -101,13 +109,13 @@ func (u *CreateToken) Invoke(c *gin.Context) {
 			return
 		}
 
-		randomString, err := generateRandomString(32)
+		randomString, err := generateRandomString(randomStringLen)
 		if err != nil {
 			c.Error(err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		refreshExpiration := time.Now().AddDate(0, 0, 10)
+		refreshExpiration := time.Now().Add(u.cfg.AuthRefreshTokenExpiresDay * day)
 		if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
 			RefreshToken: randomString,
 			AccessToken:  token,
@@ -168,7 +176,7 @@ func (u *CreateToken) Invoke(c *gin.Context) {
 		}
 		return
 	}
-	expiration := time.Now().Add(10 * time.Minute)
+	expiration := time.Now().Add(u.cfg.AuthTokenExpiresMin * time.Minute)
 
 	token, err := accesstoken.Generate(accesstoken.TokenParams{
 		UserID:    tkn.UserID,
@@ -194,13 +202,13 @@ func (u *CreateToken) Invoke(c *gin.Context) {
 		return
 	}
 
-	randomString, err := generateRandomString(32)
+	randomString, err := generateRandomString(randomStringLen)
 	if err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	refreshExpiration := time.Now().AddDate(0, 0, 10)
+	refreshExpiration := time.Now().Add(u.cfg.AuthRefreshTokenExpiresDay * day)
 
 	if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
 		RefreshToken: randomString,
