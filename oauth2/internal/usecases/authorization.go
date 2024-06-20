@@ -39,7 +39,7 @@ func NewAuthorization(redisCli *redis.RedisCli, db *repository.Repository, cfg *
 }
 
 func (u *Authorization) Invoke(c *gin.Context) {
-	s := session.NewSession(c, u.redisCli)
+	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 	var input AuthorizationInput
 	// リクエストのJSONデータをAuthorizationInputにバインド
 	if err := c.Bind(&input); err != nil {

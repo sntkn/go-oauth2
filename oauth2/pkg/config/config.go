@@ -15,6 +15,7 @@ type Config struct {
 	AuthCodeExpires            time.Duration `env:"AuthCodeExpires" envDefault:"120"`
 	AuthTokenExpiresMin        int           `env:"AuthTokenExpiresMin" envDefault:"60"`
 	AuthRefreshTokenExpiresDay int           `env:"AuthRefreshTokenExpiresDay" envDefault:"30"`
+	SessionExpires             int           `env:"SessionExpires" envDefault:"3600"`
 }
 
 func GetEnv() (*Config, error) {

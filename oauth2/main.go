@@ -67,14 +67,14 @@ func main() {
 	}
 	defer db.Close()
 
-	r.GET("/signin", auth.SigninHandler(redisCli))
-	r.GET("/authorize", auth.AuthrozeHandler(redisCli, db))
+	r.GET("/signin", auth.SigninHandler(redisCli, cfg))
+	r.GET("/authorize", auth.AuthrozeHandler(redisCli, db, cfg))
 	r.POST("/authorization", auth.AuthrozationHandler(redisCli, db, cfg))
 	r.POST("/token", auth.CreateTokenHandler(redisCli, db))
 	r.DELETE("/token", auth.DeleteTokenHandler(redisCli, db))
 	r.GET("/me", user.GetUserHandler(redisCli, db))
-	r.GET("/signup", user.SignupHandler(redisCli))
-	r.POST("/signup", user.CreateUserHandler(redisCli, db))
+	r.GET("/signup", user.SignupHandler(redisCli, cfg))
+	r.POST("/signup", user.CreateUserHandler(redisCli, db, cfg))
 	r.GET("/signup-finished", user.SignupFinishedHandler())
 
 	// サーバーの設定

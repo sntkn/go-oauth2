@@ -7,6 +7,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
@@ -17,16 +18,18 @@ type SigninForm struct {
 
 type Signin struct {
 	redisCli *redis.RedisCli
+	cfg      *config.Config
 }
 
-func NewSignin(redisCli *redis.RedisCli) *Signin {
+func NewSignin(redisCli *redis.RedisCli, cfg *config.Config) *Signin {
 	return &Signin{
 		redisCli: redisCli,
+		cfg:      cfg,
 	}
 }
 
 func (u *Signin) Invoke(c *gin.Context) {
-	s := session.NewSession(c, u.redisCli)
+	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 
 	var input AuthorizeInput
 	if err := s.GetNamedSessionData(c, "auth", &input); err != nil {

@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
@@ -24,17 +25,19 @@ type AuthorizeInput struct {
 type Authorize struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
+	cfg      *config.Config
 }
 
-func NewAuthorize(redisCli *redis.RedisCli, db *repository.Repository) *Authorize {
+func NewAuthorize(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) *Authorize {
 	return &Authorize{
 		redisCli: redisCli,
 		db:       db,
+		cfg:      cfg,
 	}
 }
 
 func (u *Authorize) Invoke(c *gin.Context) {
-	s := session.NewSession(c, u.redisCli)
+	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 	var input AuthorizeInput
 	// Query ParameterをAuthorizeInputにバインド
 	if err := c.BindQuery(&input); err != nil {
