@@ -1,4 +1,4 @@
-package delete_token
+package usecases
 
 import (
 	"net/http"
@@ -6,25 +6,23 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
-var secretKey = []byte("test")
-
-type UseCase struct {
+type DeleteToken struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
-	return &UseCase{
+func NewDeleteToken(redisCli *redis.RedisCli, db *repository.Repository) *DeleteToken {
+	return &DeleteToken{
 		redisCli: redisCli,
 		db:       db,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
+func (u *DeleteToken) Invoke(c *gin.Context) {
 	// "Authorization" ヘッダーを取得
 	authHeader := c.GetHeader("Authorization")
 
@@ -38,8 +36,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
 	if err := u.db.RevokeToken(tokenStr); err != nil {
-		c.Error(errors.WithStack(err))
-		c.JSON(http.StatusUnauthorized, err)
+		c.Error(errors.WithStack(err)).SetType(gin.ErrorTypePublic).SetMeta(http.StatusInternalServerError)
 		return
 	}
 

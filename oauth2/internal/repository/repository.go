@@ -85,8 +85,8 @@ func NewClient(c Conn) (*Repository, error) {
 	}, nil
 }
 
-func (c *Repository) Close() {
-	c.db.Close()
+func (r *Repository) Close() {
+	r.db.Close()
 }
 
 func (r *Repository) FindClientByClientID(clientID string) (Client, error) {
@@ -105,7 +105,7 @@ func (r *Repository) FindUserByEmail(email string) (User, error) {
 	return u, errors.WithStack(err)
 }
 
-func (r *Repository) RegisterOAuth2Code(c Code) error {
+func (r *Repository) RegisterOAuth2Code(c *Code) error {
 	c.CreatedAt = time.Now()
 	c.UpdatedAt = time.Now()
 	q := `
@@ -126,7 +126,7 @@ func (r *Repository) FindValidOAuth2Code(code string, expiresAt time.Time) (Code
 	return c, errors.WithStack(err)
 }
 
-func (r *Repository) RegisterToken(t Token) error {
+func (r *Repository) RegisterToken(t *Token) error {
 	t.CreatedAt = time.Now()
 	t.UpdatedAt = time.Now()
 	q := `
@@ -137,7 +137,7 @@ func (r *Repository) RegisterToken(t Token) error {
 	return errors.WithStack(err)
 }
 
-func (r *Repository) RegesterRefreshToken(t RefreshToken) error {
+func (r *Repository) RegesterRefreshToken(t *RefreshToken) error {
 	t.CreatedAt = time.Now()
 	t.UpdatedAt = time.Now()
 	q := `INSERT INTO oauth2_refresh_tokens (refresh_token, access_token, expires_at, created_at, updated_at)
@@ -196,7 +196,7 @@ func (r *Repository) ExistsUserByEmail(email string) (bool, error) {
 	return c > 0, errors.WithStack(err)
 }
 
-func (r *Repository) CreateUser(u User) error {
+func (r *Repository) CreateUser(u *User) error {
 	u.CreatedAt = time.Now()
 	u.UpdatedAt = time.Now()
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)

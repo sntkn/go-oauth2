@@ -49,7 +49,7 @@ func Generate(p TokenParams) (string, error) {
 
 func Parse(tokenStr string) (*CustomClaims, error) {
 	// JWTトークンをパース
-	token, err := jwt.ParseWithClaims(tokenStr, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &CustomClaims{}, func(*jwt.Token) (any, error) {
 		// シークレットキーまたは公開鍵を返すことが必要です
 		return secretKey, nil
 	})

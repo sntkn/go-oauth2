@@ -1,14 +1,14 @@
-package create_user
+package usecases
 
 import (
 	"net/http"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type SignupInput struct {
@@ -17,26 +17,22 @@ type SignupInput struct {
 	Password string `form:"password"`
 }
 
-type RegistrationForm struct {
-	Name  string `form:"name"`
-	Email string `form:"email"`
-	Error string
-}
-
-type UseCase struct {
+type CreateUser struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
+	cfg      *config.Config
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
-	return &UseCase{
+func NewCreateUser(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) *CreateUser {
+	return &CreateUser{
 		redisCli: redisCli,
 		db:       db,
+		cfg:      cfg,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
-	s := session.NewSession(c, u.redisCli)
+func (u *CreateUser) Invoke(c *gin.Context) {
+	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 	var input SignupInput
 	// Query ParameterをAuthorizeInputにバインド
 	if err := c.Bind(&input); err != nil {
@@ -76,12 +72,11 @@ func (u *UseCase) Run(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	} else if eu {
-		//err := fmt.Errorf("User %s already exists", input.Email)
 		c.Redirect(http.StatusFound, "/signup")
 		return
 	}
 
-	user := repository.User{
+	user := &repository.User{
 		Name:     input.Name,
 		Email:    input.Email,
 		Password: input.Password,
@@ -100,9 +95,4 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusFound, "/signup-finished")
-}
-
-func IsValidUUID(u string) bool {
-	_, err := uuid.Parse(u)
-	return err == nil
 }

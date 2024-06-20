@@ -3,23 +3,27 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
+	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
+	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorization"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/authorize"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/create_token"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/create_user"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/delete_token"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/me"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signin"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases/signup_finished"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+)
+
+const (
+	readHederTimeout      = 5 * time.Second
+	shutdownTimeoutSecond = 5 * time.Second
 )
 
 func main() {
@@ -32,7 +36,7 @@ func main() {
 	// エラーログを出力するミドルウェアを追加
 	r.Use(ErrorLoggerMiddleware())
 
-	config, err := GetEnv()
+	cfg, err := config.GetEnv()
 	if err != nil {
 		slog.Error("Config Load Error", "message:", err)
 		return
@@ -51,11 +55,11 @@ func main() {
 
 	// PostgreSQLに接続
 	db, err := repository.NewClient(repository.Conn{
-		Host:     config.DBHost,
-		Port:     uint32(config.DBPort),
-		User:     config.DBUser,
-		Password: config.DBPassword,
-		DBName:   config.DBName,
+		Host:     cfg.DBHost,
+		Port:     uint32(cfg.DBPort),
+		User:     cfg.DBUser,
+		Password: cfg.DBPassword,
+		DBName:   cfg.DBName,
 	})
 	if err != nil {
 		slog.Error("Database Error", "message:", err)
@@ -63,18 +67,49 @@ func main() {
 	}
 	defer db.Close()
 
-	r.GET("/signin", signin.NewUseCase(redisCli).Run)
-	r.GET("/authorize", authorize.NewUseCase(redisCli, db).Run)
-	r.POST("/authorization", authorization.NewUseCase(redisCli, db).Run)
-	r.POST("/token", create_token.NewUseCase(redisCli, db).Run)
-	r.GET("/me", me.NewUseCase(redisCli, db).Run)
-	r.DELETE("/token", delete_token.NewUseCase(redisCli, db).Run)
-	r.GET("/signup", signup.NewUseCase(redisCli).Run)
-	r.POST("/signup", create_user.NewUseCase(redisCli, db).Run)
-	r.GET("/signup-finished", signup_finished.NewUseCase().Run)
+	r.GET("/signin", auth.SigninHandler(redisCli, cfg))
+	r.GET("/authorize", auth.AuthrozeHandler(redisCli, db, cfg))
+	r.POST("/authorization", auth.AuthrozationHandler(redisCli, db, cfg))
+	r.POST("/token", auth.CreateTokenHandler(redisCli, db, cfg))
+	r.DELETE("/token", auth.DeleteTokenHandler(redisCli, db))
+	r.GET("/me", user.GetUserHandler(redisCli, db))
+	r.GET("/signup", user.SignupHandler(redisCli, cfg))
+	r.POST("/signup", user.CreateUserHandler(redisCli, db, cfg))
+	r.GET("/signup-finished", user.SignupFinishedHandler())
 
-	// サーバーをポート8080で起動
-	r.Run(":8080")
+	// サーバーの設定
+	srv := &http.Server{
+		Addr:              ":8080",
+		Handler:           r,
+		ReadHeaderTimeout: readHederTimeout,
+	}
+
+	// サーバーを非同期で起動
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	// シグナル受信のためのチャネルを作成
+	quit := make(chan os.Signal, 1)
+	// SIGINT（Ctrl+C）およびSIGTERMを受け取る
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	// タイムアウト付きのコンテキストを設定
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeoutSecond)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("Server forced to shutdown: %+v\n", err)
+	}
+
+	// ctx.Done() をキャッチする。5秒間のタイムアウト。
+	<-ctx.Done()
+	log.Println("timeout of 5 seconds.")
+
+	log.Println("Server exiting")
 }
 
 // ErrorLoggerMiddleware はエラーログを出力するためのミドルウェアです。
@@ -87,22 +122,34 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 				slog.Error(fmt.Sprintf("%+v\n", err.Err))
 			}
 		}
+
+		err := c.Errors.ByType(gin.ErrorTypePublic).Last()
+		if err != nil {
+			// 短縮して型アサーションとデフォルト値の設定を一行で
+			statusCode := func() int {
+				if sc, ok := err.Meta.(int); ok {
+					return sc
+				}
+				return http.StatusInternalServerError
+			}()
+			c.JSON(statusCode, gin.H{"error": err.Error()})
+		}
 	}
 }
 
 func ping() (bool, error) {
-	config, err := GetEnv()
+	cfg, err := config.GetEnv()
 	if err != nil {
 		slog.Error("Config Load Error", "message:", err)
 		return false, err
 	}
 
 	db, err := repository.NewClient(repository.Conn{
-		Host:     config.DBHost,
-		Port:     uint32(config.DBPort),
-		User:     config.DBUser,
-		Password: config.DBPassword,
-		DBName:   config.DBName,
+		Host:     cfg.DBHost,
+		Port:     uint32(cfg.DBPort),
+		User:     cfg.DBUser,
+		Password: cfg.DBPassword,
+		DBName:   cfg.DBName,
 	})
 	if err != nil {
 		slog.Error("Database Error", "message:", err)

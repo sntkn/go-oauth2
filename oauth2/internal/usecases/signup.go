@@ -1,12 +1,13 @@
-package signup
+package usecases
 
 import (
 	"net/http"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type RegistrationForm struct {
@@ -15,18 +16,20 @@ type RegistrationForm struct {
 	Error string
 }
 
-type UseCase struct {
+type Signup struct {
 	redisCli *redis.RedisCli
+	cfg      *config.Config
 }
 
-func NewUseCase(redisCli *redis.RedisCli) *UseCase {
-	return &UseCase{
+func NewSignup(redisCli *redis.RedisCli, cfg *config.Config) *Signup {
+	return &Signup{
 		redisCli: redisCli,
+		cfg:      cfg,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
-	s := session.NewSession(c, u.redisCli)
+func (u *Signup) Invoke(c *gin.Context) {
+	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 	var form RegistrationForm
 	if err := s.FlushNamedSessionData(c, "signup_form", &form); err != nil {
 		c.Error(errors.WithStack(err))

@@ -1,4 +1,4 @@
-package authorization
+package usecases
 
 import (
 	"crypto/rand"
@@ -12,67 +12,47 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type SigninForm struct {
-	Email string `form:"email"`
-	Error string
-}
-
 type AuthorizationInput struct {
-	Email    string `form:"email"`
-	Password string `form:"password"`
+	Email    string `form:"email" binding:"required,email"`
+	Password string `form:"password" binding:"required"`
 }
 
-type AuthorizeInput struct {
-	ResponseType string `form:"response_type"`
-	ClientID     string `form:"client_id"`
-	Scope        string `form:"scope"`
-	RedirectURI  string `form:"redirect_uri"`
-	State        string `form:"state"`
-}
-
-type UseCase struct {
+type Authorization struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
+	cfg      *config.Config
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
-	return &UseCase{
+func NewAuthorization(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) *Authorization {
+	return &Authorization{
 		redisCli: redisCli,
 		db:       db,
+		cfg:      cfg,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
-	s := session.NewSession(c, u.redisCli)
+func (u *Authorization) Invoke(c *gin.Context) {
 	var input AuthorizationInput
-	// リクエストのJSONデータをAuthorizationInputにバインド
-	if err := c.Bind(&input); err != nil {
-		err := fmt.Errorf("Could not bind JSON")
+
+	if err := c.ShouldBind(&input); err != nil {
+		c.Redirect(http.StatusFound, "/signin")
+		return
+	}
+
+	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
+
+	if err := s.SetNamedSessionData(c, "signin_form", SigninForm{
+		Email: input.Email,
+	}); err != nil {
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	s.SetNamedSessionData(c, "signin_form", SigninForm{
-		Email: input.Email,
-	})
-
-	if input.Email == "" {
-		//err := fmt.Errorf("Invalid email address")
-		c.Redirect(http.StatusFound, "/signin")
-		return
-	}
-
-	if input.Password == "" {
-		//err := fmt.Errorf("Invalid password")
-		c.Redirect(http.StatusFound, "/signin")
-		return
 	}
 
 	// validate user credentials
@@ -102,8 +82,9 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	// create code
-	expired := time.Now().AddDate(0, 0, 10)
-	randomString, err := generateRandomString(32)
+	expired := time.Now().Add(u.cfg.AuthCodeExpires * time.Second)
+	randomStringLen := 32
+	randomString, err := generateRandomString(randomStringLen)
 	if err != nil {
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
@@ -117,7 +98,7 @@ func (u *UseCase) Run(c *gin.Context) {
 		return
 	}
 
-	err = u.db.RegisterOAuth2Code(repository.Code{
+	err = u.db.RegisterOAuth2Code(&repository.Code{
 		Code:        randomString,
 		ClientID:    clientID,
 		UserID:      user.ID,

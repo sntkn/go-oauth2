@@ -1,40 +1,35 @@
-package signin
+package usecases
 
 import (
 	"fmt"
 	"net/http"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
-
-type AuthorizeInput struct {
-	ResponseType string `form:"response_type"`
-	ClientID     string `form:"client_id"`
-	Scope        string `form:"scope"`
-	RedirectURI  string `form:"redirect_uri"`
-	State        string `form:"state"`
-}
 
 type SigninForm struct {
 	Email string `form:"email"`
 	Error string
 }
 
-type UseCase struct {
+type Signin struct {
 	redisCli *redis.RedisCli
+	cfg      *config.Config
 }
 
-func NewUseCase(redisCli *redis.RedisCli) *UseCase {
-	return &UseCase{
+func NewSignin(redisCli *redis.RedisCli, cfg *config.Config) *Signin {
+	return &Signin{
 		redisCli: redisCli,
+		cfg:      cfg,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
-	s := session.NewSession(c, u.redisCli)
+func (u *Signin) Invoke(c *gin.Context) {
+	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 
 	var input AuthorizeInput
 	if err := s.GetNamedSessionData(c, "auth", &input); err != nil {
@@ -44,7 +39,7 @@ func (u *UseCase) Run(c *gin.Context) {
 	}
 
 	if input.ClientID == "" {
-		err := fmt.Errorf("Invalid client_id")
+		err := fmt.Errorf("invalid client_id")
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return

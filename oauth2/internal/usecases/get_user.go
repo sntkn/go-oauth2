@@ -1,4 +1,4 @@
-package me
+package usecases
 
 import (
 	"fmt"
@@ -9,33 +9,30 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
-var secretKey = []byte("test")
-
-type UseCase struct {
+type GetUser struct {
 	redisCli *redis.RedisCli
 	db       *repository.Repository
 }
 
-func NewUseCase(redisCli *redis.RedisCli, db *repository.Repository) *UseCase {
-	return &UseCase{
+func NewGetUser(redisCli *redis.RedisCli, db *repository.Repository) *GetUser {
+	return &GetUser{
 		redisCli: redisCli,
 		db:       db,
 	}
 }
 
-func (u *UseCase) Run(c *gin.Context) {
+func (u *GetUser) Invoke(c *gin.Context) {
 	// "Authorization" ヘッダーを取得
 	authHeader := c.GetHeader("Authorization")
 
 	// "Authorization" ヘッダーが存在しない場合や、Bearer トークンでない場合はエラーを返す
 	if authHeader == "" {
-		err := fmt.Errorf("Missing or empty Authorization header")
-		c.Error(errors.WithStack(err))
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		err := fmt.Errorf("missing or empty authorization header")
+		c.Error(errors.WithStack(err)).SetType(gin.ErrorTypePublic).SetMeta(http.StatusUnauthorized)
 		return
 	}
 
