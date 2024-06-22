@@ -3,7 +3,7 @@ name: BuildAndPush
 on:
   push:
     branches:
-      - main
+      - "*"
     paths:
       - "oauth2/**"
       - ".github/**"
