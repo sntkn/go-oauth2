@@ -8,9 +8,9 @@ on:
       - "oauth2/**"
       - ".github/**"
   workflow_run:
-    workflows: ["Test"]
-    types:
-      - completed
+    workflows: [Test]
+    types: [completed]
+
 jobs:
   fail_on_error:
     runs-on: ubuntu-latest
