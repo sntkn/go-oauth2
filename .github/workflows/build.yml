@@ -3,15 +3,17 @@ name: BuildAndPush
 on:
   workflow_run:
     workflows: [Lint]
+    types: [completed]
 
 jobs:
   build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-      attestations: write
-      id-token: write
+      #attestations: write
+      #id-token: write
     strategy:
       matrix:
         go-version: ["1.22.x"]
@@ -22,10 +24,6 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       # You can test your matrix by printing the current Go version
-      - name: Display Go version
-        run: go version
-      - name: ls
-        run: ls -l
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
@@ -46,17 +44,3 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.BRANCH_NAME }}
             ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.COMMIT_HASH }}
-  fail_on_error:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-    steps:
-      - name: Failure
-        run: |
-          echo "Failure"
-  success:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    steps:
-      - name: Success
-        run: |
-          echo "Success"
