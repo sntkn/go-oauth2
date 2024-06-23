@@ -6,13 +6,40 @@ on:
     types: [completed]
 
 jobs:
-  on-success:
+  build:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    strategy:
+      matrix:
+        go-version: ["1.22.x"]
     steps:
-      - run: echo 'The triggering workflow passed'
-  on-failure:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-    steps:
-      - run: echo 'The triggering workflow failed'
+      - uses: actions/checkout@v4
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      # You can test your matrix by printing the current Go version
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Git information
+        id: git-info
+        run: |
+          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed -e 's/\//\-/g')" >> $GITHUB_ENV
+          echo "COMMIT_HASH=${GITHUB_SHA::7}" >> $GITHUB_ENV
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./oauth2
+          target: final
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.BRANCH_NAME }}
+            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.COMMIT_HASH }}
