@@ -22,8 +22,7 @@ jobs:
   build:
     if: >-
       ${{
-        github.actor != 'dependabot[bot]' &&
-        github.event.workflow_run.conclusion == 'success'
+        github.actor != 'dependabot[bot]'
       }}
     runs-on: ubuntu-latest
     permissions:
