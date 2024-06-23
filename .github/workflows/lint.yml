@@ -5,6 +5,7 @@ on:
     paths:
       - "**.go"
       - ".github/**"
+  workflow_dispatch:
 
 jobs:
   golangci-lint:
