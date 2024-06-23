@@ -3,8 +3,7 @@ name: BuildAndPush
 on:
   workflow_run:
     workflows: [Lint]
-    types:
-      - completed
+    types: [completed]
 
 jobs:
   build:
