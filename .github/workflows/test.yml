@@ -2,6 +2,11 @@ name: Test
 
 on:
   push:
+    branches:
+      - "*"
+    paths:
+      - "oauth2/**"
+      - ".github/**"
   workflow_dispatch:
 
 jobs:

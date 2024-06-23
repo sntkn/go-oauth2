@@ -1,12 +1,6 @@
 name: BuildAndPush
 
 on:
-  push:
-    branches:
-      - "*"
-    paths:
-      - "oauth2/**"
-      - ".github/**"
   workflow_run:
     workflows: [Test]
     types: [completed]

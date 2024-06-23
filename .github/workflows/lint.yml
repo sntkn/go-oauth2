@@ -1,9 +1,11 @@
 name: Lint
 
 on:
-  pull_request:
+  push:
+    branches:
+      - "*"
     paths:
-      - "**.go"
+      - "oauth2/**"
       - ".github/**"
   workflow_dispatch:
 
