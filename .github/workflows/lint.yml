@@ -7,7 +7,6 @@ on:
     paths:
       - "oauth2/**"
       - ".github/**"
-  workflow_dispatch:
 
 jobs:
   golangci-lint:
