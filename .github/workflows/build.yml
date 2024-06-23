@@ -8,9 +8,7 @@ on:
       - "oauth2/**"
       - ".github/**"
   workflow_run:
-    workflows:
-      - golangci-lint
-      - test
+    workflows: [Lint, Test]
     types:
       - completed
 jobs:
