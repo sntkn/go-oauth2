@@ -2,7 +2,7 @@ name: BuildAndPush
 
 on:
   workflow_run:
-    workflows: [Lint]
+    workflows: ["Lint"]
     types: [completed]
 
 jobs:
@@ -13,6 +13,13 @@ jobs:
       - name: Failure
         run: |
           echo "Failure"
+  success:
+    runs-on: ubuntu-latest
+    if: ${{github.event.workflow_run.conclusion == 'success'}}
+    steps:
+      - name: Success
+        run: |
+          echo "Success"
   build:
     if: >-
       ${{
