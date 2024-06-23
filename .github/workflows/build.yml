@@ -1,12 +1,8 @@
 name: BuildAndPush
 
 on:
-  push:
-    branches:
-      - "*"
-    paths:
-      - "oauth2/**"
-      - ".github/**"
+  workflow_run:
+    workflows: [Lint]
 
 jobs:
   build:
@@ -50,3 +46,17 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.BRANCH_NAME }}
             ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.COMMIT_HASH }}
+  fail_on_error:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - name: Failure
+        run: |
+          echo "Failure"
+  success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Success
+        run: |
+          echo "Success"
