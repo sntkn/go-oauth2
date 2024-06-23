@@ -8,7 +8,7 @@ on:
       - "oauth2/**"
       - ".github/**"
   workflow_run:
-    workflows: [Lint, Test]
+    workflows: [Test]
     types:
       - completed
 jobs:
