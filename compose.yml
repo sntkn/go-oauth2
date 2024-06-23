@@ -1,0 +1,41 @@
+services:
+  server:
+    build:
+      context: ./oauth2
+      target: development
+    container_name: server
+    ports:
+      - 8080:8080
+    environment:
+      DBHost: database
+      DBPort: "5432"
+      DBUser: app
+      DBPassword: pass
+      DBName: auth
+    volumes:
+      - ./oauth2:/src
+    depends_on:
+      - database
+      - session
+  database:
+    build:
+      context: ./docker/database
+    container_name: database
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - 5432:5432
+  session:
+    build:
+      context: ./docker/session
+    ports:
+      - 6379:6379
+    volumes:
+      - redisdata:/data
+volumes:
+  pgdata:
+  redisdata:

@@ -7,7 +7,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal/redis"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type Session struct {
@@ -15,14 +15,14 @@ type Session struct {
 	SessionStore *redis.RedisCli
 }
 
-func NewSession(c *gin.Context, r *redis.RedisCli) *Session {
+func NewSession(c *gin.Context, r *redis.RedisCli, expires int) *Session {
 	// セッションIDをクッキーから取得
 	sessionID, err := c.Cookie("sessionID")
 	if err != nil {
 		// セッションIDがない場合は新しいセッションIDを生成
 		sessionID = GenerateSessionID()
 		// クッキーにセッションIDをセット
-		c.SetCookie("sessionID", sessionID, 3600, "/", "localhost", false, true)
+		c.SetCookie("sessionID", sessionID, expires, "/", "localhost", false, true)
 	}
 
 	// Redisからセッションデータを取得
@@ -100,7 +100,7 @@ func (s *Session) FlushNamedSessionData(c *gin.Context, key string, t any) error
 	return nil
 }
 
-//func GetSessionDataToType[T any](s *Session, c *gin.Context, key string, t T) (T, error) {
+// func GetSessionDataToType[T any](s *Session, c *gin.Context, key string, t T) (T, error) {
 //	b, err := s.GetSessionData(c, key)
 //	if err != nil {
 //		return t, err
