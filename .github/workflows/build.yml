@@ -11,8 +11,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-      attestations: write
-      id-token: write
+      #attestations: write
+      #id-token: write
     strategy:
       matrix:
         go-version: ["1.22.x"]
