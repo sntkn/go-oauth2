@@ -1,21 +1,17 @@
 name: BuildAndPush
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "oauth2/**"
-      - ".github/**"
+  workflow_run:
+    workflows: [LintAndTest]
+    types: [completed]
 
 jobs:
   build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-      attestations: write
-      id-token: write
     strategy:
       matrix:
         go-version: ["1.22.x"]
@@ -26,10 +22,6 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       # You can test your matrix by printing the current Go version
-      - name: Display Go version
-        run: go version
-      - name: ls
-        run: ls -l
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
