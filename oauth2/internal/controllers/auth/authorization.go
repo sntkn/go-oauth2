@@ -39,6 +39,7 @@ func AuthrozationHandler(redisCli *redis.RedisCli, db *repository.Repository, cf
 		}); err != nil {
 			c.Error(errors.WithStack(err))
 			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
 		}
 
 		redirectURI, err := usecases.NewAuthorization(redisCli, db, cfg, s).Invoke(c, input.Email, input.Password)
@@ -55,6 +56,7 @@ func AuthrozationHandler(redisCli *redis.RedisCli, db *repository.Repository, cf
 			} else {
 				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			}
+			return
 		}
 
 		c.Redirect(http.StatusFound, redirectURI)

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"io"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -20,4 +21,9 @@ func GenerateRandomString(length int) (string, error) {
 	encodedString := base64.URLEncoding.EncodeToString(randomBytes)
 
 	return encodedString, nil
+}
+
+func IsValidUUID(u string) bool {
+	_, err := uuid.Parse(u)
+	return err == nil
 }
