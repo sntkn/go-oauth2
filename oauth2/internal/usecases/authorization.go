@@ -1,11 +1,8 @@
 package usecases
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -17,6 +14,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -64,7 +62,7 @@ func (u *Authorization) Invoke(c *gin.Context, email string, password string) (s
 	// create code
 	expired := time.Now().Add(u.cfg.AuthCodeExpires * time.Second)
 	randomStringLen := 32
-	randomString, err := generateRandomString(randomStringLen)
+	randomString, err := str.GenerateRandomString(randomStringLen)
 	if err != nil {
 		return "", cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -93,18 +91,4 @@ func (u *Authorization) Invoke(c *gin.Context, email string, password string) (s
 	}
 
 	return fmt.Sprintf("%s?code=%s", d.RedirectURI, randomString), nil
-}
-
-func generateRandomString(length int) (string, error) {
-	// ランダムなバイト列を生成
-	randomBytes := make([]byte, length)
-	_, err := io.ReadFull(rand.Reader, randomBytes)
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
-
-	// URLセーフなBase64エンコード
-	encodedString := base64.URLEncoding.EncodeToString(randomBytes)
-
-	return encodedString, nil
 }

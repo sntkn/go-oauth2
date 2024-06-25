@@ -12,6 +12,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
 type CreateToken struct {
@@ -124,7 +125,7 @@ func (u *CreateToken) createTokenByCode(c *gin.Context, input *TokenInput) {
 		return
 	}
 
-	randomString, err := generateRandomString(randomStringLen)
+	randomString, err := str.GenerateRandomString(randomStringLen)
 	if err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -209,7 +210,7 @@ func (u *CreateToken) CreateTokenByRefereshToken(c *gin.Context, input *TokenInp
 		return
 	}
 
-	randomString, err := generateRandomString(randomStringLen)
+	randomString, err := str.GenerateRandomString(randomStringLen)
 	if err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
