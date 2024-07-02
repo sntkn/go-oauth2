@@ -3,7 +3,7 @@ name: LintAndTest
 on:
   push:
     branches:
-      - "*"
+      - "**"
     paths:
       - "oauth2/**"
       - ".github/**"

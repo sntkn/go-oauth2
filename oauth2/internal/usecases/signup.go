@@ -3,18 +3,13 @@ package usecases
 import (
 	"net/http"
 
-	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
+	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
-
-type RegistrationForm struct {
-	Name  string `form:"name"`
-	Email string `form:"email"`
-	Error string
-}
 
 type Signup struct {
 	redisCli *redis.RedisCli
@@ -28,13 +23,11 @@ func NewSignup(redisCli *redis.RedisCli, cfg *config.Config) *Signup {
 	}
 }
 
-func (u *Signup) Invoke(c *gin.Context) {
+func (u *Signup) Invoke(c *gin.Context) (entity.SessionRegistrationForm, error) {
 	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
-	var form RegistrationForm
+	var form entity.SessionRegistrationForm
 	if err := s.FlushNamedSessionData(c, "signup_form", &form); err != nil {
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "500.html", gin.H{"error": err.Error()})
-		return
+		return form, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
-	c.HTML(http.StatusOK, "signup.html", gin.H{"f": form})
+	return form, nil
 }

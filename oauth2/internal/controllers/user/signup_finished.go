@@ -1,12 +1,13 @@
 package user
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 )
 
 func SignupFinishedHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		usecases.NewSignupFinished().Invoke(c)
+		c.HTML(http.StatusOK, "signup_finished.html", nil)
 	}
 }
