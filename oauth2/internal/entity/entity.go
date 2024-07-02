@@ -10,3 +10,9 @@ type SessionSigninForm struct {
 	Email string
 	Error string
 }
+
+type SessionRegistrationForm struct {
+	Name  string
+	Email string
+	Error string
+}
