@@ -5,3 +5,8 @@ type AuthTokens struct {
 	RefreshToken string
 	Expiry       int64
 }
+
+type SessionSigninForm struct {
+	Email string
+	Error string
+}
