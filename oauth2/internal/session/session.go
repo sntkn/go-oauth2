@@ -68,6 +68,20 @@ func (s *Session) DelSessionData(c *gin.Context, key string) error {
 	return s.SessionStore.Del(c, fullKey).Err()
 }
 
+// Get and flush session
+func (s *Session) PullSessionData(c *gin.Context, key string) ([]byte, error) {
+	v, err := s.GetSessionData(c, key)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.DelSessionData(c, key); err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
 func (s *Session) GetNamedSessionData(c *gin.Context, key string, t any) error {
 	b, err := s.GetSessionData(c, key)
 	if err != nil {

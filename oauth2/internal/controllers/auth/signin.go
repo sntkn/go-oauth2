@@ -32,7 +32,7 @@ func SigninHandler(redisCli *redis.RedisCli, cfg *config.Config) gin.HandlerFunc
 
 		s := session.NewSession(c, redisCli, cfg.SessionExpires)
 
-		mess, err := s.GetSessionData(c, "flushMessage")
+		mess, err := s.PullSessionData(c, "flushMessage")
 		if err != nil {
 			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		}
