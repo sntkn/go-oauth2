@@ -27,11 +27,6 @@ func AuthrozationHandler(redisCli *redis.RedisCli, db *repository.Repository, cf
 	return func(c *gin.Context) {
 		var input AuthorizationInput
 
-		if err := c.ShouldBind(&input); err != nil {
-			c.Redirect(http.StatusFound, "/signin")
-			return
-		}
-
 		s := session.NewSession(c, redisCli, cfg.SessionExpires)
 
 		if err := s.SetNamedSessionData(c, "signin_form", SigninForm{
@@ -42,13 +37,25 @@ func AuthrozationHandler(redisCli *redis.RedisCli, db *repository.Repository, cf
 			return
 		}
 
+		if err := c.ShouldBind(&input); err != nil {
+			if err := s.SetSessionData(c, "flushMessage", err.Error()); err != nil {
+				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+				return
+			}
+			c.Redirect(http.StatusFound, "/signin")
+			return
+		}
+
 		redirectURI, err := usecases.NewAuthorization(redisCli, db, cfg, s).Invoke(c, input.Email, input.Password)
 		if err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
 				case http.StatusFound:
+					if err := s.SetSessionData(c, "flushMessage", usecaseErr.Error()); err != nil {
+						c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
+						return
+					}
 					c.Redirect(http.StatusFound, "/signin")
-
 				case http.StatusInternalServerError:
 					c.Error(errors.WithStack(err)) // TODO: trigger usecase
 					c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
@@ -56,6 +63,11 @@ func AuthrozationHandler(redisCli *redis.RedisCli, db *repository.Repository, cf
 			} else {
 				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			}
+			return
+		}
+
+		if err := s.DelSessionData(c, "flushMessage"); err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
 

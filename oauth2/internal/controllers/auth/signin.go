@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
@@ -29,6 +30,13 @@ func SigninHandler(redisCli *redis.RedisCli, cfg *config.Config) gin.HandlerFunc
 			return
 		}
 
-		c.HTML(http.StatusOK, "signin.html", gin.H{"f": form})
+		s := session.NewSession(c, redisCli, cfg.SessionExpires)
+
+		mess, err := s.GetSessionData(c, "flushMessage")
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		}
+
+		c.HTML(http.StatusOK, "signin.html", gin.H{"f": form, "m": string(mess)})
 	}
 }
