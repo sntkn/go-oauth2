@@ -13,28 +13,25 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Authorization struct {
-	redisCli *redis.RedisCli
-	db       *repository.Repository
-	cfg      *config.Config
-	sess     *session.Session
+	db   *repository.Repository
+	cfg  *config.Config
+	sess *session.Session
 }
 
-func NewAuthorization(redisCli *redis.RedisCli,
+func NewAuthorization(
 	db *repository.Repository,
 	cfg *config.Config,
 	sess *session.Session,
 ) *Authorization {
 	return &Authorization{
-		redisCli: redisCli,
-		db:       db,
-		cfg:      cfg,
-		sess:     sess,
+		db:   db,
+		cfg:  cfg,
+		sess: sess,
 	}
 }
 

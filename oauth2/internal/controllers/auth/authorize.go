@@ -11,7 +11,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
@@ -23,8 +22,9 @@ type AuthorizeInput struct {
 	State        string `form:"state" binding:"required"`
 }
 
-func AuthrozeHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
+func AuthrozeHandler(sessionCreator session.Creator, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		s := sessionCreator(c)
 		var input AuthorizeInput
 
 		if err := c.ShouldBind(&input); err != nil {
@@ -39,9 +39,7 @@ func AuthrozeHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg *c
 			return
 		}
 
-		s := session.NewSession(c, redisCli, cfg.SessionExpires)
-
-		if err := usecases.NewAuthorize(redisCli, db, cfg, s).Invoke(c, input.ClientID, input.RedirectURI); err != nil {
+		if err := usecases.NewAuthorize(db, cfg, s).Invoke(c, input.ClientID, input.RedirectURI); err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
 				case http.StatusBadRequest:

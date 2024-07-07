@@ -10,7 +10,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type AuthorizeInput struct {
@@ -22,18 +21,16 @@ type AuthorizeInput struct {
 }
 
 type Authorize struct {
-	redisCli *redis.RedisCli
-	db       *repository.Repository
-	cfg      *config.Config
-	sess     *session.Session
+	db   *repository.Repository
+	cfg  *config.Config
+	sess *session.Session
 }
 
-func NewAuthorize(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config, sess *session.Session) *Authorize {
+func NewAuthorize(db *repository.Repository, cfg *config.Config, sess *session.Session) *Authorize {
 	return &Authorize{
-		redisCli: redisCli,
-		db:       db,
-		cfg:      cfg,
-		sess:     sess,
+		db:   db,
+		cfg:  cfg,
+		sess: sess,
 	}
 }
 

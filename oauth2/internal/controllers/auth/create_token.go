@@ -7,10 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type TokenInput struct {
@@ -25,9 +25,11 @@ type TokenOutput struct {
 	Expiry       int64  `json:"expiry"`
 }
 
-func CreateTokenHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
+func CreateTokenHandler(sessionCreator session.Creator, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		s := sessionCreator(c)
 		var input TokenInput
+
 		if err := c.BindJSON(&input); err != nil {
 			c.Error(errors.WithStack(err))
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -42,7 +44,7 @@ func CreateTokenHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg
 		}
 
 		if input.GrantType == "authorization_code" {
-			token, err := usecases.NewCreateTokenByCode(redisCli, db, cfg).Invoke(c, input.Code)
+			token, err := usecases.NewCreateTokenByCode(db, cfg, s).Invoke(c, input.Code)
 			if err != nil {
 				if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 					c.AbortWithStatusJSON(usecaseErr.Code, gin.H{"error": usecaseErr.Error()})
@@ -66,7 +68,7 @@ func CreateTokenHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
 		}
-		token, err := usecases.NewCreateTokenByRefreshToken(redisCli, db, cfg).Invoke(c, input.RefreshToken)
+		token, err := usecases.NewCreateTokenByRefreshToken(db, cfg, s).Invoke(c, input.RefreshToken)
 		if err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				c.AbortWithStatusJSON(usecaseErr.Code, gin.H{"error": usecaseErr.Error()})

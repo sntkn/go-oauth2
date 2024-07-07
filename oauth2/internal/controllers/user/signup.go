@@ -5,10 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type RegistrationForm struct {
@@ -17,9 +17,10 @@ type RegistrationForm struct {
 	Error string
 }
 
-func SignupHandler(redisCli *redis.RedisCli, cfg *config.Config) gin.HandlerFunc {
+func SignupHandler(sessionCreator session.Creator, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		form, err := usecases.NewSignup(redisCli, cfg).Invoke(c)
+		s := sessionCreator(c)
+		form, err := usecases.NewSignup(cfg, s).Invoke(c)
 		if err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {

@@ -14,6 +14,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 
@@ -67,14 +68,18 @@ func main() {
 	}
 	defer db.Close()
 
-	r.GET("/signin", auth.SigninHandler(redisCli, cfg))
-	r.GET("/authorize", auth.AuthrozeHandler(redisCli, db, cfg))
-	r.POST("/authorization", auth.AuthrozationHandler(redisCli, db, cfg))
-	r.POST("/token", auth.CreateTokenHandler(redisCli, db, cfg))
-	r.DELETE("/token", auth.DeleteTokenHandler(redisCli, db))
-	r.GET("/me", user.GetUserHandler(redisCli, db))
-	r.GET("/signup", user.SignupHandler(redisCli, cfg))
-	r.POST("/signup", user.CreateUserHandler(redisCli, db, cfg))
+	sessionCreator := func(c *gin.Context) *session.Session {
+		return session.NewSession(c, redisCli, cfg.SessionExpires)
+	}
+
+	r.GET("/signin", auth.SigninHandler(sessionCreator, cfg))
+	r.GET("/authorize", auth.AuthrozeHandler(sessionCreator, db, cfg))
+	r.POST("/authorization", auth.AuthrozationHandler(sessionCreator, db, cfg))
+	r.POST("/token", auth.CreateTokenHandler(sessionCreator, db, cfg))
+	r.DELETE("/token", auth.DeleteTokenHandler(sessionCreator, db))
+	r.GET("/me", user.GetUserHandler(sessionCreator, db))
+	r.GET("/signup", user.SignupHandler(sessionCreator, cfg))
+	r.POST("/signup", user.CreateUserHandler(sessionCreator, db, cfg))
 	r.GET("/signup-finished", user.SignupFinishedHandler())
 
 	// サーバーの設定

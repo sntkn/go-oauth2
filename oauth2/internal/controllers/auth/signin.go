@@ -9,12 +9,12 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
-func SigninHandler(redisCli *redis.RedisCli, cfg *config.Config) gin.HandlerFunc {
+func SigninHandler(sessionCreator session.Creator, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		form, err := usecases.NewSignin(redisCli, cfg).Invoke(c)
+		s := sessionCreator(c)
+		form, err := usecases.NewSignin(cfg, s).Invoke(c)
 		if err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
@@ -29,8 +29,6 @@ func SigninHandler(redisCli *redis.RedisCli, cfg *config.Config) gin.HandlerFunc
 			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
-
-		s := session.NewSession(c, redisCli, cfg.SessionExpires)
 
 		mess, err := s.PullSessionData(c, "flushMessage")
 		if err != nil {

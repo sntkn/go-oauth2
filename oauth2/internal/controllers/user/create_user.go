@@ -10,7 +10,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type SignupInput struct {
@@ -19,7 +18,7 @@ type SignupInput struct {
 	Password string `form:"password" binding:"required"`
 }
 
-func CreateUserHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
+func CreateUserHandler(sessionCreator session.Creator, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input SignupInput
 		// Query ParameterをAuthorizeInputにバインド
@@ -28,7 +27,7 @@ func CreateUserHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg 
 			return
 		}
 
-		s := session.NewSession(c, redisCli, cfg.SessionExpires)
+		s := sessionCreator(c)
 
 		user := repository.User{
 			Name:     input.Name,
@@ -36,7 +35,7 @@ func CreateUserHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg 
 			Password: input.Password,
 		}
 
-		if err := usecases.NewCreateUser(redisCli, db, cfg, s).Invoke(c, user); err != nil {
+		if err := usecases.NewCreateUser(db, cfg, s).Invoke(c, user); err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
 				case http.StatusFound:

@@ -18,6 +18,8 @@ type RedisClient interface {
 	GetOrNil(ctx context.Context, key string) ([]byte, error)
 }
 
+type Creator func(c *gin.Context) *Session
+
 type Session struct {
 	SessionID    string
 	SessionStore RedisClient

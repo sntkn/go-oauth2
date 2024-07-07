@@ -10,23 +10,23 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
 type CreateTokenByCode struct {
-	redisCli *redis.RedisCli
-	db       *repository.Repository
-	cfg      *config.Config
+	db   *repository.Repository
+	cfg  *config.Config
+	sess *session.Session
 }
 
-func NewCreateTokenByCode(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) *CreateTokenByCode {
+func NewCreateTokenByCode(db *repository.Repository, cfg *config.Config, sess *session.Session) *CreateTokenByCode {
 	return &CreateTokenByCode{
-		redisCli: redisCli,
-		db:       db,
-		cfg:      cfg,
+		db:   db,
+		cfg:  cfg,
+		sess: sess,
 	}
 }
 

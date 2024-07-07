@@ -10,7 +10,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type AuthorizationInput struct {
@@ -23,11 +22,10 @@ type SigninForm struct {
 	Error string
 }
 
-func AuthrozationHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
+func AuthrozationHandler(sessionCreator session.Creator, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		s := sessionCreator(c)
 		var input AuthorizationInput
-
-		s := session.NewSession(c, redisCli, cfg.SessionExpires)
 
 		if err := s.SetNamedSessionData(c, "signin_form", SigninForm{
 			Email: input.Email,
@@ -46,7 +44,7 @@ func AuthrozationHandler(redisCli *redis.RedisCli, db *repository.Repository, cf
 			return
 		}
 
-		redirectURI, err := usecases.NewAuthorization(redisCli, db, cfg, s).Invoke(c, input.Email, input.Password)
+		redirectURI, err := usecases.NewAuthorization(db, cfg, s).Invoke(c, input.Email, input.Password)
 		if err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
