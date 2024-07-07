@@ -10,23 +10,20 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
 type CreateTokenByCode struct {
-	db   *repository.Repository
-	cfg  *config.Config
-	sess *session.Session
+	cfg *config.Config
+	db  *repository.Repository
 }
 
-func NewCreateTokenByCode(db *repository.Repository, cfg *config.Config, sess *session.Session) *CreateTokenByCode {
+func NewCreateTokenByCode(cfg *config.Config, db *repository.Repository) *CreateTokenByCode {
 	return &CreateTokenByCode{
-		db:   db,
-		cfg:  cfg,
-		sess: sess,
+		cfg: cfg,
+		db:  db,
 	}
 }
 

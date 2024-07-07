@@ -7,7 +7,6 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
@@ -21,16 +20,14 @@ type AuthorizeInput struct {
 }
 
 type Authorize struct {
-	db   *repository.Repository
-	cfg  *config.Config
-	sess *session.Session
+	cfg *config.Config
+	db  *repository.Repository
 }
 
-func NewAuthorize(db *repository.Repository, cfg *config.Config, sess *session.Session) *Authorize {
+func NewAuthorize(cfg *config.Config, db *repository.Repository) *Authorize {
 	return &Authorize{
-		db:   db,
-		cfg:  cfg,
-		sess: sess,
+		cfg: cfg,
+		db:  db,
 	}
 }
 

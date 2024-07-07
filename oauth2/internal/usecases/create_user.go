@@ -16,15 +16,15 @@ type RegistrationData struct {
 }
 
 type CreateUser struct {
-	db   *repository.Repository
 	cfg  *config.Config
+	db   *repository.Repository
 	sess *session.Session
 }
 
-func NewCreateUser(db *repository.Repository, cfg *config.Config, sess *session.Session) *CreateUser {
+func NewCreateUser(cfg *config.Config, db *repository.Repository, sess *session.Session) *CreateUser {
 	return &CreateUser{
-		db:   db,
 		cfg:  cfg,
+		db:   db,
 		sess: sess,
 	}
 }

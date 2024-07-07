@@ -39,7 +39,7 @@ func AuthrozeHandler(sessionCreator session.Creator, db *repository.Repository, 
 			return
 		}
 
-		if err := usecases.NewAuthorize(db, cfg, s).Invoke(c, input.ClientID, input.RedirectURI); err != nil {
+		if err := usecases.NewAuthorize(cfg, db).Invoke(c, input.ClientID, input.RedirectURI); err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
 				case http.StatusBadRequest:

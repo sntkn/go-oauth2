@@ -35,7 +35,7 @@ func CreateUserHandler(sessionCreator session.Creator, db *repository.Repository
 			Password: input.Password,
 		}
 
-		if err := usecases.NewCreateUser(db, cfg, s).Invoke(c, user); err != nil {
+		if err := usecases.NewCreateUser(cfg, db, s).Invoke(c, user); err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
 				case http.StatusFound:

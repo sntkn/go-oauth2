@@ -11,14 +11,14 @@ import (
 )
 
 type Signup struct {
-	sess *session.Session
 	cfg  *config.Config
+	sess *session.Session
 }
 
 func NewSignup(cfg *config.Config, sess *session.Session) *Signup {
 	return &Signup{
-		sess: sess,
 		cfg:  cfg,
+		sess: sess,
 	}
 }
 

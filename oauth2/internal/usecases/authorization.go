@@ -18,19 +18,15 @@ import (
 )
 
 type Authorization struct {
-	db   *repository.Repository
 	cfg  *config.Config
+	db   *repository.Repository
 	sess *session.Session
 }
 
-func NewAuthorization(
-	db *repository.Repository,
-	cfg *config.Config,
-	sess *session.Session,
-) *Authorization {
+func NewAuthorization(cfg *config.Config, db *repository.Repository, sess *session.Session) *Authorization {
 	return &Authorization{
-		db:   db,
 		cfg:  cfg,
+		db:   db,
 		sess: sess,
 	}
 }

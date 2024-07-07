@@ -8,19 +8,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type GetUser struct {
-	db   *repository.Repository
-	sess *session.Session
+	db *repository.Repository
 }
 
-func NewGetUser(db *repository.Repository, sess *session.Session) *GetUser {
+func NewGetUser(db *repository.Repository) *GetUser {
 	return &GetUser{
-		db:   db,
-		sess: sess,
+		db: db,
 	}
 }
 

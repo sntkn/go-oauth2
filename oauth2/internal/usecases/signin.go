@@ -16,14 +16,14 @@ type SigninForm struct {
 }
 
 type Signin struct {
-	sess *session.Session
 	cfg  *config.Config
+	sess *session.Session
 }
 
 func NewSignin(cfg *config.Config, sess *session.Session) *Signin {
 	return &Signin{
-		sess: sess,
 		cfg:  cfg,
+		sess: sess,
 	}
 }
 

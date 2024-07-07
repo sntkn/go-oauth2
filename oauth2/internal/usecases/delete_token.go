@@ -6,19 +6,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type DeleteToken struct {
-	db   *repository.Repository
-	sess *session.Session
+	db *repository.Repository
 }
 
-func NewDeleteToken(db *repository.Repository, sess *session.Session) *DeleteToken {
+func NewDeleteToken(db *repository.Repository) *DeleteToken {
 	return &DeleteToken{
-		db:   db,
-		sess: sess,
+		db: db,
 	}
 }
 

@@ -44,7 +44,7 @@ func AuthrozationHandler(sessionCreator session.Creator, db *repository.Reposito
 			return
 		}
 
-		redirectURI, err := usecases.NewAuthorization(db, cfg, s).Invoke(c, input.Email, input.Password)
+		redirectURI, err := usecases.NewAuthorization(cfg, db, s).Invoke(c, input.Email, input.Password)
 		if err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
