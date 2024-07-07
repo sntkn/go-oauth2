@@ -1,21 +1,29 @@
 package session
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
+
+//go:generate go run github.com/matryer/moq -out session_mock.go . RedisClient
+type RedisClient interface {
+	Set(ctx context.Context, key string, value any, expiration time.Duration) error
+	Get(ctx context.Context, key string) ([]byte, error)
+	Del(ctx context.Context, key string) error
+	GetOrNil(ctx context.Context, key string) ([]byte, error)
+}
 
 type Session struct {
 	SessionID    string
-	SessionStore *redis.RedisCli
+	SessionStore RedisClient
 }
 
-func NewSession(c *gin.Context, r *redis.RedisCli, expires int) *Session {
+func NewSession(c *gin.Context, r RedisClient, expires int) *Session {
 	// セッションIDをクッキーから取得
 	sessionID, err := c.Cookie("sessionID")
 	if err != nil {
@@ -26,10 +34,10 @@ func NewSession(c *gin.Context, r *redis.RedisCli, expires int) *Session {
 	}
 
 	// Redisからセッションデータを取得
-	sessionData, err := r.Get(c, sessionID).Result()
+	sessionData, err := r.Get(c, sessionID)
 	if err != nil {
 		// セッションデータが存在しない場合は空のデータをセット
-		sessionData = ""
+		sessionData = nil
 	}
 
 	// セッションデータをコンテキストにセット
@@ -60,12 +68,12 @@ func (s *Session) GetSessionData(c *gin.Context, key string) ([]byte, error) {
 func (s *Session) SetSessionData(c *gin.Context, key string, input any) error {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
 	// Redisにセッションデータを書き込み
-	return s.SessionStore.Set(c, fullKey, input, 0).Err()
+	return s.SessionStore.Set(c, fullKey, input, 0)
 }
 
 func (s *Session) DelSessionData(c *gin.Context, key string) error {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
-	return s.SessionStore.Del(c, fullKey).Err()
+	return s.SessionStore.Del(c, fullKey)
 }
 
 // Get and flush session
@@ -86,9 +94,6 @@ func (s *Session) GetNamedSessionData(c *gin.Context, key string, t any) error {
 	b, err := s.GetSessionData(c, key)
 	if err != nil {
 		return err
-	}
-	if b == nil {
-		return nil
 	}
 	if err = json.Unmarshal(b, &t); err != nil {
 		return errors.WithStack(err)
