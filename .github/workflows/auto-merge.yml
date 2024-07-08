@@ -4,7 +4,7 @@ on: pull_request
 
 jobs:
   merge:
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -13,4 +13,6 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - run: gh pr merge "${GITHUB_HEAD_REF}" --auto
+      - run: |
+          gh pr review "${GITHUB_HEAD_REF}" --approve
+          gh pr merge "${GITHUB_HEAD_REF}" --merge --auto
