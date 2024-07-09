@@ -1,13 +1,21 @@
-name: BuildAndPush
+name: Build
 
 on:
-  workflow_run:
-    workflows: [LintAndTest]
-    types: [completed]
+  push:
+    branches:
+      - "**"
+    paths:
+      - "oauth2/**"
+      - ".github/**"
 
 jobs:
-  build:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  lint:
+    uses: ./.github/workflows/lint.yml
+  test:
+    uses: ./.github/workflows/test.yml
+  build-and-push:
+    needs: [lint, test]
+    if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,11 +36,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract Git information
-        id: git-info
-        run: |
-          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed -e 's/\//\-/g')" >> $GITHUB_ENV
-          echo "COMMIT_HASH=${GITHUB_SHA::7}" >> $GITHUB_ENV
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -40,5 +43,5 @@ jobs:
           target: final
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.BRANCH_NAME }}
-            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.COMMIT_HASH }}
+            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ github.sha }}
