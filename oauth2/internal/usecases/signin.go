@@ -1,13 +1,13 @@
 package usecases
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
+	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
@@ -28,28 +28,22 @@ func NewSignin(redisCli *redis.RedisCli, cfg *config.Config) *Signin {
 	}
 }
 
-func (u *Signin) Invoke(c *gin.Context) {
+func (u *Signin) Invoke(c *gin.Context) (entity.SessionSigninForm, error) {
 	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 
+	var form entity.SessionSigninForm
 	var input AuthorizeInput
+
 	if err := s.GetNamedSessionData(c, "auth", &input); err != nil {
-		c.Error(err)
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
+		return form, cerrs.NewUsecaseError(http.StatusBadRequest, err.Error())
 	}
 
 	if input.ClientID == "" {
-		err := fmt.Errorf("invalid client_id")
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
+		return form, cerrs.NewUsecaseError(http.StatusBadRequest, "invalid client_id")
 	}
 
-	var form SigninForm
 	if err := s.FlushNamedSessionData(c, "signin_form", &form); err != nil {
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
+		return form, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
-	c.HTML(http.StatusOK, "signin.html", gin.H{"f": form})
+	return form, nil
 }
