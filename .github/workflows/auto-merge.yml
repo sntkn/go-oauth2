@@ -3,7 +3,14 @@ name: Auto merge
 on: pull_request
 
 jobs:
+  lint:
+    uses: ./.github/workflows/lint.yml
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+  test:
+    uses: ./.github/workflows/test.yml
   merge:
+    needs: [lint, test]
     if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     permissions:
