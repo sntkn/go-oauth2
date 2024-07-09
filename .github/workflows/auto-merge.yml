@@ -4,8 +4,10 @@ on: pull_request
 
 jobs:
   lint:
+    if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
     uses: ./.github/workflows/lint.yml
   test:
+    if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
     uses: ./.github/workflows/test.yml
   merge:
     needs: [lint, test]

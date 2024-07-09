@@ -15,7 +15,7 @@ jobs:
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }} # GITHUB_TOKEN can be read directly from reusable workflow
           workdir: oauth2
           golangci_lint_flags: "--config=.golangci.yml --timeout=5m ./..."
           fail_on_error: true
