@@ -2,11 +2,6 @@ name: LintAndTest
 
 on:
   workflow_call:
-    secrets:
-      token:
-        required: true
-        description: GitHub Token
-
 
 jobs:
   golangci-lint:
@@ -20,7 +15,7 @@ jobs:
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2
         with:
-          github_token: ${{ secrets.token }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           workdir: oauth2
           golangci_lint_flags: "--config=.golangci.yml --timeout=5m ./..."
           fail_on_error: true
