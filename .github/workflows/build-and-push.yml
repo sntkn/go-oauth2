@@ -1,17 +1,23 @@
-name: BuildAndPush
+name: Build
 
 on:
-  workflow_run:
-    workflows: [LintAndTest]
-    types: [completed]
+  push:
+    branches:
+      - "**"
+    paths:
+      - "oauth2/**"
+      - ".github/**"
 
 jobs:
+  lint:
+    uses: ./.github/workflows/lint.yml
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+  test:
+    uses: ./.github/workflows/test.yml
   build:
-    if: >-
-      ${{
-        github.actor != 'dependabot[bot]' &&
-        github.event.workflow_run.conclusion == 'success'
-      }}
+    needs: [lint, test]
+    if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

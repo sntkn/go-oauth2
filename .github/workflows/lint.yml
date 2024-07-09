@@ -1,0 +1,27 @@
+name: LintAndTest
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+        description: GitHub Token
+
+
+jobs:
+  golangci-lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v2
+        with:
+          github_token: ${{ secrets.token }}
+          workdir: oauth2
+          golangci_lint_flags: "--config=.golangci.yml --timeout=5m ./..."
+          fail_on_error: true
+          reporter: "github-pr-review"
