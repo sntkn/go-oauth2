@@ -33,6 +33,12 @@ func SignupHandler(sessionCreator session.Creator, cfg *config.Config) gin.Handl
 			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
-		c.HTML(http.StatusOK, "signup.html", gin.H{"f": form})
+
+		mess, err := s.PullSessionData(c, "flushMessage")
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		}
+
+		c.HTML(http.StatusOK, "signup.html", gin.H{"f": form, "m": string(mess)})
 	}
 }

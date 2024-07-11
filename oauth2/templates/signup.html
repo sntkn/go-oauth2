@@ -20,6 +20,9 @@
         </p>
       <![endif]-->
       <div>
+        {{ if .m }}
+          <p style="color:red">{{ .m }}</p>
+        {{ end }}
         <p>Signup</p>
         <form method="post" action="./signup">
           <div class="control">

@@ -39,6 +39,10 @@ func CreateUserHandler(sessionCreator session.Creator, db *repository.Repository
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
 				case http.StatusFound:
+					if err := s.SetSessionData(c, "flushMessage", usecaseErr.Error()); err != nil {
+						c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
+						return
+					}
 					c.Redirect(http.StatusFound, "/signup")
 				case http.StatusInternalServerError:
 					c.Error(errors.WithStack(err)) // TODO: trigger usecase
