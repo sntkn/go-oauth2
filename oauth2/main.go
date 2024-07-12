@@ -13,6 +13,7 @@ import (
 
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
+	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
@@ -69,7 +70,10 @@ func main() {
 	defer db.Close()
 
 	sessionCreator := func(c *gin.Context) *session.Session {
-		return session.NewSession(c, redisCli, cfg.SessionExpires)
+		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
+		messages, _ := flashmessage.Flash(c, sess)
+		c.Set("flashMessages", messages)
+		return sess
 	}
 
 	r.GET("/signin", auth.SigninHandler(sessionCreator, cfg))
