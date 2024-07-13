@@ -76,9 +76,16 @@ func main() {
 		return sess
 	}
 
-	r.GET("/signin", auth.SigninHandler(sessionCreator, cfg))
+	r.Use(func(c *gin.Context) {
+		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
+		messages, _ := flashmessage.Flash(c, sess)
+		c.Set("session", sess)
+		c.Set("flashMessages", messages)
+	})
+
+	r.GET("/signin", auth.SigninHandler(cfg))
 	r.GET("/authorize", auth.AuthrozeHandler(sessionCreator, db, cfg))
-	r.POST("/authorization", auth.AuthrozationHandler(sessionCreator, db, cfg))
+	r.POST("/authorization", auth.AuthrozationHandler(db, cfg))
 	r.POST("/token", auth.CreateTokenHandler(db, cfg))
 	r.DELETE("/token", auth.DeleteTokenHandler(db))
 	r.GET("/me", user.GetUserHandler(db))

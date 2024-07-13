@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
@@ -22,9 +23,20 @@ type SigninForm struct {
 	Error string
 }
 
-func AuthrozationHandler(sessionCreator session.Creator, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
+func AuthrozationHandler(db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		s := sessionCreator(c)
+		s, err := session.GetSession(c)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
+		//mess, err := flashmessage.GetMessage(c)
+		//if err != nil {
+		//	c.Error(errors.WithStack(err)) // TODO: trigger usecase
+		//	c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		//	return
+		//}
+
 		var input AuthorizationInput
 
 		if err := s.SetNamedSessionData(c, "signin_form", SigninForm{
@@ -36,7 +48,7 @@ func AuthrozationHandler(sessionCreator session.Creator, db *repository.Reposito
 		}
 
 		if err := c.ShouldBind(&input); err != nil {
-			if err := s.SetSessionData(c, "flushMessage", err.Error()); err != nil {
+			if err := flashmessage.AddMessage(c, s, "error", err.Error()); err != nil {
 				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 				return
 			}
@@ -61,11 +73,6 @@ func AuthrozationHandler(sessionCreator session.Creator, db *repository.Reposito
 			} else {
 				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			}
-			return
-		}
-
-		if err := s.DelSessionData(c, "flushMessage"); err != nil {
-			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
 

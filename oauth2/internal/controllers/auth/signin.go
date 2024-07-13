@@ -5,15 +5,27 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
-func SigninHandler(sessionCreator session.Creator, cfg *config.Config) gin.HandlerFunc {
+func SigninHandler(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		s := sessionCreator(c)
+		s, err := session.GetSession(c)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
+		mess, err := flashmessage.GetMessage(c)
+		if err != nil {
+			c.Error(errors.WithStack(err)) // TODO: trigger usecase
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
+
 		form, err := usecases.NewSignin(cfg, s).Invoke(c)
 		if err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
@@ -30,11 +42,6 @@ func SigninHandler(sessionCreator session.Creator, cfg *config.Config) gin.Handl
 			return
 		}
 
-		mess, err := s.PullSessionData(c, "flushMessage")
-		if err != nil {
-			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		}
-
-		c.HTML(http.StatusOK, "signin.html", gin.H{"f": form, "m": string(mess)})
+		c.HTML(http.StatusOK, "signin.html", gin.H{"f": form, "mess": mess})
 	}
 }

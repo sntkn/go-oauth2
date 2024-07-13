@@ -1,6 +1,8 @@
 package flashmessage
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 )
@@ -12,6 +14,20 @@ const (
 	Notice  MessageType = "notice"
 	Error   MessageType = "error"
 )
+
+func GetMessage(c *gin.Context) (Messages, error) {
+	m, exists := c.Get("flashMessages")
+	if !exists {
+		return Messages{}, fmt.Errorf("flashMessages not found")
+	}
+
+	messages, ok := m.(Messages)
+	if !ok {
+		return Messages{}, fmt.Errorf("flashMessages value is not of type Message")
+	}
+
+	return messages, nil
+}
 
 type Messages struct {
 	Success []string
@@ -34,8 +50,7 @@ func setFlashMessages(c *gin.Context, s *session.Session, messages Messages) err
 	return nil
 }
 
-func Add(c *gin.Context, s *session.Session, t MessageType, m string) error {
-
+func AddMessage(c *gin.Context, s *session.Session, t MessageType, message string) error {
 	messages, err := getFlashMessages(c, s)
 	if err != nil {
 		return err
@@ -43,11 +58,11 @@ func Add(c *gin.Context, s *session.Session, t MessageType, m string) error {
 
 	switch t {
 	case Success:
-		messages.Success = append(messages.Success, m)
+		messages.Success = append(messages.Success, message)
 	case Notice:
-		messages.Notice = append(messages.Notice, m)
+		messages.Notice = append(messages.Notice, message)
 	case Error:
-		messages.Error = append(messages.Error, m)
+		messages.Error = append(messages.Error, message)
 	}
 
 	return setFlashMessages(c, s, messages)

@@ -25,6 +25,20 @@ type Session struct {
 	SessionStore RedisClient
 }
 
+func GetSession(c *gin.Context) (*Session, error) {
+	s, exists := c.Get("session")
+	if !exists {
+		return nil, fmt.Errorf("session not found")
+	}
+
+	sessionValue, ok := s.(*Session)
+	if !ok {
+		return nil, fmt.Errorf("session value is not of type Session")
+	}
+
+	return sessionValue, nil
+}
+
 func NewSession(c *gin.Context, r RedisClient, expires int) *Session {
 	// セッションIDをクッキーから取得
 	sessionID, err := c.Cookie("sessionID")
@@ -34,16 +48,6 @@ func NewSession(c *gin.Context, r RedisClient, expires int) *Session {
 		// クッキーにセッションIDをセット
 		c.SetCookie("sessionID", sessionID, expires, "/", "localhost", false, true)
 	}
-
-	// Redisからセッションデータを取得
-	sessionData, err := r.Get(c, sessionID)
-	if err != nil {
-		// セッションデータが存在しない場合は空のデータをセット
-		sessionData = nil
-	}
-
-	// セッションデータをコンテキストにセット
-	c.Set("sessionData", sessionData)
 
 	return &Session{
 		SessionID:    sessionID,
