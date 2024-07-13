@@ -95,7 +95,10 @@ func (s *Session) PullSessionData(c *gin.Context, key string) ([]byte, error) {
 func (s *Session) GetNamedSessionData(c *gin.Context, key string, t any) error {
 	b, err := s.GetSessionData(c, key)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
+	}
+	if len(b) == 0 {
+		return nil
 	}
 	if err = json.Unmarshal(b, &t); err != nil {
 		return errors.WithStack(err)
