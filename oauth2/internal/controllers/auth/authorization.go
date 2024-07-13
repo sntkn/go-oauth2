@@ -61,8 +61,8 @@ func AuthrozationHandler(db *repository.Repository, cfg *config.Config) gin.Hand
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
 				case http.StatusFound:
-					if err := s.SetSessionData(c, "flushMessage", usecaseErr.Error()); err != nil {
-						c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
+					if err := flashmessage.AddMessage(c, s, "error", usecaseErr.Error()); err != nil {
+						c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 						return
 					}
 					c.Redirect(http.StatusFound, "/signin")

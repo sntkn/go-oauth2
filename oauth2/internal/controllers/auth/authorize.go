@@ -22,9 +22,13 @@ type AuthorizeInput struct {
 	State        string `form:"state" binding:"required"`
 }
 
-func AuthrozeHandler(sessionCreator session.Creator, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
+func AuthrozeHandler(db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		s := sessionCreator(c)
+		s, err := session.GetSession(c)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
 		var input AuthorizeInput
 
 		if err := c.ShouldBind(&input); err != nil {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
@@ -18,16 +19,19 @@ type SignupInput struct {
 	Password string `form:"password" binding:"required"`
 }
 
-func CreateUserHandler(sessionCreator session.Creator, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
+func CreateUserHandler(db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		s, err := session.GetSession(c)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
 		var input SignupInput
 		// Query ParameterをAuthorizeInputにバインド
 		if err := c.Bind(&input); err != nil {
 			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 			return
 		}
-
-		s := sessionCreator(c)
 
 		user := repository.User{
 			Name:     input.Name,
@@ -39,8 +43,8 @@ func CreateUserHandler(sessionCreator session.Creator, db *repository.Repository
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
 				case http.StatusFound:
-					if err := s.SetSessionData(c, "flushMessage", usecaseErr.Error()); err != nil {
-						c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
+					if err := flashmessage.AddMessage(c, s, flashmessage.Error, usecaseErr.Error()); err != nil {
+						c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 						return
 					}
 					c.Redirect(http.StatusFound, "/signup")

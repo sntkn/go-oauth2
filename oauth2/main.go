@@ -69,13 +69,6 @@ func main() {
 	}
 	defer db.Close()
 
-	sessionCreator := func(c *gin.Context) *session.Session {
-		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
-		messages, _ := flashmessage.Flash(c, sess)
-		c.Set("flashMessages", messages)
-		return sess
-	}
-
 	r.Use(func(c *gin.Context) {
 		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
 		messages, _ := flashmessage.Flash(c, sess)
@@ -84,13 +77,13 @@ func main() {
 	})
 
 	r.GET("/signin", auth.SigninHandler(cfg))
-	r.GET("/authorize", auth.AuthrozeHandler(sessionCreator, db, cfg))
+	r.GET("/authorize", auth.AuthrozeHandler(db, cfg))
 	r.POST("/authorization", auth.AuthrozationHandler(db, cfg))
 	r.POST("/token", auth.CreateTokenHandler(db, cfg))
 	r.DELETE("/token", auth.DeleteTokenHandler(db))
 	r.GET("/me", user.GetUserHandler(db))
-	r.GET("/signup", user.SignupHandler(sessionCreator, cfg))
-	r.POST("/signup", user.CreateUserHandler(sessionCreator, db, cfg))
+	r.GET("/signup", user.SignupHandler(cfg))
+	r.POST("/signup", user.CreateUserHandler(db, cfg))
 	r.GET("/signup-finished", user.SignupFinishedHandler())
 
 	// サーバーの設定

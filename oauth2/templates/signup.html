@@ -20,8 +20,14 @@
         </p>
       <![endif]-->
       <div>
-        {{ if .m }}
-          <p style="color:red">{{ .m }}</p>
+        {{ range .mess.Success }}
+          <p style="color:green">{{ . }}</p>
+        {{ end }}
+        {{ range .mess.Notice }}
+          <p style="color:yellow">{{ . }}</p>
+        {{ end }}
+        {{ range .mess.Error }}
+          <p style="color:red">{{ . }}</p>
         {{ end }}
         <p>Signup</p>
         <form method="post" action="./signup">
