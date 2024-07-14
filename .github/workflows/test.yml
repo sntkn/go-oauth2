@@ -59,9 +59,10 @@ jobs:
           docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }}-db ./docker/database --load
           docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }}-session ./docker/session --load
           docker buildx bake -f compose.yml
-          docker compose up -d
+          docker compose up -d database session
 
       # 5. テスト実行
       - name: Test
         run: |
-          docker compose exec server go test -v ./...
+          cd oauth2
+          server go test -v ./...
