@@ -1,21 +1,45 @@
 package session
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
+
+//go:generate go run github.com/matryer/moq -out session_mock.go . RedisClient
+type RedisClient interface {
+	Set(ctx context.Context, key string, value any, expiration time.Duration) error
+	Get(ctx context.Context, key string) ([]byte, error)
+	Del(ctx context.Context, key string) error
+	GetOrNil(ctx context.Context, key string) ([]byte, error)
+}
+
+type Creator func(c *gin.Context) *Session
 
 type Session struct {
 	SessionID    string
-	SessionStore *redis.RedisCli
+	SessionStore RedisClient
 }
 
-func NewSession(c *gin.Context, r *redis.RedisCli, expires int) *Session {
+func GetSession(c *gin.Context) (*Session, error) {
+	s, exists := c.Get("session")
+	if !exists {
+		return nil, fmt.Errorf("session not found")
+	}
+
+	sessionValue, ok := s.(*Session)
+	if !ok {
+		return nil, fmt.Errorf("session value is not of type Session")
+	}
+
+	return sessionValue, nil
+}
+
+func NewSession(c *gin.Context, r RedisClient, expires int) *Session {
 	// セッションIDをクッキーから取得
 	sessionID, err := c.Cookie("sessionID")
 	if err != nil {
@@ -24,16 +48,6 @@ func NewSession(c *gin.Context, r *redis.RedisCli, expires int) *Session {
 		// クッキーにセッションIDをセット
 		c.SetCookie("sessionID", sessionID, expires, "/", "localhost", false, true)
 	}
-
-	// Redisからセッションデータを取得
-	sessionData, err := r.Get(c, sessionID).Result()
-	if err != nil {
-		// セッションデータが存在しない場合は空のデータをセット
-		sessionData = ""
-	}
-
-	// セッションデータをコンテキストにセット
-	c.Set("sessionData", sessionData)
 
 	return &Session{
 		SessionID:    sessionID,
@@ -60,20 +74,34 @@ func (s *Session) GetSessionData(c *gin.Context, key string) ([]byte, error) {
 func (s *Session) SetSessionData(c *gin.Context, key string, input any) error {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
 	// Redisにセッションデータを書き込み
-	return s.SessionStore.Set(c, fullKey, input, 0).Err()
+	return s.SessionStore.Set(c, fullKey, input, 0)
 }
 
 func (s *Session) DelSessionData(c *gin.Context, key string) error {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
-	return s.SessionStore.Del(c, fullKey).Err()
+	return s.SessionStore.Del(c, fullKey)
+}
+
+// Get and flush session
+func (s *Session) PullSessionData(c *gin.Context, key string) ([]byte, error) {
+	v, err := s.GetSessionData(c, key)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.DelSessionData(c, key); err != nil {
+		return nil, err
+	}
+
+	return v, nil
 }
 
 func (s *Session) GetNamedSessionData(c *gin.Context, key string, t any) error {
 	b, err := s.GetSessionData(c, key)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
-	if b == nil {
+	if len(b) == 0 {
 		return nil
 	}
 	if err = json.Unmarshal(b, &t); err != nil {

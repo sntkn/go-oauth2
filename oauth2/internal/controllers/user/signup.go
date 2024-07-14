@@ -5,10 +5,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type RegistrationForm struct {
@@ -17,9 +18,21 @@ type RegistrationForm struct {
 	Error string
 }
 
-func SignupHandler(redisCli *redis.RedisCli, cfg *config.Config) gin.HandlerFunc {
+func SignupHandler(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		form, err := usecases.NewSignup(redisCli, cfg).Invoke(c)
+		s, err := session.GetSession(c)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
+		mess, err := flashmessage.GetMessage(c)
+		if err != nil {
+			c.Error(errors.WithStack(err)) // TODO: trigger usecase
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
+
+		form, err := usecases.NewSignup(cfg, s).Invoke(c)
 		if err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
@@ -32,6 +45,7 @@ func SignupHandler(redisCli *redis.RedisCli, cfg *config.Config) gin.HandlerFunc
 			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 			return
 		}
-		c.HTML(http.StatusOK, "signup.html", gin.H{"f": form})
+
+		c.HTML(http.StatusOK, "signup.html", gin.H{"f": form, "mess": mess})
 	}
 }

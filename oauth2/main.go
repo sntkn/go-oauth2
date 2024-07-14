@@ -13,7 +13,9 @@ import (
 
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
+	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 
@@ -67,14 +69,21 @@ func main() {
 	}
 	defer db.Close()
 
-	r.GET("/signin", auth.SigninHandler(redisCli, cfg))
-	r.GET("/authorize", auth.AuthrozeHandler(redisCli, db, cfg))
-	r.POST("/authorization", auth.AuthrozationHandler(redisCli, db, cfg))
-	r.POST("/token", auth.CreateTokenHandler(redisCli, db, cfg))
-	r.DELETE("/token", auth.DeleteTokenHandler(redisCli, db))
-	r.GET("/me", user.GetUserHandler(redisCli, db))
-	r.GET("/signup", user.SignupHandler(redisCli, cfg))
-	r.POST("/signup", user.CreateUserHandler(redisCli, db, cfg))
+	r.Use(func(c *gin.Context) {
+		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
+		messages, _ := flashmessage.Flash(c, sess)
+		c.Set("session", sess)
+		c.Set("flashMessages", messages)
+	})
+
+	r.GET("/signin", auth.SigninHandler(cfg))
+	r.GET("/authorize", auth.AuthrozeHandler(db, cfg))
+	r.POST("/authorization", auth.AuthrozationHandler(db, cfg))
+	r.POST("/token", auth.CreateTokenHandler(db, cfg))
+	r.DELETE("/token", auth.DeleteTokenHandler(db))
+	r.GET("/me", user.GetUserHandler(db))
+	r.GET("/signup", user.SignupHandler(cfg))
+	r.POST("/signup", user.CreateUserHandler(db, cfg))
 	r.GET("/signup-finished", user.SignupFinishedHandler())
 
 	// サーバーの設定

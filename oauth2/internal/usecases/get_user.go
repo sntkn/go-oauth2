@@ -9,18 +9,15 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type GetUser struct {
-	redisCli *redis.RedisCli
-	db       *repository.Repository
+	db *repository.Repository
 }
 
-func NewGetUser(redisCli *redis.RedisCli, db *repository.Repository) *GetUser {
+func NewGetUser(db *repository.Repository) *GetUser {
 	return &GetUser{
-		redisCli: redisCli,
-		db:       db,
+		db: db,
 	}
 }
 

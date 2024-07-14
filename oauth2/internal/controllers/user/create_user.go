@@ -5,12 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type SignupInput struct {
@@ -19,8 +19,13 @@ type SignupInput struct {
 	Password string `form:"password" binding:"required"`
 }
 
-func CreateUserHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
+func CreateUserHandler(db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		s, err := session.GetSession(c)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
 		var input SignupInput
 		// Query ParameterをAuthorizeInputにバインド
 		if err := c.Bind(&input); err != nil {
@@ -28,18 +33,20 @@ func CreateUserHandler(redisCli *redis.RedisCli, db *repository.Repository, cfg 
 			return
 		}
 
-		s := session.NewSession(c, redisCli, cfg.SessionExpires)
-
 		user := repository.User{
 			Name:     input.Name,
 			Email:    input.Email,
 			Password: input.Password,
 		}
 
-		if err := usecases.NewCreateUser(redisCli, db, cfg, s).Invoke(c, user); err != nil {
+		if err := usecases.NewCreateUser(cfg, db, s).Invoke(c, user); err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				switch usecaseErr.Code {
 				case http.StatusFound:
+					if err := flashmessage.AddMessage(c, s, flashmessage.Error, usecaseErr.Error()); err != nil {
+						c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+						return
+					}
 					c.Redirect(http.StatusFound, "/signup")
 				case http.StatusInternalServerError:
 					c.Error(errors.WithStack(err)) // TODO: trigger usecase

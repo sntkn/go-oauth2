@@ -7,18 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type DeleteToken struct {
-	redisCli *redis.RedisCli
-	db       *repository.Repository
+	db *repository.Repository
 }
 
-func NewDeleteToken(redisCli *redis.RedisCli, db *repository.Repository) *DeleteToken {
+func NewDeleteToken(db *repository.Repository) *DeleteToken {
 	return &DeleteToken{
-		redisCli: redisCli,
-		db:       db,
+		db: db,
 	}
 }
 

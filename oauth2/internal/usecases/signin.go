@@ -8,7 +8,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type SigninForm struct {
@@ -17,24 +16,22 @@ type SigninForm struct {
 }
 
 type Signin struct {
-	redisCli *redis.RedisCli
-	cfg      *config.Config
+	cfg  *config.Config
+	sess *session.Session
 }
 
-func NewSignin(redisCli *redis.RedisCli, cfg *config.Config) *Signin {
+func NewSignin(cfg *config.Config, sess *session.Session) *Signin {
 	return &Signin{
-		redisCli: redisCli,
-		cfg:      cfg,
+		cfg:  cfg,
+		sess: sess,
 	}
 }
 
 func (u *Signin) Invoke(c *gin.Context) (entity.SessionSigninForm, error) {
-	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
-
 	var form entity.SessionSigninForm
 	var input AuthorizeInput
 
-	if err := s.GetNamedSessionData(c, "auth", &input); err != nil {
+	if err := u.sess.GetNamedSessionData(c, "auth", &input); err != nil {
 		return form, cerrs.NewUsecaseError(http.StatusBadRequest, err.Error())
 	}
 
@@ -42,7 +39,7 @@ func (u *Signin) Invoke(c *gin.Context) (entity.SessionSigninForm, error) {
 		return form, cerrs.NewUsecaseError(http.StatusBadRequest, "invalid client_id")
 	}
 
-	if err := s.FlushNamedSessionData(c, "signin_form", &form); err != nil {
+	if err := u.sess.FlushNamedSessionData(c, "signin_form", &form); err != nil {
 		return form, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 	return form, nil

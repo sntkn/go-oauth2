@@ -8,25 +8,23 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type Signup struct {
-	redisCli *redis.RedisCli
-	cfg      *config.Config
+	cfg  *config.Config
+	sess *session.Session
 }
 
-func NewSignup(redisCli *redis.RedisCli, cfg *config.Config) *Signup {
+func NewSignup(cfg *config.Config, sess *session.Session) *Signup {
 	return &Signup{
-		redisCli: redisCli,
-		cfg:      cfg,
+		cfg:  cfg,
+		sess: sess,
 	}
 }
 
 func (u *Signup) Invoke(c *gin.Context) (entity.SessionRegistrationForm, error) {
-	s := session.NewSession(c, u.redisCli, u.cfg.SessionExpires)
 	var form entity.SessionRegistrationForm
-	if err := s.FlushNamedSessionData(c, "signup_form", &form); err != nil {
+	if err := u.sess.FlushNamedSessionData(c, "signup_form", &form); err != nil {
 		return form, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 	return form, nil

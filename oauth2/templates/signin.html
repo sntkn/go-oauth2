@@ -20,6 +20,16 @@
         </p>
       <![endif]-->
       <div>
+        {{ range .mess.Success }}
+          <p style="color:green">{{ . }}</p>
+        {{ end }}
+        {{ range .mess.Notice }}
+          <p style="color:yellow">{{ . }}</p>
+        {{ end }}
+        {{ range .mess.Error }}
+          <p style="color:red">{{ . }}</p>
+        {{ end }}
+
         <form method="post" action="./authorization">
           <div class="control">
             <label for="email" class="control-label">Email</label>

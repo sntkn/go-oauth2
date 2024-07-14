@@ -36,26 +36,25 @@ func NewClient(ctx context.Context, o Options) (*RedisCli, error) {
 	}, nil
 }
 
-func (r *RedisCli) Set(ctx context.Context, key string, value any, expiration time.Duration) *redis.StatusCmd {
-	return r.cli.Set(ctx, key, value, expiration)
+func (r *RedisCli) Set(ctx context.Context, key string, value any, expiration time.Duration) error {
+	return r.cli.Set(ctx, key, value, expiration).Err()
 }
 
-func (r *RedisCli) Get(ctx context.Context, key string) *redis.StringCmd {
-	return r.cli.Get(ctx, key)
+func (r *RedisCli) Get(ctx context.Context, key string) ([]byte, error) {
+	return r.cli.Get(ctx, key).Bytes()
 }
 
-func (r *RedisCli) Del(ctx context.Context, key string) *redis.IntCmd {
-	return r.cli.Del(ctx, key)
+func (r *RedisCli) Del(ctx context.Context, key string) error {
+	return r.cli.Del(ctx, key).Err()
 }
 
 func (r *RedisCli) GetOrNil(ctx context.Context, key string) ([]byte, error) {
-	ret := r.cli.Get(ctx, key)
-	d, err := ret.Bytes()
+	b, err := r.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return d, nil
+	return b, nil
 }

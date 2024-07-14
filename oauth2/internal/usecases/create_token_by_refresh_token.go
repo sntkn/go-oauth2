@@ -12,21 +12,18 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
 type CreateTokenByRefreshToken struct {
-	redisCli *redis.RedisCli
-	db       *repository.Repository
-	cfg      *config.Config
+	cfg *config.Config
+	db  *repository.Repository
 }
 
-func NewCreateTokenByRefreshToken(redisCli *redis.RedisCli, db *repository.Repository, cfg *config.Config) *CreateTokenByRefreshToken {
+func NewCreateTokenByRefreshToken(cfg *config.Config, db *repository.Repository) *CreateTokenByRefreshToken {
 	return &CreateTokenByRefreshToken{
-		redisCli: redisCli,
-		db:       db,
-		cfg:      cfg,
+		cfg: cfg,
+		db:  db,
 	}
 }
 
