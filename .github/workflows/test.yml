@@ -47,11 +47,11 @@ jobs:
       # 4. docker composeビルド/起動
       - name: docker compose build & up
         run: |
-          docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }} ./docker/database
-          docker buildx bake --load -f compose.yml
+          docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }} ./docker/database --load
+          docker buildx bake -f compose.yml
           docker compose up -d
 
       # 5. テスト実行
       - name: Test
         run: |
-          docker compose run --rm server go test -v ./...
+          docker compose exec server go test -v ./...
