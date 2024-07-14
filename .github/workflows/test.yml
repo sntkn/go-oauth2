@@ -47,7 +47,7 @@ jobs:
       # 4. docker composeビルド/起動
       - name: docker compose build & up
         run: |
-          docker compose build
+          DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker compose build
           docker compose up -d
 
       # 5. テスト実行
