@@ -8,7 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'oauth2/go.mod'
+          check-latest: true
+          cache-dependency-path: |
+              oauth2/go.sum
       # 1. Buildxのセットアップ
       - name: Set up Docker Buildx
         id: buildx
