@@ -34,20 +34,30 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
-      - name: Build and push Docker image
+      - name: Build and push Docker database image
         uses: docker/build-push-action@v5
         with:
           context: ./docker/database
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}-db
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ steps.meta.outputs.tags }} # キャッシュを指定
+          cache-from: type=registry,ref=${{ steps.meta.outputs.tags }}-db # キャッシュを指定
+          cache-to: type=inline # キャッシュを指定
+      - name: Build and push Docker session image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./docker/session
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}-session
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ steps.meta.outputs.tags }}-session # キャッシュを指定
           cache-to: type=inline # キャッシュを指定
 
       # 4. docker composeビルド/起動
       - name: docker compose build & up
         run: |
-          docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }} ./docker/database --load
+          docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }}-db ./docker/database --load
+          docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }}-session ./docker/session --load
           docker buildx bake -f compose.yml
           docker compose up -d
 
