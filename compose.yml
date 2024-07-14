@@ -21,7 +21,7 @@ services:
     build:
       context: ./docker/database
       cache_from:
-        - ghcr.io/${{ github.repository }}:latest
+        - ghcr.io/sntkn/go-oauth2:cache-github-actions
     container_name: database
     restart: always
     volumes:
