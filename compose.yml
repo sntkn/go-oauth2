@@ -20,6 +20,8 @@ services:
   database:
     build:
       context: ./docker/database
+      cache_from:
+        - ghcr.io/${{ github.repository }}:latest
     container_name: database
     restart: always
     volumes:
