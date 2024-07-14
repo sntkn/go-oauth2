@@ -58,7 +58,7 @@ jobs:
         run: |
           docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }}-db ./docker/database --load
           docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }}-session ./docker/session --load
-          docker buildx bake -f compose.yml
+          docker buildx bake -f compose.yml database session
           docker compose up -d database session
 
       # 5. テスト実行
