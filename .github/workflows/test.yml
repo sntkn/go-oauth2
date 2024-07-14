@@ -19,16 +19,6 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v3
 
-      # 2. キャッシュ設定
-      - name: Cache Docker layers - App
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache-app # Buildxのキャッシュを指定
-          key: ${{ github.ref }}-${{ github.sha }} # キャッシュのキーを指定
-          restore-keys: |
-            ${{ github.ref }}
-            refs/head/main
-
       - name: Cache Docker layers - Database
         uses: actions/cache@v4
         with:
@@ -37,18 +27,6 @@ jobs:
           restore-keys: |
             ${{ github.ref }}
             refs/head/main
-
-      # 3. Buildxでイメージをビルドする
-      - name: Build images - App
-        uses: docker/build-push-action@v5
-        with:
-          push: false
-          builder: ${{ steps.buildx.outputs.name }} # Buildxでビルドすることを指定
-          tags: testapp-app-cached:latest # イメージ名を指定/docker-compose.ymlで参照する名前
-          load: true
-          context: ./oauth2
-          cache-from: type=local,src=/tmp/.buildx-cache-app # キャッシュを指定
-          cache-to: type=local,dest=/tmp/.buildx-cache-new-app # キャッシュを指定
 
       - name: Build images - Database
         uses: docker/build-push-action@v5
@@ -88,9 +66,7 @@ jobs:
       # https://github.com/moby/buildkit/issues/1896
       - name: Update cache
         run: |
-          rm -rf /tmp/.buildx-cache-app
           rm -rf /tmp/.buildx-cache-database
           rm -rf /tmp/.buildx-cache-session
-          mv /tmp/.buildx-cache-new-app /tmp/.buildx-cache-app
           mv /tmp/.buildx-cache-new-database /tmp/.buildx-cache-database
           mv /tmp/.buildx-cache-new-session /tmp/.buildx-cache-session
