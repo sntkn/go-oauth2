@@ -6,6 +6,10 @@ jobs:
   lint:
     if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
     uses: ./.github/workflows/lint.yml
+    permissions:
+      contents: read
+      packages: write
+
   test:
     if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
     uses: ./.github/workflows/test.yml

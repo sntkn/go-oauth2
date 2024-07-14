@@ -12,6 +12,9 @@ jobs:
   lint:
     uses: ./.github/workflows/lint.yml
   test:
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/test.yml
   build-and-push:
     needs: [lint, test]
