@@ -8,6 +8,7 @@ on:
       - "oauth2/**"
       - ".github/**"
       - "compose.yml"
+      - "docker/**"
 
 jobs:
   lint:
