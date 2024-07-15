@@ -79,3 +79,6 @@ password: mypassword1234!
 ## Reference
 
 - <https://qiita.com/TakahikoKawasaki/items/e508a14ed960347cff11>
+- <https://qiita.com/Daiius/items/9b3f26137380de74d049>
+- <https://qiita.com/tatsurou313/items/ad86da1bb9e8e570b6fa#docker-compose-における-buildkit-の利用>
+- <https://tech-lab.sios.jp/archives/39388#i-9>
