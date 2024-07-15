@@ -47,6 +47,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ steps.meta.outputs.tags }}-db
           cache-to: type=inline
+          no-cache: false
 
       # 5. Buildxのセットアップ
       - name: Build and push Docker session image
@@ -58,6 +59,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ steps.meta.outputs.tags }}-session
           cache-to: type=inline
+          no-cache: false
 
       # 6. docker composeビルド/起動
       - name: Compose Build & UP
