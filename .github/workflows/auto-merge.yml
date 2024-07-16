@@ -1,6 +1,8 @@
 name: Auto merge
 
-on: pull_request
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   lint:
@@ -22,7 +24,9 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
-      - run: |
-          gh pr review "${GITHUB_HEAD_REF}" --approve
-          gh pr merge "${GITHUB_HEAD_REF}" --merge --auto
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Approve PR
+        run: gh pr review "${GITHUB_HEAD_REF}" --approve
+      - name: Merge PR
+        run: gh pr merge "${GITHUB_HEAD_REF}" --merge --auto
