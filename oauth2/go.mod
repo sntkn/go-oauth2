@@ -15,7 +15,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/matryer/moq v0.3.4
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.25.0
 )
 
