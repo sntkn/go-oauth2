@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
@@ -13,9 +14,14 @@ import (
 )
 
 type TokenInput struct {
-	Code         string `json:"code" binding:"required"`
-	RefreshToken string `json:"refresh_token" binding:"required"`
-	GrantType    string `json:"grant_type" binding:"required"`
+	Code         string `json:"code" validate:"code_or_refresh_token"`
+	RefreshToken string `json:"refresh_token" validate:"code_or_refresh_token"`
+	GrantType    string `json:"grant_type" validate:"required"`
+}
+
+func codeOrRefreshToken(fl validator.FieldLevel) bool {
+	input := fl.Top().Interface().(TokenInput)
+	return input.Code != "" || input.RefreshToken != ""
 }
 
 type TokenOutput struct {
@@ -25,12 +31,23 @@ type TokenOutput struct {
 }
 
 func CreateTokenHandler(db *repository.Repository, cfg *config.Config) gin.HandlerFunc {
+
+	// Register the custom validation
+	validate := validator.New()
+	validate.RegisterValidation("code_or_refresh_token", codeOrRefreshToken)
+
 	return func(c *gin.Context) {
 		var input TokenInput
 
 		if err := c.BindJSON(&input); err != nil {
 			c.Error(errors.WithStack(err))
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Perform validation
+		if err := validate.Struct(input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 

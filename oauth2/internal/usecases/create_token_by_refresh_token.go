@@ -53,7 +53,7 @@ func (u *CreateTokenByRefreshToken) Invoke(c *gin.Context, refreshToken string) 
 		}
 		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
-	expiration := time.Now().Add(u.cfg.AuthTokenExpiresMin * time.Minute)
+	expiration := time.Now().Add(time.Duration(u.cfg.AuthTokenExpiresMin) * time.Minute)
 
 	t := accesstoken.TokenParams{
 		UserID:    tkn.UserID,
@@ -81,7 +81,7 @@ func (u *CreateTokenByRefreshToken) Invoke(c *gin.Context, refreshToken string) 
 	if err != nil {
 		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
-	refreshExpiration := time.Now().Add(u.cfg.AuthRefreshTokenExpiresDay * day)
+	refreshExpiration := time.Now().Add(time.Duration(u.cfg.AuthRefreshTokenExpiresDay) * day)
 
 	if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
 		RefreshToken: randomString,

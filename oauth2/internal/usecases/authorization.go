@@ -53,7 +53,7 @@ func (u *Authorization) Invoke(c *gin.Context, email string, password string) (s
 	}
 
 	// create code
-	expired := time.Now().Add(u.cfg.AuthCodeExpires * time.Second)
+	expired := time.Now().Add(time.Duration(u.cfg.AuthCodeExpires) * time.Second)
 	randomStringLen := 32
 	randomString, err := str.GenerateRandomString(randomStringLen)
 	if err != nil {

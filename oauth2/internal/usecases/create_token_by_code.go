@@ -49,7 +49,7 @@ func (u *CreateTokenByCode) Invoke(c *gin.Context, authCode string) (entity.Auth
 	}
 
 	// create token and refresh token
-	expiration := time.Now().Add(u.cfg.AuthTokenExpiresMin * time.Minute)
+	expiration := time.Now().Add(time.Duration(u.cfg.AuthTokenExpiresMin) * time.Minute)
 	t := accesstoken.TokenParams{
 		UserID:    code.UserID,
 		ClientID:  code.ClientID,
@@ -75,7 +75,7 @@ func (u *CreateTokenByCode) Invoke(c *gin.Context, authCode string) (entity.Auth
 	if err != nil {
 		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
-	refreshExpiration := time.Now().Add(u.cfg.AuthRefreshTokenExpiresDay * day)
+	refreshExpiration := time.Now().Add(time.Duration(u.cfg.AuthRefreshTokenExpiresDay) * day)
 	if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
 		RefreshToken: randomString,
 		AccessToken:  accessToken,
