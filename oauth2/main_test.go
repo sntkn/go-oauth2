@@ -1,8 +1,6 @@
 package main
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestPing(t *testing.T) {
 	_, err := ping()
