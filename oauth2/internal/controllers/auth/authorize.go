@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,12 +10,11 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
 type AuthorizeInput struct {
 	ResponseType string `form:"response_type" binding:"required"`
-	ClientID     string `form:"client_id" binding:"required"`
+	ClientID     string `form:"client_id" binding:"required,uuid"`
 	Scope        string `form:"scope" binding:"required"`
 	RedirectURI  string `form:"redirect_uri" binding:"required"`
 	State        string `form:"state" binding:"required"`
@@ -32,13 +30,6 @@ func AuthrozeHandler(db *repository.Repository, cfg *config.Config) gin.HandlerF
 		var input AuthorizeInput
 
 		if err := c.ShouldBind(&input); err != nil {
-			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-			return
-		}
-
-		if !str.IsValidUUID(input.ClientID) {
-			err := fmt.Errorf("could not parse client_id")
-			c.Error(errors.WithStack(err))
 			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 			return
 		}
