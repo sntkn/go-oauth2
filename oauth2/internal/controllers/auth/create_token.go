@@ -13,9 +13,9 @@ import (
 )
 
 type TokenInput struct {
-	Code         string `json:"code" binding:"required_without=RefreshToken"`
-	RefreshToken string `json:"refresh_token" binding:"required_without=Code"`
-	GrantType    string `json:"grant_type" binding:"required"`
+	Code         string `json:"code" binding:"required_without=RefreshToken,omitempty"`
+	RefreshToken string `json:"refresh_token" binding:"required_without=Code,omitempty"`
+	GrantType    string `json:"grant_type" binding:"required,oneof=authorization_code refresh_token"`
 }
 
 type TokenOutput struct {
@@ -30,13 +30,6 @@ func CreateTokenHandler(db *repository.Repository, cfg *config.Config) gin.Handl
 		var input TokenInput
 
 		if err := c.BindJSON(&input); err != nil {
-			c.Error(errors.WithStack(err))
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		if input.GrantType != "authorization_code" && input.GrantType != "refresh_token" {
-			err := fmt.Errorf("invalid grant type: %s", input.GrantType)
 			c.Error(errors.WithStack(err))
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
