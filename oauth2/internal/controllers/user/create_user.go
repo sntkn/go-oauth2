@@ -58,6 +58,10 @@ func CreateUserHandler(db *repository.Repository, cfg *config.Config) gin.Handle
 			return
 		}
 
+		if err := flashmessage.AddMessage(c, s, flashmessage.Success, "create user succeeded"); err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
 		c.Redirect(http.StatusFound, "/signup-finished")
 	}
 }
