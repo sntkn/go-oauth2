@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -10,5 +9,4 @@ func TestPing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("success")
 }
