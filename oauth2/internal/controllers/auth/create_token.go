@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,8 +12,8 @@ import (
 )
 
 type TokenInput struct {
-	Code         string `json:"code" binding:"required_without=RefreshToken,omitempty"`
-	RefreshToken string `json:"refresh_token" binding:"required_without=Code,omitempty"`
+	Code         string `json:"code" binding:"required_without=RefreshToken,required_with_field_value=GrantType authorization_code"`
+	RefreshToken string `json:"refresh_token" binding:"required_without=Code,required_with_field_value=GrantType refresh_token"`
 	GrantType    string `json:"grant_type" binding:"required,oneof=authorization_code refresh_token"`
 }
 
@@ -54,12 +53,6 @@ func CreateTokenHandler(db *repository.Repository, cfg *config.Config) gin.Handl
 			return
 		}
 
-		if input.RefreshToken == "" {
-			err := fmt.Errorf("invalid refresh token")
-			c.Error(errors.WithStack(err))
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
-			return
-		}
 		token, err := usecases.NewCreateTokenByRefreshToken(cfg, db).Invoke(c, input.RefreshToken)
 		if err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {

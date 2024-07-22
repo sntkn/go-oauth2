@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
@@ -20,6 +22,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	_ "github.com/lib/pq"
 )
 
@@ -27,6 +30,18 @@ const (
 	readHederTimeout      = 5 * time.Second
 	shutdownTimeoutSecond = 5 * time.Second
 )
+
+func required_with_field_value(fl validator.FieldLevel) bool {
+	params := strings.Split(fl.Param(), " ")
+	if len(params) != 2 {
+		return false
+	}
+	targetFieldValue := fl.Parent().FieldByName(params[0])
+	if targetFieldValue.IsValid() && targetFieldValue.String() == params[1] {
+		return fl.Field().String() != ""
+	}
+	return true
+}
 
 func main() {
 	// Ginルーターの初期化
@@ -68,6 +83,10 @@ func main() {
 		return
 	}
 	defer db.Close()
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("required_with_field_value", required_with_field_value)
+	}
 
 	r.Use(func(c *gin.Context) {
 		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
