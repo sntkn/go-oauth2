@@ -44,14 +44,8 @@ func required_with_field_value(fl validator.FieldLevel) bool {
 }
 
 func main() {
-	// Ginルーターの初期化
-	r := gin.Default()
-	r.LoadHTMLGlob("templates/*")
 
 	slog.New(slog.NewJSONHandler(os.Stdout, nil))
-
-	// エラーログを出力するミドルウェアを追加
-	r.Use(ErrorLoggerMiddleware())
 
 	cfg, err := config.GetEnv()
 	if err != nil {
@@ -84,10 +78,16 @@ func main() {
 	}
 	defer db.Close()
 
+	// Ginルーターの初期化
+	r := gin.Default()
+	r.LoadHTMLGlob("templates/*")
+
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("required_with_field_value", required_with_field_value)
 	}
 
+	// エラーログを出力するミドルウェアを追加
+	r.Use(ErrorLoggerMiddleware())
 	r.Use(func(c *gin.Context) {
 		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
 		messages, _ := flashmessage.Flash(c, sess)
