@@ -8,6 +8,14 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+//go:generate go run github.com/matryer/moq -out redis_mock.go . RedisClient
+type RedisClient interface {
+	Set(ctx context.Context, key string, value any, expiration time.Duration) error
+	Get(ctx context.Context, key string) ([]byte, error)
+	Del(ctx context.Context, key string) error
+	GetOrNil(ctx context.Context, key string) ([]byte, error)
+}
+
 type Options struct {
 	Addr     string // Redisのアドレスとポート番号に合わせて変更してください
 	Password string // Redisにパスワードが設定されている場合は設定してください
