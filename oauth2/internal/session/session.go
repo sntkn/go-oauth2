@@ -17,20 +17,6 @@ type Session struct {
 	SessionStore redis.RedisClient
 }
 
-func GetSession(c *gin.Context) (*Session, error) {
-	s, exists := c.Get("session")
-	if !exists {
-		return nil, fmt.Errorf("session not found")
-	}
-
-	sessionValue, ok := s.(*Session)
-	if !ok {
-		return nil, fmt.Errorf("session value is not of type Session")
-	}
-
-	return sessionValue, nil
-}
-
 //go:generate go run github.com/matryer/moq -out session_mock.go . SessionClient
 type SessionClient interface {
 	GetSessionData(c *gin.Context, key string) ([]byte, error)

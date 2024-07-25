@@ -93,17 +93,19 @@ func main() {
 		messages, _ := flashmessage.Flash(c, sess)
 		c.Set("session", sess)
 		c.Set("flashMessages", messages)
+		c.Set("cfg", cfg)
+		c.Set("db", db)
 	})
 
-	r.GET("/signin", auth.SigninHandler(cfg))
-	r.GET("/authorize", auth.AuthrozeHandler(db, cfg))
-	r.POST("/authorization", auth.AuthrozationHandler(db, cfg))
-	r.POST("/token", auth.CreateTokenHandler(db, cfg))
-	r.DELETE("/token", auth.DeleteTokenHandler(db))
-	r.GET("/me", user.GetUserHandler(db))
-	r.GET("/signup", user.SignupHandler(cfg))
-	r.POST("/signup", user.CreateUserHandler(db, cfg))
-	r.GET("/signup-finished", user.SignupFinishedHandler())
+	r.GET("/signin", auth.SigninHandler)
+	r.GET("/authorize", auth.AuthrozeHandler)
+	r.POST("/authorization", auth.AuthrozationHandler)
+	r.POST("/token", auth.CreateTokenHandler)
+	r.DELETE("/token", auth.DeleteTokenHandler)
+	r.GET("/me", user.GetUserHandler)
+	r.GET("/signup", user.SignupHandler)
+	r.POST("/signup", user.CreateUserHandler)
+	r.GET("/signup-finished", user.SignupFinishedHandler)
 
 	// サーバーの設定
 	srv := &http.Server{
