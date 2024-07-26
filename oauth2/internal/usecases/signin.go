@@ -10,11 +10,6 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
-type SigninForm struct {
-	Email string `form:"email"`
-	Error string
-}
-
 type Signin struct {
 	cfg  *config.Config
 	sess *session.Session

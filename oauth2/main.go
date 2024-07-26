@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
@@ -20,6 +22,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	_ "github.com/lib/pq"
 )
 
@@ -28,15 +31,21 @@ const (
 	shutdownTimeoutSecond = 5 * time.Second
 )
 
+func required_with_field_value(fl validator.FieldLevel) bool {
+	params := strings.Split(fl.Param(), " ")
+	if len(params) != 2 {
+		return false
+	}
+	targetFieldValue := fl.Parent().FieldByName(params[0])
+	if targetFieldValue.IsValid() && targetFieldValue.String() == params[1] {
+		return fl.Field().String() != ""
+	}
+	return true
+}
+
 func main() {
-	// Ginルーターの初期化
-	r := gin.Default()
-	r.LoadHTMLGlob("templates/*")
 
 	slog.New(slog.NewJSONHandler(os.Stdout, nil))
-
-	// エラーログを出力するミドルウェアを追加
-	r.Use(ErrorLoggerMiddleware())
 
 	cfg, err := config.GetEnv()
 	if err != nil {
@@ -69,22 +78,34 @@ func main() {
 	}
 	defer db.Close()
 
+	// Ginルーターの初期化
+	r := gin.Default()
+	r.LoadHTMLGlob("templates/*")
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("required_with_field_value", required_with_field_value)
+	}
+
+	// エラーログを出力するミドルウェアを追加
+	r.Use(ErrorLoggerMiddleware())
 	r.Use(func(c *gin.Context) {
 		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
 		messages, _ := flashmessage.Flash(c, sess)
 		c.Set("session", sess)
 		c.Set("flashMessages", messages)
+		c.Set("cfg", cfg)
+		c.Set("db", db)
 	})
 
-	r.GET("/signin", auth.SigninHandler(cfg))
-	r.GET("/authorize", auth.AuthrozeHandler(db, cfg))
-	r.POST("/authorization", auth.AuthrozationHandler(db, cfg))
-	r.POST("/token", auth.CreateTokenHandler(db, cfg))
-	r.DELETE("/token", auth.DeleteTokenHandler(db))
-	r.GET("/me", user.GetUserHandler(db))
-	r.GET("/signup", user.SignupHandler(cfg))
-	r.POST("/signup", user.CreateUserHandler(db, cfg))
-	r.GET("/signup-finished", user.SignupFinishedHandler())
+	r.GET("/signin", auth.SigninHandler)
+	r.GET("/authorize", auth.AuthrozeHandler)
+	r.POST("/authorization", auth.AuthrozationHandler)
+	r.POST("/token", auth.CreateTokenHandler)
+	r.DELETE("/token", auth.DeleteTokenHandler)
+	r.GET("/me", user.GetUserHandler)
+	r.GET("/signup", user.SignupHandler)
+	r.POST("/signup", user.CreateUserHandler)
+	r.GET("/signup-finished", user.SignupFinishedHandler)
 
 	// サーバーの設定
 	srv := &http.Server{

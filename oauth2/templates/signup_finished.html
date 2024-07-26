@@ -20,6 +20,15 @@
         </p>
       <![endif]-->
       <div>
+        {{ range .mess.Success }}
+          <p style="color:green">{{ . }}</p>
+        {{ end }}
+        {{ range .mess.Notice }}
+          <p style="color:yellow">{{ . }}</p>
+        {{ end }}
+        {{ range .mess.Error }}
+          <p style="color:red">{{ . }}</p>
+        {{ end }}
         <p>User creation was successful.</p>
       </div>
     </body>

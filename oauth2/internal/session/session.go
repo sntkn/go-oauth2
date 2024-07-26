@@ -1,45 +1,34 @@
 package session
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
-
-//go:generate go run github.com/matryer/moq -out session_mock.go . RedisClient
-type RedisClient interface {
-	Set(ctx context.Context, key string, value any, expiration time.Duration) error
-	Get(ctx context.Context, key string) ([]byte, error)
-	Del(ctx context.Context, key string) error
-	GetOrNil(ctx context.Context, key string) ([]byte, error)
-}
 
 type Creator func(c *gin.Context) *Session
 
 type Session struct {
 	SessionID    string
-	SessionStore RedisClient
+	SessionStore redis.RedisClient
 }
 
-func GetSession(c *gin.Context) (*Session, error) {
-	s, exists := c.Get("session")
-	if !exists {
-		return nil, fmt.Errorf("session not found")
-	}
-
-	sessionValue, ok := s.(*Session)
-	if !ok {
-		return nil, fmt.Errorf("session value is not of type Session")
-	}
-
-	return sessionValue, nil
+//go:generate go run github.com/matryer/moq -out session_mock.go . SessionClient
+type SessionClient interface {
+	GetSessionData(c *gin.Context, key string) ([]byte, error)
+	SetSessionData(c *gin.Context, key string, input any) error
+	DelSessionData(c *gin.Context, key string) error
+	PullSessionData(c *gin.Context, key string) ([]byte, error)
+	GetNamedSessionData(c *gin.Context, key string, t any) error
+	SetNamedSessionData(c *gin.Context, key string, v any) error
+	FlushNamedSessionData(c *gin.Context, key string, t any) error
 }
 
-func NewSession(c *gin.Context, r RedisClient, expires int) *Session {
+func NewSession(c *gin.Context, r redis.RedisClient, expires int) *Session {
 	// セッションIDをクッキーから取得
 	sessionID, err := c.Cookie("sessionID")
 	if err != nil {

@@ -1,8 +1,6 @@
 package flashmessage
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 )
@@ -14,20 +12,6 @@ const (
 	Notice  MessageType = "notice"
 	Error   MessageType = "error"
 )
-
-func GetMessage(c *gin.Context) (Messages, error) {
-	m, exists := c.Get("flashMessages")
-	if !exists {
-		return Messages{}, fmt.Errorf("flashMessages not found")
-	}
-
-	messages, ok := m.(Messages)
-	if !ok {
-		return Messages{}, fmt.Errorf("flashMessages value is not of type Message")
-	}
-
-	return messages, nil
-}
 
 type Messages struct {
 	Success []string
@@ -68,13 +52,13 @@ func AddMessage(c *gin.Context, s *session.Session, t MessageType, message strin
 	return setFlashMessages(c, s, messages)
 }
 
-func Flash(c *gin.Context, s *session.Session) (Messages, error) {
+func Flash(c *gin.Context, s *session.Session) (*Messages, error) {
 	messages, err := getFlashMessages(c, s)
 	if err != nil {
-		return Messages{}, err
+		return nil, err
 	}
 
 	setFlashMessages(c, s, Messages{})
 
-	return messages, nil
+	return &messages, nil
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +19,7 @@ func setupTestContext() *gin.Context {
 }
 
 func TestGetSessionData(t *testing.T) {
-	mockRedis := &RedisClientMock{
+	mockRedis := &redis.RedisClientMock{
 		GetOrNilFunc: func(ctx context.Context, key string) ([]byte, error) {
 			return []byte("testValue"), nil
 		},
@@ -38,7 +39,7 @@ func TestGetSessionData(t *testing.T) {
 }
 
 func TestSetSessionData(t *testing.T) {
-	mockRedis := &RedisClientMock{
+	mockRedis := &redis.RedisClientMock{
 		SetFunc: func(ctx context.Context, key string, value any, expiration time.Duration) error {
 			return nil
 		},
@@ -57,7 +58,7 @@ func TestSetSessionData(t *testing.T) {
 }
 
 func TestDelSessionData(t *testing.T) {
-	mockRedis := &RedisClientMock{
+	mockRedis := &redis.RedisClientMock{
 		DelFunc: func(ctx context.Context, key string) error {
 			return nil
 		},
@@ -76,7 +77,7 @@ func TestDelSessionData(t *testing.T) {
 }
 
 func TestPullSessionData(t *testing.T) {
-	mockRedis := &RedisClientMock{
+	mockRedis := &redis.RedisClientMock{
 		GetOrNilFunc: func(ctx context.Context, key string) ([]byte, error) {
 			return []byte("testValue"), nil
 		},
@@ -113,7 +114,7 @@ func TestGetNamedSessionData(t *testing.T) {
 	data, err := json.Marshal(input)
 	require.NoError(t, err)
 
-	mockRedis := &RedisClientMock{
+	mockRedis := &redis.RedisClientMock{
 		GetOrNilFunc: func(ctx context.Context, key string) ([]byte, error) {
 			return data, nil
 		},
@@ -149,7 +150,7 @@ func TestSetNamedSessionData(t *testing.T) {
 	data, err := json.Marshal(input)
 	require.NoError(t, err)
 
-	mockRedis := &RedisClientMock{
+	mockRedis := &redis.RedisClientMock{
 		SetFunc: func(ctx context.Context, key string, value any, expiration time.Duration) error {
 			return nil
 		},
@@ -182,7 +183,7 @@ func TestFlushNamedSessionData(t *testing.T) {
 	data, err := json.Marshal(input)
 	require.NoError(t, err)
 
-	mockRedis := &RedisClientMock{
+	mockRedis := &redis.RedisClientMock{
 		GetOrNilFunc: func(ctx context.Context, key string) ([]byte, error) {
 			return data, nil
 		},
