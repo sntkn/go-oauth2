@@ -93,7 +93,7 @@ func main() {
 		messages, _ := flashmessage.Flash(c, sess)
 		c.Set("session", sess)
 		c.Set("flashMessages", messages)
-		c.Set("cfg", cfg)
+		c.Set("cfg", *cfg)
 		c.Set("db", db)
 	})
 

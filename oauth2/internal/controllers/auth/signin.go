@@ -14,7 +14,7 @@ import (
 )
 
 func SigninHandler(c *gin.Context) {
-	s, err := internal.GetFromContext[session.Session](c, "session")
+	s, err := internal.GetFromContext[session.SessionClient](c, "session")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return

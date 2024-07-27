@@ -12,13 +12,13 @@ import (
 
 type Signin struct {
 	cfg  *config.Config
-	sess *session.Session
+	sess session.SessionClient
 }
 
-func NewSignin(cfg *config.Config, sess *session.Session) *Signin {
+func NewSignin(cfg *config.Config, sess *session.SessionClient) *Signin {
 	return &Signin{
 		cfg:  cfg,
-		sess: sess,
+		sess: *sess,
 	}
 }
 
