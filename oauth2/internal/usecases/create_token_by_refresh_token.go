@@ -17,10 +17,10 @@ import (
 
 type CreateTokenByRefreshToken struct {
 	cfg *config.Config
-	db  *repository.Repository
+	db  *repository.SQLXOAuth2Repository
 }
 
-func NewCreateTokenByRefreshToken(cfg *config.Config, db *repository.Repository) *CreateTokenByRefreshToken {
+func NewCreateTokenByRefreshToken(cfg *config.Config, db *repository.SQLXOAuth2Repository) *CreateTokenByRefreshToken {
 	return &CreateTokenByRefreshToken{
 		cfg: cfg,
 		db:  db,

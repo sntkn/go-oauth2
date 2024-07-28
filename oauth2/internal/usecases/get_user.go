@@ -12,10 +12,10 @@ import (
 )
 
 type GetUser struct {
-	db *repository.Repository
+	db *repository.SQLXOAuth2Repository
 }
 
-func NewGetUser(db *repository.Repository) *GetUser {
+func NewGetUser(db *repository.SQLXOAuth2Repository) *GetUser {
 	return &GetUser{
 		db: db,
 	}

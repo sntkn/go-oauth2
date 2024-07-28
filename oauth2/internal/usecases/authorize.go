@@ -21,10 +21,10 @@ type AuthorizeInput struct {
 
 type Authorize struct {
 	cfg *config.Config
-	db  *repository.Repository
+	db  *repository.SQLXOAuth2Repository
 }
 
-func NewAuthorize(cfg *config.Config, db *repository.Repository) *Authorize {
+func NewAuthorize(cfg *config.Config, db *repository.SQLXOAuth2Repository) *Authorize {
 	return &Authorize{
 		cfg: cfg,
 		db:  db,

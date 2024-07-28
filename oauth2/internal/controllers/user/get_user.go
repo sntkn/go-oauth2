@@ -11,7 +11,7 @@ import (
 )
 
 func GetUserHandler(c *gin.Context) {
-	db, err := internal.GetFromContext[repository.Repository](c, "db")
+	db, err := internal.GetFromContext[repository.SQLXOAuth2Repository](c, "db")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
