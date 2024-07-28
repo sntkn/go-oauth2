@@ -15,10 +15,10 @@ type Signin struct {
 	sess session.SessionClient
 }
 
-func NewSignin(cfg *config.Config, sess *session.SessionClient) *Signin {
+func NewSignin(cfg *config.Config, sess session.SessionClient) *Signin {
 	return &Signin{
 		cfg:  cfg,
-		sess: *sess,
+		sess: sess,
 	}
 }
 
