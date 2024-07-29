@@ -14,6 +14,10 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
+type AuthorizationUsecase interface {
+	Invoke(c *gin.Context, email string, password string) (string, error)
+}
+
 type AuthorizationInput struct {
 	Email    string `form:"email" binding:"required,email"`
 	Password string `form:"password" binding:"required"`
@@ -41,6 +45,11 @@ func AuthrozationHandler(c *gin.Context) {
 		return
 	}
 
+	uc := usecases.NewAuthorization(cfg, db, s)
+	authorization(c, uc, s)
+}
+
+func authorization(c *gin.Context, uc AuthorizationUsecase, s session.SessionClient) {
 	var input AuthorizationInput
 
 	if err := s.SetNamedSessionData(c, "signin_form", SigninForm{
@@ -60,7 +69,7 @@ func AuthrozationHandler(c *gin.Context) {
 		return
 	}
 
-	redirectURI, err := usecases.NewAuthorization(cfg, db, s).Invoke(c, input.Email, input.Password)
+	redirectURI, err := uc.Invoke(c, input.Email, input.Password)
 	if err != nil {
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 			switch usecaseErr.Code {

@@ -14,6 +14,10 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
+type CreateUserUsecase interface {
+	Invoke(c *gin.Context, user repository.User) error
+}
+
 type SignupInput struct {
 	Name     string `form:"name" binding:"required"`
 	Email    string `form:"email" binding:"required"`
@@ -21,12 +25,12 @@ type SignupInput struct {
 }
 
 func CreateUserHandler(c *gin.Context) {
-	db, err := internal.GetFromContext[repository.SQLXOAuth2Repository](c, "db")
+	db, err := internal.GetFromContextIF[repository.OAuth2Repository](c, "db")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
-	s, err := internal.GetFromContext[session.Session](c, "session")
+	s, err := internal.GetFromContextIF[session.SessionClient](c, "session")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
@@ -37,6 +41,11 @@ func CreateUserHandler(c *gin.Context) {
 		return
 	}
 
+	uc := usecases.NewCreateUser(cfg, db, s)
+	createUser(c, uc, s)
+}
+
+func createUser(c *gin.Context, uc CreateUserUsecase, s session.SessionClient) {
 	var input SignupInput
 	// Query ParameterをAuthorizeInputにバインド
 	if err := c.Bind(&input); err != nil {
@@ -50,7 +59,7 @@ func CreateUserHandler(c *gin.Context) {
 		Password: input.Password,
 	}
 
-	if err := usecases.NewCreateUser(cfg, db, s).Invoke(c, user); err != nil {
+	if err := uc.Invoke(c, user); err != nil {
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 			switch usecaseErr.Code {
 			case http.StatusFound:

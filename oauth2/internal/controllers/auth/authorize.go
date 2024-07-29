@@ -13,6 +13,10 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
+type AuthorizeUsecase interface {
+	Invoke(c *gin.Context, clientID string, redirectURI string) error
+}
+
 type AuthorizeInput struct {
 	ResponseType string `form:"response_type" binding:"required"`
 	ClientID     string `form:"client_id" binding:"required,uuid"`
@@ -38,6 +42,11 @@ func AuthrozeHandler(c *gin.Context) {
 		return
 	}
 
+	authorizeUsecase := usecases.NewAuthorize(cfg, db)
+	authorize(c, s, authorizeUsecase)
+}
+
+func authorize(c *gin.Context, s session.SessionClient, uc AuthorizeUsecase) {
 	var input AuthorizeInput
 
 	if err := c.ShouldBind(&input); err != nil {
@@ -45,7 +54,7 @@ func AuthrozeHandler(c *gin.Context) {
 		return
 	}
 
-	if err := usecases.NewAuthorize(cfg, db).Invoke(c, input.ClientID, input.RedirectURI); err != nil {
+	if err := uc.Invoke(c, input.ClientID, input.RedirectURI); err != nil {
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 			switch usecaseErr.Code {
 			case http.StatusBadRequest:

@@ -17,10 +17,10 @@ import (
 
 type CreateTokenByCode struct {
 	cfg *config.Config
-	db  *repository.SQLXOAuth2Repository
+	db  repository.OAuth2Repository
 }
 
-func NewCreateTokenByCode(cfg *config.Config, db *repository.SQLXOAuth2Repository) *CreateTokenByCode {
+func NewCreateTokenByCode(cfg *config.Config, db repository.OAuth2Repository) *CreateTokenByCode {
 	return &CreateTokenByCode{
 		cfg: cfg,
 		db:  db,

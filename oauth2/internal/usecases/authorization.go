@@ -19,11 +19,11 @@ import (
 
 type Authorization struct {
 	cfg  *config.Config
-	db   *repository.SQLXOAuth2Repository
-	sess *session.Session
+	db   repository.OAuth2Repository
+	sess session.SessionClient
 }
 
-func NewAuthorization(cfg *config.Config, db *repository.SQLXOAuth2Repository, sess *session.Session) *Authorization {
+func NewAuthorization(cfg *config.Config, db repository.OAuth2Repository, sess session.SessionClient) *Authorization {
 	return &Authorization{
 		cfg:  cfg,
 		db:   db,
