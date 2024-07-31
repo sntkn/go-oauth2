@@ -18,6 +18,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/internal/validation"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 
@@ -83,7 +84,7 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("required_with_field_value", required_with_field_value)
+		v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
 	}
 
 	// エラーログを出力するミドルウェアを追加
