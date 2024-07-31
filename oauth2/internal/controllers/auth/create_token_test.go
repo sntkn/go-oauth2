@@ -62,7 +62,7 @@ func TestCreateTokenHandler(t *testing.T) {
 				RegisterTokenFunc: func(t *repository.Token) error {
 					return nil
 				},
-				RegesterRefreshTokenFunc: func(t *repository.RefreshToken) error {
+				RegisterRefreshTokenFunc: func(t *repository.RefreshToken) error {
 					return nil
 				},
 				RevokeCodeFunc: func(code string) error {
@@ -135,7 +135,7 @@ func TestCreateTokenHandler(t *testing.T) {
 				RegisterTokenFunc: func(t *repository.Token) error {
 					return nil
 				},
-				RegesterRefreshTokenFunc: func(t *repository.RefreshToken) error {
+				RegisterRefreshTokenFunc: func(t *repository.RefreshToken) error {
 					return nil
 				},
 				RevokeTokenFunc: func(accessToken string) error {

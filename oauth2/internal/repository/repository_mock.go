@@ -43,11 +43,11 @@ var _ OAuth2Repository = &OAuth2RepositoryMock{}
 //			FindValidRefreshTokenFunc: func(refreshToken string, expiresAt time.Time) (RefreshToken, error) {
 //				panic("mock out the FindValidRefreshToken method")
 //			},
-//			RegesterRefreshTokenFunc: func(t *RefreshToken) error {
-//				panic("mock out the RegesterRefreshToken method")
-//			},
 //			RegisterOAuth2CodeFunc: func(c *Code) error {
 //				panic("mock out the RegisterOAuth2Code method")
+//			},
+//			RegisterRefreshTokenFunc: func(t *RefreshToken) error {
+//				panic("mock out the RegisterRefreshToken method")
 //			},
 //			RegisterTokenFunc: func(t *Token) error {
 //				panic("mock out the RegisterToken method")
@@ -92,11 +92,11 @@ type OAuth2RepositoryMock struct {
 	// FindValidRefreshTokenFunc mocks the FindValidRefreshToken method.
 	FindValidRefreshTokenFunc func(refreshToken string, expiresAt time.Time) (RefreshToken, error)
 
-	// RegesterRefreshTokenFunc mocks the RegesterRefreshToken method.
-	RegesterRefreshTokenFunc func(t *RefreshToken) error
-
 	// RegisterOAuth2CodeFunc mocks the RegisterOAuth2Code method.
 	RegisterOAuth2CodeFunc func(c *Code) error
+
+	// RegisterRefreshTokenFunc mocks the RegisterRefreshToken method.
+	RegisterRefreshTokenFunc func(t *RefreshToken) error
 
 	// RegisterTokenFunc mocks the RegisterToken method.
 	RegisterTokenFunc func(t *Token) error
@@ -156,15 +156,15 @@ type OAuth2RepositoryMock struct {
 			// ExpiresAt is the expiresAt argument value.
 			ExpiresAt time.Time
 		}
-		// RegesterRefreshToken holds details about calls to the RegesterRefreshToken method.
-		RegesterRefreshToken []struct {
-			// T is the t argument value.
-			T *RefreshToken
-		}
 		// RegisterOAuth2Code holds details about calls to the RegisterOAuth2Code method.
 		RegisterOAuth2Code []struct {
 			// C is the c argument value.
 			C *Code
+		}
+		// RegisterRefreshToken holds details about calls to the RegisterRefreshToken method.
+		RegisterRefreshToken []struct {
+			// T is the t argument value.
+			T *RefreshToken
 		}
 		// RegisterToken holds details about calls to the RegisterToken method.
 		RegisterToken []struct {
@@ -195,8 +195,8 @@ type OAuth2RepositoryMock struct {
 	lockFindUserByEmail       sync.RWMutex
 	lockFindValidOAuth2Code   sync.RWMutex
 	lockFindValidRefreshToken sync.RWMutex
-	lockRegesterRefreshToken  sync.RWMutex
 	lockRegisterOAuth2Code    sync.RWMutex
+	lockRegisterRefreshToken  sync.RWMutex
 	lockRegisterToken         sync.RWMutex
 	lockRevokeCode            sync.RWMutex
 	lockRevokeRefreshToken    sync.RWMutex
@@ -467,38 +467,6 @@ func (mock *OAuth2RepositoryMock) FindValidRefreshTokenCalls() []struct {
 	return calls
 }
 
-// RegesterRefreshToken calls RegesterRefreshTokenFunc.
-func (mock *OAuth2RepositoryMock) RegesterRefreshToken(t *RefreshToken) error {
-	if mock.RegesterRefreshTokenFunc == nil {
-		panic("OAuth2RepositoryMock.RegesterRefreshTokenFunc: method is nil but OAuth2Repository.RegesterRefreshToken was just called")
-	}
-	callInfo := struct {
-		T *RefreshToken
-	}{
-		T: t,
-	}
-	mock.lockRegesterRefreshToken.Lock()
-	mock.calls.RegesterRefreshToken = append(mock.calls.RegesterRefreshToken, callInfo)
-	mock.lockRegesterRefreshToken.Unlock()
-	return mock.RegesterRefreshTokenFunc(t)
-}
-
-// RegesterRefreshTokenCalls gets all the calls that were made to RegesterRefreshToken.
-// Check the length with:
-//
-//	len(mockedOAuth2Repository.RegesterRefreshTokenCalls())
-func (mock *OAuth2RepositoryMock) RegesterRefreshTokenCalls() []struct {
-	T *RefreshToken
-} {
-	var calls []struct {
-		T *RefreshToken
-	}
-	mock.lockRegesterRefreshToken.RLock()
-	calls = mock.calls.RegesterRefreshToken
-	mock.lockRegesterRefreshToken.RUnlock()
-	return calls
-}
-
 // RegisterOAuth2Code calls RegisterOAuth2CodeFunc.
 func (mock *OAuth2RepositoryMock) RegisterOAuth2Code(c *Code) error {
 	if mock.RegisterOAuth2CodeFunc == nil {
@@ -528,6 +496,38 @@ func (mock *OAuth2RepositoryMock) RegisterOAuth2CodeCalls() []struct {
 	mock.lockRegisterOAuth2Code.RLock()
 	calls = mock.calls.RegisterOAuth2Code
 	mock.lockRegisterOAuth2Code.RUnlock()
+	return calls
+}
+
+// RegisterRefreshToken calls RegisterRefreshTokenFunc.
+func (mock *OAuth2RepositoryMock) RegisterRefreshToken(t *RefreshToken) error {
+	if mock.RegisterRefreshTokenFunc == nil {
+		panic("OAuth2RepositoryMock.RegisterRefreshTokenFunc: method is nil but OAuth2Repository.RegisterRefreshToken was just called")
+	}
+	callInfo := struct {
+		T *RefreshToken
+	}{
+		T: t,
+	}
+	mock.lockRegisterRefreshToken.Lock()
+	mock.calls.RegisterRefreshToken = append(mock.calls.RegisterRefreshToken, callInfo)
+	mock.lockRegisterRefreshToken.Unlock()
+	return mock.RegisterRefreshTokenFunc(t)
+}
+
+// RegisterRefreshTokenCalls gets all the calls that were made to RegisterRefreshToken.
+// Check the length with:
+//
+//	len(mockedOAuth2Repository.RegisterRefreshTokenCalls())
+func (mock *OAuth2RepositoryMock) RegisterRefreshTokenCalls() []struct {
+	T *RefreshToken
+} {
+	var calls []struct {
+		T *RefreshToken
+	}
+	mock.lockRegisterRefreshToken.RLock()
+	calls = mock.calls.RegisterRefreshToken
+	mock.lockRegisterRefreshToken.RUnlock()
 	return calls
 }
 

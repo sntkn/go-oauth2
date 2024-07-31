@@ -19,7 +19,7 @@ type OAuth2Repository interface {
 	RegisterOAuth2Code(c *Code) error
 	FindValidOAuth2Code(code string, expiresAt time.Time) (Code, error)
 	RegisterToken(t *Token) error
-	RegesterRefreshToken(t *RefreshToken) error
+	RegisterRefreshToken(t *RefreshToken) error
 	RevokeCode(code string) error
 	FindValidRefreshToken(refreshToken string, expiresAt time.Time) (RefreshToken, error)
 	FindToken(accessToken string) (Token, error)
@@ -155,7 +155,7 @@ func (r *SQLXOAuth2Repository) RegisterToken(t *Token) error {
 	return errors.WithStack(err)
 }
 
-func (r *SQLXOAuth2Repository) RegesterRefreshToken(t *RefreshToken) error {
+func (r *SQLXOAuth2Repository) RegisterRefreshToken(t *RefreshToken) error {
 	t.CreatedAt = time.Now()
 	t.UpdatedAt = time.Now()
 	q := `INSERT INTO oauth2_refresh_tokens (refresh_token, access_token, expires_at, created_at, updated_at)

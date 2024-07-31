@@ -83,7 +83,7 @@ func (u *CreateTokenByRefreshToken) Invoke(c *gin.Context, refreshToken string) 
 	}
 	refreshExpiration := time.Now().Add(time.Duration(u.cfg.AuthRefreshTokenExpiresDay) * day)
 
-	if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
+	if err = u.db.RegisterRefreshToken(&repository.RefreshToken{
 		RefreshToken: randomString,
 		AccessToken:  accessToken,
 		ExpiresAt:    refreshExpiration,
