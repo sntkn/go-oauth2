@@ -38,7 +38,7 @@ func (u *CreateTokenByCode) Invoke(c *gin.Context, authCode string) (entity.Auth
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// TODO: redirect to autorize with parameters
-			return atokn, cerrs.NewUsecaseError(http.StatusBadRequest, err.Error())
+			return atokn, cerrs.NewUsecaseError(http.StatusForbidden, err.Error())
 		}
 		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
