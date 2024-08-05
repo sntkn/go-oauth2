@@ -99,7 +99,7 @@ func main() {
 	})
 
 	r.GET("/signin", auth.SigninHandler)
-	r.GET("/authorize", auth.AuthrozeHandler)
+	r.GET("/authorize", auth.AuthrizeHandler)
 	r.POST("/authorization", auth.AuthrozationHandler)
 	r.POST("/token", auth.CreateTokenHandler)
 	r.DELETE("/token", auth.DeleteTokenHandler)
