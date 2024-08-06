@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -74,57 +76,77 @@ func TestAuthorizeHandler(t *testing.T) {
 	assert.Equal(t, http.StatusFound, w.Code)
 }
 
-//func TestAuthorize(t *testing.T) {
-//	gin.SetMode(gin.TestMode)
-//
-//	t.Run("successful sign-in", func(t *testing.T) {
-//		w := httptest.NewRecorder()
-//		c, r := gin.CreateTestContext(w)
-//		r.LoadHTMLGlob("../../../templates/*")
-//
-//		mess := &flashmessage.Messages{}
-//		mockUC := new(MockAuthorizeUsecase)
-//		mockForm := entity.SessionAuthorizeForm{}
-//		mockUC.On("Invoke", mock.Anything).Return(mockForm, nil)
-//
-//		signin(c, mess, mockUC)
-//
-//		assert.Equal(t, http.StatusOK, w.Code)
-//		assert.Contains(t, w.Body.String(), "<h2>Authorize</h2>")
-//
-//		mockUC.AssertExpectations(t)
-//	})
-//
-//	t.Run("bad request error", func(t *testing.T) {
-//
-//		w := httptest.NewRecorder()
-//		c, r := gin.CreateTestContext(w)
-//		r.LoadHTMLGlob("../../../templates/*")
-//
-//		mess := &flashmessage.Messages{}
-//		mockUC := new(MockAuthorizeUsecase)
-//		mockUC.On("Invoke", mock.Anything).Return(entity.SessionAuthorizeForm{}, &cerrs.UsecaseError{Code: http.StatusBadRequest})
-//
-//		signin(c, mess, mockUC)
-//
-//		assert.Equal(t, http.StatusBadRequest, w.Code)
-//		mockUC.AssertExpectations(t)
-//	})
-//
-//	t.Run("internal server error", func(t *testing.T) {
-//
-//		w := httptest.NewRecorder()
-//		c, r := gin.CreateTestContext(w)
-//		r.LoadHTMLGlob("../../../templates/*")
-//
-//		mess := &flashmessage.Messages{}
-//		mockUC := new(MockAuthorizeUsecase)
-//		mockUC.On("Invoke", mock.Anything).Return(entity.SessionAuthorizeForm{}, errors.New("internal error"))
-//
-//		signin(c, mess, mockUC)
-//
-//		assert.Equal(t, http.StatusInternalServerError, w.Code)
-//		mockUC.AssertExpectations(t)
-//	})
-//}
-//
+func TestAuthorize(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("successful authorize", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, r := gin.CreateTestContext(w)
+		r.LoadHTMLGlob("../../../templates/*")
+		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", nil)
+
+		s := &session.SessionClientMock{
+			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+				return nil
+			},
+		}
+		mockUC := new(MockAuthorizeUsecase)
+		mockUC.On("Invoke", mock.Anything).Return(nil)
+
+		authorize(c, s, mockUC)
+
+		assert.Equal(t, http.StatusFound, w.Code)
+
+		mockUC.AssertExpectations(t)
+	})
+
+	t.Run("bad request error(validation)", func(t *testing.T) {
+
+		w := httptest.NewRecorder()
+		c, r := gin.CreateTestContext(w)
+		r.LoadHTMLGlob("../../../templates/*")
+		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+
+		s := &session.SessionClientMock{}
+		mockUC := new(MockAuthorizeUsecase)
+
+		authorize(c, s, mockUC)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		mockUC.AssertExpectations(t)
+	})
+
+	t.Run("bad request error(usecase)", func(t *testing.T) {
+
+		w := httptest.NewRecorder()
+		c, r := gin.CreateTestContext(w)
+		r.LoadHTMLGlob("../../../templates/*")
+		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", nil)
+
+		s := &session.SessionClientMock{}
+		mockUC := new(MockAuthorizeUsecase)
+		mockUC.On("Invoke", mock.Anything).Return(&cerrs.UsecaseError{Code: http.StatusBadRequest})
+
+		authorize(c, s, mockUC)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		mockUC.AssertExpectations(t)
+	})
+
+	t.Run("internal server error", func(t *testing.T) {
+
+		w := httptest.NewRecorder()
+		c, r := gin.CreateTestContext(w)
+		r.LoadHTMLGlob("../../../templates/*")
+		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", nil)
+
+		s := &session.SessionClientMock{}
+		mockUC := new(MockAuthorizeUsecase)
+		mockUC.On("Invoke", mock.Anything).Return(errors.New("internal error"))
+
+		authorize(c, s, mockUC)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		mockUC.AssertExpectations(t)
+	})
+}
