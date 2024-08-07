@@ -29,12 +29,12 @@ type SigninForm struct {
 }
 
 func AuthorizationHandler(c *gin.Context) {
-	db, err := internal.GetFromContext[repository.SQLXOAuth2Repository](c, "db")
+	db, err := internal.GetFromContextIF[repository.OAuth2Repository](c, "db")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
-	s, err := internal.GetFromContext[session.Session](c, "session")
+	s, err := internal.GetFromContextIF[session.SessionClient](c, "session")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
