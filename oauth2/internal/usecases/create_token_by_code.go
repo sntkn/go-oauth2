@@ -17,10 +17,10 @@ import (
 
 type CreateTokenByCode struct {
 	cfg *config.Config
-	db  *repository.Repository
+	db  repository.OAuth2Repository
 }
 
-func NewCreateTokenByCode(cfg *config.Config, db *repository.Repository) *CreateTokenByCode {
+func NewCreateTokenByCode(cfg *config.Config, db repository.OAuth2Repository) *CreateTokenByCode {
 	return &CreateTokenByCode{
 		cfg: cfg,
 		db:  db,
@@ -38,7 +38,7 @@ func (u *CreateTokenByCode) Invoke(c *gin.Context, authCode string) (entity.Auth
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// TODO: redirect to autorize with parameters
-			return atokn, cerrs.NewUsecaseError(http.StatusBadRequest, err.Error())
+			return atokn, cerrs.NewUsecaseError(http.StatusForbidden, err.Error())
 		}
 		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -76,7 +76,7 @@ func (u *CreateTokenByCode) Invoke(c *gin.Context, authCode string) (entity.Auth
 		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 	refreshExpiration := time.Now().Add(time.Duration(u.cfg.AuthRefreshTokenExpiresDay) * day)
-	if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
+	if err = u.db.RegisterRefreshToken(&repository.RefreshToken{
 		RefreshToken: randomString,
 		AccessToken:  accessToken,
 		ExpiresAt:    refreshExpiration,

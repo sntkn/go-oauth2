@@ -12,10 +12,10 @@ import (
 
 type Signup struct {
 	cfg  *config.Config
-	sess *session.Session
+	sess session.SessionClient
 }
 
-func NewSignup(cfg *config.Config, sess *session.Session) *Signup {
+func NewSignup(cfg *config.Config, sess session.SessionClient) *Signup {
 	return &Signup{
 		cfg:  cfg,
 		sess: sess,

@@ -18,6 +18,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/internal/validation"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 
@@ -83,7 +84,7 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("required_with_field_value", required_with_field_value)
+		v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
 	}
 
 	// エラーログを出力するミドルウェアを追加
@@ -93,13 +94,13 @@ func main() {
 		messages, _ := flashmessage.Flash(c, sess)
 		c.Set("session", sess)
 		c.Set("flashMessages", messages)
-		c.Set("cfg", cfg)
+		c.Set("cfg", *cfg)
 		c.Set("db", db)
 	})
 
 	r.GET("/signin", auth.SigninHandler)
-	r.GET("/authorize", auth.AuthrozeHandler)
-	r.POST("/authorization", auth.AuthrozationHandler)
+	r.GET("/authorize", auth.AuthorizeHandler)
+	r.POST("/authorization", auth.AuthorizationHandler)
 	r.POST("/token", auth.CreateTokenHandler)
 	r.DELETE("/token", auth.DeleteTokenHandler)
 	r.GET("/me", user.GetUserHandler)

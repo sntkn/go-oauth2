@@ -17,11 +17,11 @@ type RegistrationData struct {
 
 type CreateUser struct {
 	cfg  *config.Config
-	db   *repository.Repository
-	sess *session.Session
+	db   repository.OAuth2Repository
+	sess session.SessionClient
 }
 
-func NewCreateUser(cfg *config.Config, db *repository.Repository, sess *session.Session) *CreateUser {
+func NewCreateUser(cfg *config.Config, db repository.OAuth2Repository, sess session.SessionClient) *CreateUser {
 	return &CreateUser{
 		cfg:  cfg,
 		db:   db,

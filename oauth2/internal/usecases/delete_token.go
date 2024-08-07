@@ -10,10 +10,10 @@ import (
 )
 
 type DeleteToken struct {
-	db *repository.Repository
+	db repository.OAuth2Repository
 }
 
-func NewDeleteToken(db *repository.Repository) *DeleteToken {
+func NewDeleteToken(db repository.OAuth2Repository) *DeleteToken {
 	return &DeleteToken{
 		db: db,
 	}

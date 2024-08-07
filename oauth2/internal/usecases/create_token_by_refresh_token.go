@@ -17,10 +17,10 @@ import (
 
 type CreateTokenByRefreshToken struct {
 	cfg *config.Config
-	db  *repository.Repository
+	db  repository.OAuth2Repository
 }
 
-func NewCreateTokenByRefreshToken(cfg *config.Config, db *repository.Repository) *CreateTokenByRefreshToken {
+func NewCreateTokenByRefreshToken(cfg *config.Config, db repository.OAuth2Repository) *CreateTokenByRefreshToken {
 	return &CreateTokenByRefreshToken{
 		cfg: cfg,
 		db:  db,
@@ -83,7 +83,7 @@ func (u *CreateTokenByRefreshToken) Invoke(c *gin.Context, refreshToken string) 
 	}
 	refreshExpiration := time.Now().Add(time.Duration(u.cfg.AuthRefreshTokenExpiresDay) * day)
 
-	if err = u.db.RegesterRefreshToken(&repository.RefreshToken{
+	if err = u.db.RegisterRefreshToken(&repository.RefreshToken{
 		RefreshToken: randomString,
 		AccessToken:  accessToken,
 		ExpiresAt:    refreshExpiration,
