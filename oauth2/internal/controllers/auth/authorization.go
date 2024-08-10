@@ -73,7 +73,7 @@ func authorization(c *gin.Context, uc AuthorizationUsecase, s session.SessionCli
 	if err != nil {
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 			switch usecaseErr.Code {
-			case http.StatusFound:
+			case http.StatusBadRequest:
 				if err := flashmessage.AddMessage(c, s, "error", usecaseErr.Error()); err != nil {
 					c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 					return

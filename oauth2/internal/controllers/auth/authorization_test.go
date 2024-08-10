@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,6 +15,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
@@ -23,9 +25,9 @@ type MockAuthorizationUsecase struct {
 	mock.Mock
 }
 
-func (m *MockAuthorizationUsecase) Invoke(c *gin.Context, ClientID string, redirectURI string) error {
+func (m *MockAuthorizationUsecase) Invoke(c *gin.Context, email string, password string) (string, error) {
 	args := m.Called(c)
-	return args.Error(0)
+	return args.String(0), args.Error(1)
 }
 
 func TestAuthorizationHandler(t *testing.T) {
@@ -98,77 +100,127 @@ func TestAuthorizationHandler(t *testing.T) {
 	assert.Equal(t, http.StatusFound, w.Code)
 }
 
-//func TestAuthorization(t *testing.T) {
-//	gin.SetMode(gin.TestMode)
-//
-//	t.Run("successful authorization", func(t *testing.T) {
-//		w := httptest.NewRecorder()
-//		c, r := gin.CreateTestContext(w)
-//		r.LoadHTMLGlob("../../../templates/*")
-//		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", nil)
-//
-//		s := &session.SessionClientMock{
-//			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-//				return nil
-//			},
-//		}
-//		mockUC := new(MockAuthorizationUsecase)
-//		mockUC.On("Invoke", mock.Anything).Return(nil)
-//
-//		authorization(c, s, mockUC)
-//
-//		assert.Equal(t, http.StatusFound, w.Code)
-//
-//		mockUC.AssertExpectations(t)
-//	})
-//
-//	t.Run("bad request error(validation)", func(t *testing.T) {
-//
-//		w := httptest.NewRecorder()
-//		c, r := gin.CreateTestContext(w)
-//		r.LoadHTMLGlob("../../../templates/*")
-//		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
-//
-//		s := &session.SessionClientMock{}
-//		mockUC := new(MockAuthorizationUsecase)
-//
-//		authorization(c, s, mockUC)
-//
-//		assert.Equal(t, http.StatusBadRequest, w.Code)
-//		mockUC.AssertExpectations(t)
-//	})
-//
-//	t.Run("bad request error(usecase)", func(t *testing.T) {
-//
-//		w := httptest.NewRecorder()
-//		c, r := gin.CreateTestContext(w)
-//		r.LoadHTMLGlob("../../../templates/*")
-//		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", nil)
-//
-//		s := &session.SessionClientMock{}
-//		mockUC := new(MockAuthorizationUsecase)
-//		mockUC.On("Invoke", mock.Anything).Return(&cerrs.UsecaseError{Code: http.StatusBadRequest})
-//
-//		authorization(c, s, mockUC)
-//
-//		assert.Equal(t, http.StatusBadRequest, w.Code)
-//		mockUC.AssertExpectations(t)
-//	})
-//
-//	t.Run("internal server error", func(t *testing.T) {
-//
-//		w := httptest.NewRecorder()
-//		c, r := gin.CreateTestContext(w)
-//		r.LoadHTMLGlob("../../../templates/*")
-//		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", nil)
-//
-//		s := &session.SessionClientMock{}
-//		mockUC := new(MockAuthorizationUsecase)
-//		mockUC.On("Invoke", mock.Anything).Return(errors.New("internal error"))
-//
-//		authorization(c, s, mockUC)
-//
-//		assert.Equal(t, http.StatusInternalServerError, w.Code)
-//		mockUC.AssertExpectations(t)
-//	})
-//}
+func TestAuthorization(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("successful authorization", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, r := gin.CreateTestContext(w)
+		r.LoadHTMLGlob("../../../templates/*")
+		// 構造体からフォームデータを生成
+		values := url.Values{}
+		values.Set("email", "test@example.com")
+		values.Add("password", "test1234")
+		c.Request = httptest.NewRequest(http.MethodPost, "/authorization", strings.NewReader(values.Encode()))
+		c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		s := &session.SessionClientMock{
+			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+				return nil
+			},
+		}
+		mockUC := new(MockAuthorizationUsecase)
+		mockUC.On("Invoke", mock.Anything).Return("http://example.com/?code=abcdefg", nil)
+
+		authorization(c, mockUC, s)
+		c.Writer.WriteHeaderNow() // POST だとヘッダの書き込みが行われず、200を返してしまうのでここで書き込み https://stackoverflow.com/questions/76319196/unit-testing-of-gins-context-redirect-works-for-get-response-code-but-fails-for
+
+		assert.Equal(t, "http://example.com/?code=abcdefg", w.Header().Get("Location"))
+		assert.Equal(t, http.StatusFound, w.Code)
+
+		mockUC.AssertExpectations(t)
+	})
+
+	t.Run("validation error", func(t *testing.T) {
+
+		w := httptest.NewRecorder()
+		c, r := gin.CreateTestContext(w)
+		r.LoadHTMLGlob("../../../templates/*")
+		// 構造体からフォームデータを生成
+		values := url.Values{}
+		values.Set("email", "test@example.com")
+		values.Add("password", "")
+		c.Request = httptest.NewRequest(http.MethodPost, "/authorization", strings.NewReader(values.Encode()))
+		c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		s := &session.SessionClientMock{
+			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+				return nil
+			},
+			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+				return nil
+			},
+		}
+		mockUC := new(MockAuthorizationUsecase)
+		mockUC.On("Invoke", mock.Anything).Return("http://example.com/?code=abcdefg", nil)
+
+		authorization(c, mockUC, s)
+		c.Writer.WriteHeaderNow()
+
+		assert.Equal(t, http.StatusFound, w.Code)
+		assert.Equal(t, "/signin", w.Header().Get("Location"))
+	})
+
+	t.Run("usecase error(bad request)", func(t *testing.T) {
+
+		w := httptest.NewRecorder()
+		c, r := gin.CreateTestContext(w)
+		r.LoadHTMLGlob("../../../templates/*")
+		// 構造体からフォームデータを生成
+		values := url.Values{}
+		values.Set("email", "test@example.com")
+		values.Add("password", "test1234")
+		c.Request = httptest.NewRequest(http.MethodPost, "/authorization", strings.NewReader(values.Encode()))
+		c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		s := &session.SessionClientMock{
+			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+				return nil
+			},
+			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+				return nil
+			},
+		}
+		mockUC := new(MockAuthorizationUsecase)
+		mockUC.On("Invoke", mock.Anything).Return("", &cerrs.UsecaseError{Code: http.StatusBadRequest})
+
+		authorization(c, mockUC, s)
+		c.Writer.WriteHeaderNow() // POST だとヘッダの書き込みが行われず、200を返してしまうのでここで書き込み https://stackoverflow.com/questions/76319196/unit-testing-of-gins-context-redirect-works-for-get-response-code-but-fails-for
+
+		assert.Equal(t, "/signin", w.Header().Get("Location"))
+		assert.Equal(t, http.StatusFound, w.Code)
+
+		mockUC.AssertExpectations(t)
+	})
+
+	t.Run("usecase error(internal server error)", func(t *testing.T) {
+
+		w := httptest.NewRecorder()
+		c, r := gin.CreateTestContext(w)
+		r.LoadHTMLGlob("../../../templates/*")
+		// 構造体からフォームデータを生成
+		values := url.Values{}
+		values.Set("email", "test@example.com")
+		values.Add("password", "test1234")
+		c.Request = httptest.NewRequest(http.MethodPost, "/authorization", strings.NewReader(values.Encode()))
+		c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		s := &session.SessionClientMock{
+			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+				return nil
+			},
+			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+				return nil
+			},
+		}
+		mockUC := new(MockAuthorizationUsecase)
+		mockUC.On("Invoke", mock.Anything).Return("", errors.New("internal error"))
+
+		authorization(c, mockUC, s)
+		c.Writer.WriteHeaderNow() // POST だとヘッダの書き込みが行われず、200を返してしまうのでここで書き込み https://stackoverflow.com/questions/76319196/unit-testing-of-gins-context-redirect-works-for-get-response-code-but-fails-for
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+		mockUC.AssertExpectations(t)
+	})
+}

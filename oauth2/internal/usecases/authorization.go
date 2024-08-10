@@ -37,7 +37,7 @@ func (u *Authorization) Invoke(c *gin.Context, email string, password string) (s
 	user, err := u.db.FindUserByEmail(email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", cerrs.NewUsecaseError(http.StatusFound, err.Error())
+			return "", cerrs.NewUsecaseError(http.StatusBadRequest, err.Error())
 		}
 		return "", cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -45,7 +45,7 @@ func (u *Authorization) Invoke(c *gin.Context, email string, password string) (s
 	// パスワードを比較して認証
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return "", cerrs.NewUsecaseError(http.StatusFound, err.Error())
+		return "", cerrs.NewUsecaseError(http.StatusBadRequest, err.Error())
 	}
 	var d AuthorizeInput
 	if err := u.sess.GetNamedSessionData(c, "auth", &d); err != nil {
