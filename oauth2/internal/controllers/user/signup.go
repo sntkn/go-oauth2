@@ -25,7 +25,7 @@ type RegistrationForm struct {
 }
 
 func SignupHandler(c *gin.Context) {
-	s, err := internal.GetFromContext[session.Session](c, "session")
+	s, err := internal.GetFromContextIF[session.SessionClient](c, "session")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
