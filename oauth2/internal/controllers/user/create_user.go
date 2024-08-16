@@ -47,9 +47,12 @@ func CreateUserHandler(c *gin.Context) {
 
 func createUser(c *gin.Context, uc CreateUserUsecase, s session.SessionClient) {
 	var input SignupInput
-	// Query ParameterをAuthorizeInputにバインド
-	if err := c.Bind(&input); err != nil {
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+	if err := c.ShouldBind(&input); err != nil {
+		if err := flashmessage.AddMessage(c, s, "error", err.Error()); err != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
+		c.Redirect(http.StatusFound, "/signup")
 		return
 	}
 
@@ -62,7 +65,7 @@ func createUser(c *gin.Context, uc CreateUserUsecase, s session.SessionClient) {
 	if err := uc.Invoke(c, user); err != nil {
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 			switch usecaseErr.Code {
-			case http.StatusFound:
+			case http.StatusBadRequest:
 				if err := flashmessage.AddMessage(c, s, flashmessage.Error, usecaseErr.Error()); err != nil {
 					c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 					return

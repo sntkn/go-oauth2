@@ -43,7 +43,7 @@ func (u *CreateUser) Invoke(c *gin.Context, user repository.User) error {
 	if err != nil {
 		return cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	} else if eu {
-		return cerrs.NewUsecaseError(http.StatusFound, "input email already exists")
+		return cerrs.NewUsecaseError(http.StatusBadRequest, "input email already exists")
 	}
 
 	if err := u.db.CreateUser(&user); err != nil {
@@ -51,7 +51,7 @@ func (u *CreateUser) Invoke(c *gin.Context, user repository.User) error {
 	}
 
 	if err := u.sess.DelSessionData(c, "signup_form"); err != nil {
-		return cerrs.NewUsecaseError(http.StatusFound, "input email already exists")
+		return cerrs.NewUsecaseError(http.StatusBadRequest, "input email already exists")
 	}
 
 	return nil
