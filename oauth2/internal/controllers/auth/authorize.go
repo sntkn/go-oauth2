@@ -13,6 +13,10 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
+type AuthorizeUsecase interface {
+	Invoke(c *gin.Context, clientID string, redirectURI string) error
+}
+
 type AuthorizeInput struct {
 	ResponseType string `form:"response_type" binding:"required"`
 	ClientID     string `form:"client_id" binding:"required,uuid"`
@@ -21,13 +25,13 @@ type AuthorizeInput struct {
 	State        string `form:"state" binding:"required"`
 }
 
-func AuthrozeHandler(c *gin.Context) {
-	db, err := internal.GetFromContext[repository.Repository](c, "db")
+func AuthorizeHandler(c *gin.Context) {
+	db, err := internal.GetFromContextIF[repository.OAuth2Repository](c, "db")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
-	s, err := internal.GetFromContext[session.Session](c, "session")
+	s, err := internal.GetFromContextIF[session.SessionClient](c, "session")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
@@ -38,6 +42,11 @@ func AuthrozeHandler(c *gin.Context) {
 		return
 	}
 
+	authorizeUsecase := usecases.NewAuthorize(cfg, db)
+	authorize(c, s, authorizeUsecase)
+}
+
+func authorize(c *gin.Context, s session.SessionClient, uc AuthorizeUsecase) {
 	var input AuthorizeInput
 
 	if err := c.ShouldBind(&input); err != nil {
@@ -45,11 +54,11 @@ func AuthrozeHandler(c *gin.Context) {
 		return
 	}
 
-	if err := usecases.NewAuthorize(cfg, db).Invoke(c, input.ClientID, input.RedirectURI); err != nil {
+	if err := uc.Invoke(c, input.ClientID, input.RedirectURI); err != nil {
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 			switch usecaseErr.Code {
 			case http.StatusBadRequest:
-				c.HTML(http.StatusFound, "400.html", gin.H{"error": err.Error()})
+				c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 			case http.StatusInternalServerError:
 				c.Error(errors.WithStack(err)) // TODO: trigger usecase
 				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})

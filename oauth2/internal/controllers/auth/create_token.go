@@ -6,11 +6,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/internal"
+	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
+
+type CreateTokenByCodeUsecase interface {
+	Invoke(c *gin.Context, authCode string) (entity.AuthTokens, error)
+}
+
+type CreateTokenByRefreshTokenUsecase interface {
+	Invoke(c *gin.Context, refreshToken string) (entity.AuthTokens, error)
+}
 
 type TokenInput struct {
 	Code         string `json:"code" binding:"required_without=RefreshToken,required_with_field_value=GrantType authorization_code"`
@@ -25,7 +34,7 @@ type TokenOutput struct {
 }
 
 func CreateTokenHandler(c *gin.Context) {
-	db, err := internal.GetFromContext[repository.Repository](c, "db")
+	db, err := internal.GetFromContextIF[repository.OAuth2Repository](c, "db")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
@@ -37,6 +46,12 @@ func CreateTokenHandler(c *gin.Context) {
 		return
 	}
 
+	ctByCodeUC := usecases.NewCreateTokenByCode(cfg, db)
+	ctByRefUC := usecases.NewCreateTokenByRefreshToken(cfg, db)
+	createToken(c, ctByCodeUC, ctByRefUC)
+}
+
+func createToken(c *gin.Context, ctByCodeUC CreateTokenByCodeUsecase, ctByRefUC CreateTokenByRefreshTokenUsecase) {
 	var input TokenInput
 
 	if err := c.BindJSON(&input); err != nil {
@@ -46,7 +61,7 @@ func CreateTokenHandler(c *gin.Context) {
 	}
 
 	if input.GrantType == "authorization_code" {
-		token, err := usecases.NewCreateTokenByCode(cfg, db).Invoke(c, input.Code)
+		token, err := ctByCodeUC.Invoke(c, input.Code)
 		if err != nil {
 			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 				c.AbortWithStatusJSON(usecaseErr.Code, gin.H{"error": usecaseErr.Error()})
@@ -64,7 +79,7 @@ func CreateTokenHandler(c *gin.Context) {
 		return
 	}
 
-	token, err := usecases.NewCreateTokenByRefreshToken(cfg, db).Invoke(c, input.RefreshToken)
+	token, err := ctByRefUC.Invoke(c, input.RefreshToken)
 	if err != nil {
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 			c.AbortWithStatusJSON(usecaseErr.Code, gin.H{"error": usecaseErr.Error()})

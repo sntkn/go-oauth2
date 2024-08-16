@@ -12,10 +12,10 @@ import (
 )
 
 type GetUser struct {
-	db *repository.Repository
+	db repository.OAuth2Repository
 }
 
-func NewGetUser(db *repository.Repository) *GetUser {
+func NewGetUser(db repository.OAuth2Repository) *GetUser {
 	return &GetUser{
 		db: db,
 	}

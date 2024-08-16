@@ -10,13 +10,22 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
+type DeleteTokenUsecaser interface {
+	Invoke(c *gin.Context) error
+}
+
 func DeleteTokenHandler(c *gin.Context) {
-	db, err := internal.GetFromContext[repository.Repository](c, "db")
+	db, err := internal.GetFromContextIF[repository.OAuth2Repository](c, "db")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
-	if err := usecases.NewDeleteToken(db).Invoke(c); err != nil {
+	uc := usecases.NewDeleteToken(db)
+	deleteToken(c, uc)
+}
+
+func deleteToken(c *gin.Context, uc DeleteTokenUsecaser) {
+	if err := uc.Invoke(c); err != nil {
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 			c.AbortWithStatusJSON(usecaseErr.Code, gin.H{"error": usecaseErr.Error()})
 			return

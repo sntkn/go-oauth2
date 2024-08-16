@@ -14,6 +14,10 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
+type AuthorizationUsecase interface {
+	Invoke(c *gin.Context, email string, password string) (string, error)
+}
+
 type AuthorizationInput struct {
 	Email    string `form:"email" binding:"required,email"`
 	Password string `form:"password" binding:"required"`
@@ -24,13 +28,13 @@ type SigninForm struct {
 	Error string
 }
 
-func AuthrozationHandler(c *gin.Context) {
-	db, err := internal.GetFromContext[repository.Repository](c, "db")
+func AuthorizationHandler(c *gin.Context) {
+	db, err := internal.GetFromContextIF[repository.OAuth2Repository](c, "db")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
-	s, err := internal.GetFromContext[session.Session](c, "session")
+	s, err := internal.GetFromContextIF[session.SessionClient](c, "session")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
@@ -41,6 +45,11 @@ func AuthrozationHandler(c *gin.Context) {
 		return
 	}
 
+	uc := usecases.NewAuthorization(cfg, db, s)
+	authorization(c, uc, s)
+}
+
+func authorization(c *gin.Context, uc AuthorizationUsecase, s session.SessionClient) {
 	var input AuthorizationInput
 
 	if err := s.SetNamedSessionData(c, "signin_form", SigninForm{
@@ -60,11 +69,11 @@ func AuthrozationHandler(c *gin.Context) {
 		return
 	}
 
-	redirectURI, err := usecases.NewAuthorization(cfg, db, s).Invoke(c, input.Email, input.Password)
+	redirectURI, err := uc.Invoke(c, input.Email, input.Password)
 	if err != nil {
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 			switch usecaseErr.Code {
-			case http.StatusFound:
+			case http.StatusBadRequest:
 				if err := flashmessage.AddMessage(c, s, "error", usecaseErr.Error()); err != nil {
 					c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 					return

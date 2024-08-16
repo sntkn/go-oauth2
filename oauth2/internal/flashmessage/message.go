@@ -19,7 +19,7 @@ type Messages struct {
 	Error   []string
 }
 
-func getFlashMessages(c *gin.Context, s *session.Session) (Messages, error) {
+func getFlashMessages(c *gin.Context, s session.SessionClient) (Messages, error) {
 	var messages Messages
 	if err := s.GetNamedSessionData(c, "flashMessage", &messages); err != nil {
 		return messages, err
@@ -27,14 +27,14 @@ func getFlashMessages(c *gin.Context, s *session.Session) (Messages, error) {
 	return messages, nil
 }
 
-func setFlashMessages(c *gin.Context, s *session.Session, messages Messages) error {
+func setFlashMessages(c *gin.Context, s session.SessionClient, messages Messages) error {
 	if err := s.SetNamedSessionData(c, "flashMessage", messages); err != nil {
 		return err
 	}
 	return nil
 }
 
-func AddMessage(c *gin.Context, s *session.Session, t MessageType, message string) error {
+func AddMessage(c *gin.Context, s session.SessionClient, t MessageType, message string) error {
 	messages, err := getFlashMessages(c, s)
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func AddMessage(c *gin.Context, s *session.Session, t MessageType, message strin
 	return setFlashMessages(c, s, messages)
 }
 
-func Flash(c *gin.Context, s *session.Session) (*Messages, error) {
+func Flash(c *gin.Context, s session.SessionClient) (*Messages, error) {
 	messages, err := getFlashMessages(c, s)
 	if err != nil {
 		return nil, err
