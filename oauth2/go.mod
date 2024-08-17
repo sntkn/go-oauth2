@@ -1,6 +1,6 @@
 module github.com/sntkn/go-oauth2/oauth2
 
-go 1.22.1
+go 1.23.0
 
 require (
 	github.com/alicebob/miniredis/v2 v2.33.0
