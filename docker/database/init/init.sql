@@ -62,6 +62,17 @@ CREATE TABLE oauth2_refresh_tokens (
     FOREIGN KEY (access_token) REFERENCES oauth2_tokens (access_token)
 );
 
+-- posts table
+CREATE TABLE posts (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL,
+    content VARCHAR(512) NOT NULL,
+    revoked_at TIMESTAMP DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT current_timestamp,
+    updated_at TIMESTAMP DEFAULT current_timestamp,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
 --ユーザーにテーブル操作権限をまとめて付与
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app;
 
