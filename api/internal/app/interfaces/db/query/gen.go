@@ -21,6 +21,7 @@ var (
 	Oauth2Code         *oauth2Code
 	Oauth2RefreshToken *oauth2RefreshToken
 	Oauth2Token        *oauth2Token
+	Post               *post
 	User               *user
 )
 
@@ -30,6 +31,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	Oauth2Code = &Q.Oauth2Code
 	Oauth2RefreshToken = &Q.Oauth2RefreshToken
 	Oauth2Token = &Q.Oauth2Token
+	Post = &Q.Post
 	User = &Q.User
 }
 
@@ -40,6 +42,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		Oauth2Code:         newOauth2Code(db, opts...),
 		Oauth2RefreshToken: newOauth2RefreshToken(db, opts...),
 		Oauth2Token:        newOauth2Token(db, opts...),
+		Post:               newPost(db, opts...),
 		User:               newUser(db, opts...),
 	}
 }
@@ -51,6 +54,7 @@ type Query struct {
 	Oauth2Code         oauth2Code
 	Oauth2RefreshToken oauth2RefreshToken
 	Oauth2Token        oauth2Token
+	Post               post
 	User               user
 }
 
@@ -63,6 +67,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		Oauth2Code:         q.Oauth2Code.clone(db),
 		Oauth2RefreshToken: q.Oauth2RefreshToken.clone(db),
 		Oauth2Token:        q.Oauth2Token.clone(db),
+		Post:               q.Post.clone(db),
 		User:               q.User.clone(db),
 	}
 }
@@ -82,6 +87,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		Oauth2Code:         q.Oauth2Code.replaceDB(db),
 		Oauth2RefreshToken: q.Oauth2RefreshToken.replaceDB(db),
 		Oauth2Token:        q.Oauth2Token.replaceDB(db),
+		Post:               q.Post.replaceDB(db),
 		User:               q.User.replaceDB(db),
 	}
 }
@@ -91,6 +97,7 @@ type queryCtx struct {
 	Oauth2Code         IOauth2CodeDo
 	Oauth2RefreshToken IOauth2RefreshTokenDo
 	Oauth2Token        IOauth2TokenDo
+	Post               IPostDo
 	User               IUserDo
 }
 
@@ -100,6 +107,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		Oauth2Code:         q.Oauth2Code.WithContext(ctx),
 		Oauth2RefreshToken: q.Oauth2RefreshToken.WithContext(ctx),
 		Oauth2Token:        q.Oauth2Token.WithContext(ctx),
+		Post:               q.Post.WithContext(ctx),
 		User:               q.User.WithContext(ctx),
 	}
 }
