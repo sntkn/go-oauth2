@@ -42,3 +42,17 @@ myproject/
     └── myprojectlib/
         └── utils.go
 ```
+
+### Packages
+
+#### echo
+
+#### gorm gen
+
+<https://gorm.io/gen/query.html>
+
+Generate Query
+
+```bash
+go run internal/app/interfaces/db/gen.go
+```
