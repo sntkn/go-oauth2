@@ -54,5 +54,5 @@ myproject/
 Generate Query
 
 ```bash
-go run internal/app/interfaces/db/gen.go
+go run cmd/lib/gen.go
 ```

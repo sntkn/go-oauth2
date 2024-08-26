@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/api/internal/interfaces/db/query"
+	"github.com/sntkn/go-oauth2/api/internal/infrastructure/db/query"
 	"gorm.io/gorm"
 )
 

@@ -16,7 +16,7 @@ import (
 
 	"gorm.io/plugin/dbresolver"
 
-	"github.com/sntkn/go-oauth2/api/internal/interfaces/db/model"
+	"github.com/sntkn/go-oauth2/api/internal/infrastructure/db/model"
 )
 
 func newOauth2Token(db *gorm.DB, opts ...gen.DOOption) oauth2Token {
