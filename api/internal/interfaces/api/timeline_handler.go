@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/sntkn/go-oauth2/api/internal/app/domain/timeline"
+	"github.com/sntkn/go-oauth2/api/internal/domain/timeline"
 	"gorm.io/gorm"
 )
 

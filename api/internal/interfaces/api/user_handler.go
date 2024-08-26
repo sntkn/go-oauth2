@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/sntkn/go-oauth2/api/internal/app/domain/user"
+	"github.com/sntkn/go-oauth2/api/internal/domain/user"
 	"gorm.io/gorm"
 )
 

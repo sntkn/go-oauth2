@@ -8,7 +8,7 @@ import (
 
 func main() {
 	g := gen.NewGenerator(gen.Config{
-		OutPath: "./internal/app/interfaces/db/query",
+		OutPath: "./internal/interfaces/db/query",
 		Mode:    gen.WithoutContext | gen.WithDefaultQuery | gen.WithQueryInterface, // generate mode
 	})
 
