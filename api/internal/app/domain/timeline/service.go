@@ -14,6 +14,8 @@ func NewService(db *gorm.DB) *Service {
 	}
 }
 
-func (s *Service) RecentlyTimeline(userIDs []UserID) ([]*Timeline, error) {
+func (s *Service) RecentlyTimeline(userID UserID) ([]*Timeline, error) {
+	// TODO: get follow userID
+	userIDs := []UserID{userID}
 	return s.repository.RecentlyTimeline(userIDs)
 }

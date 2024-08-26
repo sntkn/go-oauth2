@@ -20,6 +20,7 @@ func main() {
 
 	// Define the routes
 	e.GET("/users/:id", api.GetUser)
+	e.GET("/timeline/:id", api.GetRecentlyTimeline)
 
 	// Start the server
 	e.Logger.Fatal(e.Start(":18080"))
