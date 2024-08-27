@@ -5,7 +5,11 @@
 
 version: 2
 updates:
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/oauth2" # Location of package manifests
+  - package-ecosystem: gomod
+    directory: /oauth2
     schedule:
-      interval: "daily"
+      interval: daily
+  - package-ecosystem: gomod
+    directory: /api
+    schedule:
+      interval: daily

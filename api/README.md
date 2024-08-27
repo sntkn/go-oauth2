@@ -42,3 +42,26 @@ myproject/
     └── myprojectlib/
         └── utils.go
 ```
+
+### Packages
+
+#### echo
+
+#### gorm gen
+
+<https://gorm.io/gen/query.html>
+
+Generate Query
+
+```bash
+go run cmd/lib/gen.go
+```
+
+#### go mock
+
+Generate Mock.
+
+```bash
+# ex.
+mockgen -source=internal/domain/user/repository.go -destination=internal/domain/user/mock_repository.go -package=user
+```
