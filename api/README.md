@@ -59,7 +59,7 @@ go run cmd/lib/gen.go
 
 #### go mock
 
-Generate Mock
+Generate Mock.
 
 ```bash
 # ex.
