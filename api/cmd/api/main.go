@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/sntkn/go-oauth2/api/internal/app/interfaces/api"
+	"github.com/sntkn/go-oauth2/api/internal/interfaces/api"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
