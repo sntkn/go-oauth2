@@ -25,18 +25,18 @@ func (r *Repository) FindByID(id string) (*User, error) {
 	user, err := userQuery.Where(userQuery.ID.Eq(id)).First()
 
 	if err != nil {
-		log.Printf("Could not query user: %v", err)
-
+		log.Printf("ユーザーのクエリに失敗しました: %v", err)
 		return nil, err
 	}
 
 	userID, err := uuid.Parse(user.ID)
 	if err != nil {
+		log.Printf("UUIDの解析に失敗しました: %v", err)
 		return nil, err
 	}
-	user2 := &User{
-		ID: userID,
-	}
 
-	return user2, nil
+	return &User{
+		ID: userID,
+		// ここに他のフィールドを追加
+	}, nil
 }
