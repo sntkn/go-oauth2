@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type UserRepository interface {
+	FindByID(id string) (*User, error)
+}
+
 type Repository struct {
 	query *query.Query
 	gorm  *gorm.DB
