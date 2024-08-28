@@ -25,7 +25,6 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 # Placing it here allows the previous steps to be cached across architectures.
 ARG TARGETARCH
 
-COPY templates templates
 # Build the application.
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
 # Leverage a bind mount to the current directory to avoid having to copy the
@@ -71,8 +70,6 @@ USER appuser
 
 # Copy the executable from the "build" stage.
 COPY --from=build /bin/server /bin/
-# Copy the templates directory from the "build" stage.
-COPY --from=build /src/templates /templates
 
 # Expose the port that the application listens on.
 EXPOSE 3000
