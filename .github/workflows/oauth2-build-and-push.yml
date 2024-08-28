@@ -1,0 +1,63 @@
+name: OAuth2BuildAndPush
+
+on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - "oauth2/**"
+      - ".github/**"
+      - "compose.yml"
+      - "docker/**"
+
+jobs:
+  lint:
+    uses: ./.github/workflows/calls/lint.yml
+    with:
+      target: oauth2
+  test:
+    uses: ./.github/workflows/calls/test.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      target: oauth2
+  build-and-push:
+    needs: [lint, test]
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        go-version: ["1.23.x"]
+    env:
+      SANITIZED_BRANCH_NAME: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          check-latest: true
+          cache-dependency-path: |
+              oauth2/go.sum
+      # You can test your matrix by printing the current Go version
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Sanitize branch name
+        run: echo "SANITIZED_BRANCH_NAME=${SANITIZED_BRANCH_NAME//\//-}" >> $GITHUB_ENV
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./oauth2
+          target: final
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.SANITIZED_BRANCH_NAME }}
+            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ github.sha }}

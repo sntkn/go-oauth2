@@ -1,23 +1,27 @@
-name: Build
+name: APIBuildAndPush
 
 on:
   push:
     branches:
       - "**"
     paths:
-      - "oauth2/**"
+      - "api/**"
       - ".github/**"
       - "compose.yml"
       - "docker/**"
 
 jobs:
   lint:
-    uses: ./.github/workflows/lint.yml
+    uses: ./.github/workflows/calls/lint.yml
+    with:
+      target: api
   test:
+    uses: ./.github/workflows/calls/test.yml
     permissions:
       contents: read
       packages: write
-    uses: ./.github/workflows/test.yml
+    with:
+      target: api
   build-and-push:
     needs: [lint, test]
     if: ${{ github.actor != 'dependabot[bot]' }}
@@ -38,7 +42,7 @@ jobs:
           go-version: ${{ matrix.go-version }}
           check-latest: true
           cache-dependency-path: |
-              oauth2/go.sum
+              api/go.sum
       # You can test your matrix by printing the current Go version
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -51,9 +55,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./oauth2
+          context: ./api
           target: final
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ env.SANITIZED_BRANCH_NAME }}
-            ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/go-oauth2-api:${{ env.SANITIZED_BRANCH_NAME }}
+            ghcr.io/${{ github.repository_owner }}/go-oauth2-api:${{ github.sha }}

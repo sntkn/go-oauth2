@@ -2,7 +2,10 @@ name: LintAndTest
 
 on:
   workflow_call:
-
+    inputs:
+      target:
+        required: true
+        type: string
 jobs:
   golangci-lint:
     name: golangci-lint
@@ -16,7 +19,7 @@ jobs:
         uses: reviewdog/action-golangci-lint@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }} # GITHUB_TOKEN can be read directly from reusable workflow
-          workdir: oauth2
+          workdir: ${{ inputs.target }}
           golangci_lint_flags: "--config=.golangci.yml --timeout=5m ./..."
           fail_on_error: true
           reporter: "github-pr-review"

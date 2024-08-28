@@ -5,17 +5,24 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  lint:
+  test-api:
     if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
-    uses: ./.github/workflows/lint.yml
-  test:
+    uses: ./.github/workflows/calls/test.yml
+    with:
+      target: api
+    permissions:
+      contents: read
+      packages: write
+  test-oauth2:
     if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
-    uses: ./.github/workflows/test.yml
+    uses: ./.github/workflows/calls/test.yml
+    with:
+      target: oauth2
     permissions:
       contents: read
       packages: write
   merge:
-    needs: [lint, test]
+    needs: [test-oauth2, test-api]
     if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     permissions:
