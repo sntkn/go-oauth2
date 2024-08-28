@@ -17,6 +17,24 @@ services:
     depends_on:
       - database
       - session
+  api:
+    build:
+      context: ./api
+      target: development
+    container_name: api
+    ports:
+      - 18080:18080
+    environment:
+      DBHost: database
+      DBPort: "5432"
+      DBUser: app
+      DBPassword: pass
+      DBName: auth
+    volumes:
+      - ./oauth2:/src
+    depends_on:
+      - database
+      - session
   database:
     build:
       context: ./docker/database
