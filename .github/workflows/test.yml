@@ -2,7 +2,10 @@ name: LintAndTest
 
 on:
   workflow_call:
-
+    inputs:
+      target:
+        required: true
+        type: string
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -13,10 +16,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: 'oauth2/go.mod'
+          go-version-file: ${{ inputs.target }}/go.mod
           check-latest: true
           cache-dependency-path: |
-              oauth2/go.sum
+              ${{ inputs.target }}/go.sum
       # 1. Buildxのセットアップ
       - name: Set up Docker Buildx
         id: buildx
@@ -75,5 +78,5 @@ jobs:
       # 7. テスト実行
       - name: Test
         run: |
-          cd oauth2
+          cd ${{ inputs.target }}
           go test -v ./...
