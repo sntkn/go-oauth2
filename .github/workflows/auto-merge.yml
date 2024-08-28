@@ -7,7 +7,7 @@ on:
 jobs:
   test-api:
     if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
-    uses: ./.github/workflows/calls/test.yml
+    uses: ./.github/workflows/test.yml
     with:
       target: api
     permissions:
@@ -15,7 +15,7 @@ jobs:
       packages: write
   test-oauth2:
     if: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot[bot]' }}
-    uses: ./.github/workflows/calls/test.yml
+    uses: ./.github/workflows/test.yml
     with:
       target: oauth2
     permissions:
