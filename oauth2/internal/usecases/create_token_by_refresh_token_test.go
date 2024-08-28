@@ -16,9 +16,11 @@ import (
 )
 
 func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("valid refresh token", func(t *testing.T) {
+		t.Parallel()
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindValidRefreshTokenFunc: func(refreshToken string, expiresAt time.Time) (repository.RefreshToken, error) {
 				return repository.RefreshToken{
@@ -69,6 +71,7 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 	})
 
 	t.Run("invalid refresh token", func(t *testing.T) {
+		t.Parallel()
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindValidRefreshTokenFunc: func(refreshToken string, expiresAt time.Time) (repository.RefreshToken, error) {
 				return repository.RefreshToken{}, sql.ErrNoRows
@@ -91,6 +94,7 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 	})
 
 	t.Run("database error on finding refresh token", func(t *testing.T) {
+		t.Parallel()
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindValidRefreshTokenFunc: func(refreshToken string, expiresAt time.Time) (repository.RefreshToken, error) {
 				return repository.RefreshToken{}, errors.New("db error")
@@ -112,6 +116,7 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 	})
 
 	t.Run("invalid access token", func(t *testing.T) {
+		t.Parallel()
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindValidRefreshTokenFunc: func(refreshToken string, expiresAt time.Time) (repository.RefreshToken, error) {
 				return repository.RefreshToken{
@@ -142,6 +147,7 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 	})
 
 	t.Run("database error on finding access token", func(t *testing.T) {
+		t.Parallel()
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindValidRefreshTokenFunc: func(refreshToken string, expiresAt time.Time) (repository.RefreshToken, error) {
 				return repository.RefreshToken{

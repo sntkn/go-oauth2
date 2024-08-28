@@ -27,6 +27,7 @@ func (m *MockSigninUsecase) Invoke(c *gin.Context) (entity.SessionSigninForm, er
 }
 
 func TestSigninHandler(t *testing.T) {
+	t.Parallel()
 	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
@@ -72,9 +73,11 @@ func TestSigninHandler(t *testing.T) {
 }
 
 func TestSignin(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful sign-in", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -93,7 +96,7 @@ func TestSignin(t *testing.T) {
 	})
 
 	t.Run("bad request error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -109,7 +112,7 @@ func TestSignin(t *testing.T) {
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")

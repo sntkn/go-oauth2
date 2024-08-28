@@ -27,6 +27,7 @@ func (m *MockAuthorizeUsecase) Invoke(c *gin.Context, ClientID string, redirectU
 }
 
 func TestAuthorizeHandler(t *testing.T) {
+	t.Parallel()
 	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
@@ -77,9 +78,11 @@ func TestAuthorizeHandler(t *testing.T) {
 }
 
 func TestAuthorize(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful authorize", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -101,7 +104,7 @@ func TestAuthorize(t *testing.T) {
 	})
 
 	t.Run("bad request error(validation)", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -117,7 +120,7 @@ func TestAuthorize(t *testing.T) {
 	})
 
 	t.Run("bad request error(usecase)", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -134,7 +137,7 @@ func TestAuthorize(t *testing.T) {
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")

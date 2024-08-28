@@ -22,10 +22,12 @@ func (m *MockSignupFinishedUsecase) Invoke(c *gin.Context) (entity.SessionRegist
 }
 
 func TestSignupFinishedHandler(t *testing.T) {
+	t.Parallel()
 	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
 	t.Run("signup finished successful", func(t *testing.T) {
+		t.Parallel()
 		// テスト用のルーターを作成
 		r := gin.Default()
 		r.LoadHTMLGlob("../../../templates/*") // HTMLテンプレートのパスを指定

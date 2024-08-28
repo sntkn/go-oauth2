@@ -12,12 +12,14 @@ import (
 )
 
 func TestDeleteToken_Invoke(t *testing.T) {
+	t.Parallel()
 	mockRepo := &repository.OAuth2RepositoryMock{}
 	deleteToken := NewDeleteToken(mockRepo)
 
 	gin.SetMode(gin.TestMode)
 
 	t.Run("missing authorization header", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest(http.MethodPost, "/", nil)
@@ -30,6 +32,7 @@ func TestDeleteToken_Invoke(t *testing.T) {
 	})
 
 	t.Run("successful token revocation", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest(http.MethodPost, "/", nil)
@@ -45,6 +48,7 @@ func TestDeleteToken_Invoke(t *testing.T) {
 	})
 
 	t.Run("token revocation error", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest(http.MethodPost, "/", nil)

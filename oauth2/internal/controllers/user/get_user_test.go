@@ -28,6 +28,7 @@ func (m *MockGetUserUsecase) Invoke(c *gin.Context) (repository.User, error) {
 }
 
 func TestGetUserHandler(t *testing.T) {
+	t.Parallel()
 	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
@@ -80,6 +81,7 @@ func TestGetUserHandler(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful get user", func(t *testing.T) {
@@ -103,6 +105,7 @@ func TestGetUser(t *testing.T) {
 	})
 
 	t.Run("unauthorized error", func(t *testing.T) {
+		t.Parallel()
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -117,6 +120,7 @@ func TestGetUser(t *testing.T) {
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
+		t.Parallel()
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)

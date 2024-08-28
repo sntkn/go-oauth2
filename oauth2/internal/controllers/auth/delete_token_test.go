@@ -23,6 +23,7 @@ func (m *MockDeleteTokenUsecase) Invoke(c *gin.Context) error {
 }
 
 func TestDeleteTokenHandler(t *testing.T) {
+	t.Parallel()
 	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
@@ -59,9 +60,11 @@ func TestDeleteTokenHandler(t *testing.T) {
 }
 
 func TestDeleteToken(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful sign-in", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -76,7 +79,7 @@ func TestDeleteToken(t *testing.T) {
 	})
 
 	t.Run("bad request error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -90,7 +93,7 @@ func TestDeleteToken(t *testing.T) {
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 

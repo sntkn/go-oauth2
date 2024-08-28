@@ -18,9 +18,11 @@ import (
 )
 
 func TestAuthorizationInvoke(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful invoke", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -65,6 +67,7 @@ func TestAuthorizationInvoke(t *testing.T) {
 	})
 
 	t.Run("user not found error", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -103,6 +106,7 @@ func TestAuthorizationInvoke(t *testing.T) {
 	})
 
 	t.Run("hashed password does not match error", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -151,6 +155,7 @@ func TestAuthorizationInvoke(t *testing.T) {
 	})
 
 	t.Run("could not parse client_id error", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -191,6 +196,5 @@ func TestAuthorizationInvoke(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, http.StatusInternalServerError, usecaseErr.Code)
 		assert.Equal(t, "", result)
-
 	})
 }

@@ -16,9 +16,11 @@ import (
 )
 
 func TestCreateTokenByCode_Invoke(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("valid token", func(t *testing.T) {
+		t.Parallel()
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindValidOAuth2CodeFunc: func(code string, expiresAt time.Time) (repository.Code, error) {
 				return repository.Code{
@@ -54,6 +56,7 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 	})
 
 	t.Run("invalid auth code", func(t *testing.T) {
+		t.Parallel()
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindValidOAuth2CodeFunc: func(code string, expiresAt time.Time) (repository.Code, error) {
 				return repository.Code{}, sql.ErrNoRows
@@ -76,6 +79,7 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 	})
 
 	t.Run("database error on finding refresh token", func(t *testing.T) {
+		t.Parallel()
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindValidOAuth2CodeFunc: func(code string, expiresAt time.Time) (repository.Code, error) {
 				return repository.Code{}, errors.New("db error")

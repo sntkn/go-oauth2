@@ -17,9 +17,11 @@ import (
 )
 
 func TestGetUserInvoke(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful get user", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
@@ -53,6 +55,7 @@ func TestGetUserInvoke(t *testing.T) {
 	})
 
 	t.Run("missing authorization header", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
@@ -69,6 +72,7 @@ func TestGetUserInvoke(t *testing.T) {
 	})
 
 	t.Run("missing token", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
@@ -105,6 +109,7 @@ func TestGetUserInvoke(t *testing.T) {
 	})
 
 	t.Run("missing find user", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)

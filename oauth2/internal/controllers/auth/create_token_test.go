@@ -41,10 +41,12 @@ func (m *MockCreateTokenByRefreshTokenUsecase) Invoke(c *gin.Context, refreshTok
 }
 
 func TestCreateTokenHandler(t *testing.T) {
+	t.Parallel()
 	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful create token by refresh token", func(t *testing.T) {
+		t.Parallel()
 
 		// テスト用のルーターを作成
 		r := gin.Default()
@@ -106,7 +108,7 @@ func TestCreateTokenHandler(t *testing.T) {
 	})
 
 	t.Run("successful create token by code", func(t *testing.T) {
-
+		t.Parallel()
 		// テスト用のルーターを作成
 		r := gin.Default()
 
@@ -183,6 +185,7 @@ func TestCreateTokenHandler(t *testing.T) {
 }
 
 func TestCreateToken(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful sign-in", func(t *testing.T) {
@@ -200,7 +203,7 @@ func TestCreateToken(t *testing.T) {
 	})
 
 	t.Run("bad request error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -214,7 +217,7 @@ func TestCreateToken(t *testing.T) {
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 

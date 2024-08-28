@@ -14,9 +14,11 @@ import (
 )
 
 func TestCreateUserInvoke(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful invoke", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -47,6 +49,7 @@ func TestCreateUserInvoke(t *testing.T) {
 	})
 
 	t.Run("email already exists error", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -77,6 +80,7 @@ func TestCreateUserInvoke(t *testing.T) {
 		assert.Contains(t, err.Error(), "input email already exists")
 	})
 	t.Run("successful invoke", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 

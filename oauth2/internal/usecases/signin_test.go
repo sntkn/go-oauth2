@@ -14,9 +14,11 @@ import (
 )
 
 func TestInvoke(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful invoke", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -42,6 +44,7 @@ func TestInvoke(t *testing.T) {
 	})
 
 	t.Run("missing client_id", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -69,6 +72,7 @@ func TestInvoke(t *testing.T) {
 	})
 
 	t.Run("session data error", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 
@@ -91,6 +95,7 @@ func TestInvoke(t *testing.T) {
 	})
 
 	t.Run("flush session data error", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 

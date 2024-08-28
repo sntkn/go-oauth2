@@ -26,6 +26,7 @@ func (m *MockSignupUsecase) Invoke(c *gin.Context) (entity.SessionRegistrationFo
 }
 
 func TestSignupHandler(t *testing.T) {
+	t.Parallel()
 	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
@@ -73,9 +74,11 @@ func TestSignupHandler(t *testing.T) {
 }
 
 func TestSignup(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful signup", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -98,7 +101,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("usecase internal server error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -114,7 +117,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")

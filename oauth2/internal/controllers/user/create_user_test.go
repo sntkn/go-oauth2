@@ -27,6 +27,7 @@ func (m *MockCreateUserUsecase) Invoke(c *gin.Context, user repository.User) err
 }
 
 func TestCreateUserHandler(t *testing.T) {
+	t.Parallel()
 	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
@@ -84,9 +85,11 @@ func TestCreateUserHandler(t *testing.T) {
 }
 
 func TestCreateUser(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful createUser", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -119,7 +122,7 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("validation error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -150,7 +153,7 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("usecase error(bad request)", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -183,7 +186,7 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("usecase error(internal server error)", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")

@@ -169,6 +169,7 @@ func TestSetNamedSessionData(t *testing.T) {
 }
 
 func TestFlushNamedSessionData(t *testing.T) {
+	t.Parallel()
 
 	type TestStruct struct {
 		Name  string

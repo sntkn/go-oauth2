@@ -25,6 +25,7 @@ func setupTestRedis(t *testing.T) (*miniredis.Miniredis, *RedisCli) {
 }
 
 func TestRedisCli(t *testing.T) {
+	t.Parallel()
 	mr, rdb := setupTestRedis(t)
 	defer mr.Close()
 

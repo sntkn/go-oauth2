@@ -31,6 +31,7 @@ func (m *MockAuthorizationUsecase) Invoke(c *gin.Context, email string, password
 }
 
 func TestAuthorizationHandler(t *testing.T) {
+	t.Parallel()
 	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
@@ -101,9 +102,11 @@ func TestAuthorizationHandler(t *testing.T) {
 }
 
 func TestAuthorization(t *testing.T) {
+	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	t.Run("successful authorization", func(t *testing.T) {
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -132,7 +135,7 @@ func TestAuthorization(t *testing.T) {
 	})
 
 	t.Run("validation error", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -162,7 +165,7 @@ func TestAuthorization(t *testing.T) {
 	})
 
 	t.Run("usecase error(bad request)", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
@@ -194,7 +197,7 @@ func TestAuthorization(t *testing.T) {
 	})
 
 	t.Run("usecase error(internal server error)", func(t *testing.T) {
-
+		t.Parallel()
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
