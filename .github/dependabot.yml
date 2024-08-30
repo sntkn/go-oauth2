@@ -6,10 +6,6 @@
 version: 2
 updates:
   - package-ecosystem: gomod
-    directory: /oauth2
-    schedule:
-      interval: daily
-  - package-ecosystem: gomod
-    directory: /api
+    directory: /
     schedule:
       interval: daily
