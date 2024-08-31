@@ -191,3 +191,5 @@ issues:
 
 run:
   timeout: 5m
+  issues-exit-code: 1 # 警告があればエラーとしてジョブが失敗する
+
