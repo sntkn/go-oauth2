@@ -9,6 +9,8 @@ on:
       - ".github/**"
       - "compose.yml"
       - "docker/**"
+      - "go.work"
+      - "go.work.som"
 
 jobs:
   lint:
