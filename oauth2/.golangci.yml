@@ -140,8 +140,6 @@ linters:
     - unparam
     - unused
     - whitespace
-    - testifylint # require-errorに対応
-    - gocritic # importShadowに対応
 
   # This list of linters is not a recommendation (same thing for all this configuration file).
   # We intentionally use a limited set of linters.

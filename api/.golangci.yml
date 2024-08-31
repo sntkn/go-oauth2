@@ -140,8 +140,6 @@ linters:
     - unparam
     - unused
     - whitespace
-    - testifylint # require-errorに対応
-    - gocritic # importShadowに対応
 
   # This list of linters is not a recommendation (same thing for all this configuration file).
   # We intentionally use a limited set of linters.
@@ -149,11 +147,11 @@ linters:
 
 issues:
   exclude-rules:
-    - path: (.+)_test\.go
-      linters:
-        - dupl
-        - mnd
-        - lll
+    # - path: (.+)_test\.go
+    #   linters:
+    #     - dupl
+    #     - mnd
+    #     - lll
 
     # The logic of creating a linter is similar between linters, it's not duplication.
     - path: pkg/golinters
