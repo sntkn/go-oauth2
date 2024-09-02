@@ -24,7 +24,7 @@ func TestGetUserInvoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 
 		token, err := accesstoken.Generate(accesstoken.TokenParams{
 			UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
@@ -58,7 +58,7 @@ func TestGetUserInvoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 
 		mockRepo := &repository.OAuth2RepositoryMock{}
 		getUser := NewGetUser(mockRepo)
@@ -75,7 +75,7 @@ func TestGetUserInvoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 
 		token, err := accesstoken.Generate(accesstoken.TokenParams{
 			UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
@@ -112,7 +112,7 @@ func TestGetUserInvoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 
 		token, err := accesstoken.Generate(accesstoken.TokenParams{
 			UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),

@@ -66,7 +66,7 @@ func TestGetUserHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
-	req, err := http.NewRequest(http.MethodGet, "/me", nil)
+	req, err := http.NewRequest(http.MethodGet, "/me", http.NoBody)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	assert.NoError(t, err)
 

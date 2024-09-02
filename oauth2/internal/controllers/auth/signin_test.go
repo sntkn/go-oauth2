@@ -56,7 +56,7 @@ func TestSigninHandler(t *testing.T) {
 	})
 
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
-	req, err := http.NewRequest(http.MethodGet, "/signin", nil)
+	req, err := http.NewRequest(http.MethodGet, "/signin", http.NoBody)
 	assert.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成

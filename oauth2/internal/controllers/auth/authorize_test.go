@@ -64,7 +64,7 @@ func TestAuthorizeHandler(t *testing.T) {
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
 	url := "/authorize?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz"
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, http.NoBody)
 	assert.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成
@@ -86,7 +86,7 @@ func TestAuthorize(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
-		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", http.NoBody)
 
 		s := &session.SessionClientMock{
 			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
@@ -108,7 +108,7 @@ func TestAuthorize(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
-		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 
 		s := &session.SessionClientMock{}
 		mockUC := new(MockAuthorizeUsecase)
@@ -124,7 +124,7 @@ func TestAuthorize(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
-		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", http.NoBody)
 
 		s := &session.SessionClientMock{}
 		mockUC := new(MockAuthorizeUsecase)
@@ -141,7 +141,7 @@ func TestAuthorize(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
 		r.LoadHTMLGlob("../../../templates/*")
-		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz", http.NoBody)
 
 		s := &session.SessionClientMock{}
 		mockUC := new(MockAuthorizeUsecase)

@@ -22,7 +22,7 @@ func TestDeleteToken_Invoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodPost, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodPost, "/", http.NoBody)
 
 		err := deleteToken.Invoke(c)
 
@@ -35,7 +35,7 @@ func TestDeleteToken_Invoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodPost, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodPost, "/", http.NoBody)
 		c.Request.Header.Set("Authorization", "Bearer valid-token")
 
 		mockRepo.RevokeTokenFunc = func(accessToken string) error {
@@ -51,7 +51,7 @@ func TestDeleteToken_Invoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodPost, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodPost, "/", http.NoBody)
 		c.Request.Header.Set("Authorization", "Bearer invalid-token")
 
 		mockRepo.RevokeTokenFunc = func(accessToken string) error {
