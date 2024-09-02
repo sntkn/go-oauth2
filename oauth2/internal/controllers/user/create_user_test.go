@@ -23,7 +23,7 @@ type MockCreateUserUsecase struct {
 	mock.Mock
 }
 
-func (m *MockCreateUserUsecase) Invoke(c *gin.Context, user repository.User) error {
+func (m *MockCreateUserUsecase) Invoke(c *gin.Context, user *repository.User) error {
 	args := m.Called(c)
 	return args.Error(0)
 }

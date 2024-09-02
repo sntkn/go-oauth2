@@ -6,7 +6,7 @@ import (
 
 type Config struct {
 	DBHost                     string `env:"DBHost" envDefault:"localhost"`
-	DBPort                     int    `env:"DBPort" envDefault:"5432"`
+	DBPort                     uint16 `env:"DBPort" envDefault:"5432"`
 	DBUser                     string `env:"DBUser" envDefault:"app"`
 	DBPassword                 string `env:"DBPassword" envDefault:"pass"`
 	DBName                     string `env:"DBName" envDefault:"auth"`

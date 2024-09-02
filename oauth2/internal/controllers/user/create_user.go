@@ -15,7 +15,7 @@ import (
 )
 
 type CreateUserUsecase interface {
-	Invoke(c *gin.Context, user repository.User) error
+	Invoke(c *gin.Context, user *repository.User) error
 }
 
 type SignupInput struct {
@@ -56,7 +56,7 @@ func createUser(c *gin.Context, uc CreateUserUsecase, s session.SessionClient) {
 		return
 	}
 
-	user := repository.User{
+	user := &repository.User{
 		Name:     input.Name,
 		Email:    input.Email,
 		Password: input.Password,

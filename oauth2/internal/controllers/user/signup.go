@@ -49,11 +49,8 @@ func signup(c *gin.Context, mess *flashmessage.Messages, uc SignupUsecase) {
 	form, err := uc.Invoke(c)
 	if err != nil {
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
-			switch usecaseErr.Code {
-			case http.StatusInternalServerError:
-				c.Error(errors.WithStack(err)) // TODO: trigger usecase
-				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
-			}
+			c.Error(errors.WithStack(err)) // TODO: trigger usecase
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
 			return
 		}
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})

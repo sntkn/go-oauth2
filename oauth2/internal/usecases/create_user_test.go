@@ -45,7 +45,7 @@ func TestCreateUserInvoke(t *testing.T) {
 		cfg := &config.Config{}
 		signup := NewCreateUser(cfg, mockRepo, mockSess)
 
-		err := signup.Invoke(c, repository.User{})
+		err := signup.Invoke(c, &repository.User{})
 		require.NoError(t, err)
 	})
 
@@ -76,7 +76,7 @@ func TestCreateUserInvoke(t *testing.T) {
 		cfg := &config.Config{}
 		signup := NewCreateUser(cfg, mockRepo, mockSess)
 
-		err := signup.Invoke(c, repository.User{})
+		err := signup.Invoke(c, &repository.User{})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "input email already exists")
 	})
@@ -107,7 +107,7 @@ func TestCreateUserInvoke(t *testing.T) {
 		cfg := &config.Config{}
 		signup := NewCreateUser(cfg, mockRepo, mockSess)
 
-		err := signup.Invoke(c, repository.User{})
+		err := signup.Invoke(c, &repository.User{})
 		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "internal error")

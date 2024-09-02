@@ -154,6 +154,7 @@ issues:
         - lll
         - revive
         - goconst
+        - gosec
 
     # The logic of creating a linter is similar between linters, it's not duplication.
     - path: pkg/golinters

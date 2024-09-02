@@ -36,7 +36,7 @@ type SQLXOAuth2Repository struct {
 
 type Conn struct {
 	Host     string
-	Port     uint32
+	Port     uint16
 	User     string
 	Password string
 	DBName   string

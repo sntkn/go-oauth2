@@ -29,7 +29,7 @@ func NewCreateUser(cfg *config.Config, db repository.OAuth2Repository, sess sess
 	}
 }
 
-func (u *CreateUser) Invoke(c *gin.Context, user repository.User) error {
+func (u *CreateUser) Invoke(c *gin.Context, user *repository.User) error {
 	if err := u.sess.SetNamedSessionData(c, "signup_form", RegistrationData{
 		Name:  user.Name,
 		Email: user.Email,
@@ -45,7 +45,7 @@ func (u *CreateUser) Invoke(c *gin.Context, user repository.User) error {
 		return cerrs.NewUsecaseError(http.StatusBadRequest, "input email already exists")
 	}
 
-	if err := u.db.CreateUser(&user); err != nil {
+	if err := u.db.CreateUser(user); err != nil {
 		return cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 

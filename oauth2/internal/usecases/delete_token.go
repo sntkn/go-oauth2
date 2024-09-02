@@ -33,7 +33,6 @@ func (u *DeleteToken) Invoke(c *gin.Context) error {
 
 	if err := u.db.RevokeToken(tokenStr); err != nil {
 		return cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
-		// c.Error(errors.WithStack(err)).SetType(gin.ErrorTypePublic).SetMeta(http.StatusInternalServerError)
 	}
 
 	return nil

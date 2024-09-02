@@ -58,7 +58,9 @@ func Flash(c *gin.Context, s session.SessionClient) (*Messages, error) {
 		return nil, err
 	}
 
-	setFlashMessages(c, s, Messages{})
+	if err := setFlashMessages(c, s, Messages{}); err != nil {
+		return nil, err
+	}
 
 	return &messages, nil
 }
