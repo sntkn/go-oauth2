@@ -15,13 +15,14 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockAuthorizeUsecase struct {
 	mock.Mock
 }
 
-func (m *MockAuthorizeUsecase) Invoke(c *gin.Context, ClientID string, redirectURI string) error {
+func (m *MockAuthorizeUsecase) Invoke(c *gin.Context, clientID string, redirectURI string) error {
 	args := m.Called(c)
 	return args.Error(0)
 }
@@ -65,7 +66,7 @@ func TestAuthorizeHandler(t *testing.T) {
 	url := "/authorize?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz"
 
 	req, err := http.NewRequest(http.MethodGet, url, http.NoBody)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成
 	w := httptest.NewRecorder()

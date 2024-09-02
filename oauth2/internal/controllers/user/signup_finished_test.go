@@ -10,6 +10,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockSignupFinishedUsecase struct {
@@ -44,7 +45,7 @@ func TestSignupFinishedHandler(t *testing.T) {
 
 		// テスト用のHTTPリクエストとレスポンスレコーダを作成
 		req, err := http.NewRequest(http.MethodGet, "/signup_finished", http.NoBody)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// レスポンスを記録するためのレスポンスレコーダを作成
 		w := httptest.NewRecorder()

@@ -12,6 +12,20 @@
 # See the file `.golangci.reference.yml` to have a list of all available configuration options.
 
 linters-settings:
+  depguard:
+    rules:
+      logger:
+        deny:
+          # logging is allowed only by logutils.Log,
+          - pkg: "github.com/sirupsen/logrus"
+            desc: logging is allowed only by logutils.Log.
+          - pkg: "github.com/pkg/errors"
+            desc: Should be replaced by standard lib errors package.
+          - pkg: "github.com/instana/testify"
+            desc: It's a fork of github.com/stretchr/testify.
+        files:
+          # logrus is allowed to use only in logutils package.
+          - "!**/pkg/logutils/**.go"
   dupl:
     threshold: 100
   funlen:
@@ -20,6 +34,18 @@ linters-settings:
   goconst:
     min-len: 2
     min-occurrences: 3
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
   gocyclo:
     min-complexity: 15
   godox:
@@ -46,11 +72,16 @@ linters-settings:
     ignored-functions:
       - strings.SplitN
   govet:
-    enable:
-      - shadow
     settings:
-      shadow:
-        strict: true
+      printf:
+        funcs:
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+    enable:
+      - nilness
+      - shadow
   errorlint:
     asserts: false
   lll:
@@ -59,24 +90,17 @@ linters-settings:
     locale: US
     ignore-words:
       - "importas" # linter name
+  nolintlint:
+    allow-unused: false # report any unused nolint directives
+    require-explanation: true # require an explanation for nolint directives
+    require-specific: true # require nolint directives to be specific about which linter is being skipped
   revive:
     rules:
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#import-shadowing
-      - name: import-shadowing
-        severity: warning
-        disabled: false
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#empty-block
-      - name: empty-block
-        severity: warning
-        disabled: false
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#empty-lines
-      - name: empty-lines
-        severity: warning
-        disabled: false
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#use-any
-      - name: use-any
-        severity: warning
-        disabled: false
+      - name: indent-error-flow
+      - name: unexported-return
+        disabled: true
+      - name: unused-parameter
+      - name: unused-receiver
 
 linters:
   disable-all: true
@@ -128,6 +152,7 @@ issues:
         - dupl
         - mnd
         - lll
+        - revive
 
     # The logic of creating a linter is similar between linters, it's not duplication.
     - path: pkg/golinters

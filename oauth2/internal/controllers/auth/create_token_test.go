@@ -77,7 +77,8 @@ func TestCreateTokenHandler(t *testing.T) {
 		})
 
 		if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-			v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
+			err := v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
+			require.NoError(t, err)
 		}
 
 		// サインインハンドラをセット
@@ -96,7 +97,7 @@ func TestCreateTokenHandler(t *testing.T) {
 		req.Header.Add("Authorization", "AccessToken")
 		req.Header.Set("Content-Type", "application/json")
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// レスポンスを記録するためのレスポンスレコーダを作成
 		w := httptest.NewRecorder()
@@ -153,7 +154,8 @@ func TestCreateTokenHandler(t *testing.T) {
 		})
 
 		if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-			v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
+			err := v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
+			require.NoError(t, err)
 		}
 
 		// サインインハンドラをセット
@@ -173,7 +175,7 @@ func TestCreateTokenHandler(t *testing.T) {
 		req.Header.Add("Authorization", "AccessToken")
 		req.Header.Set("Content-Type", "application/json")
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// レスポンスを記録するためのレスポンスレコーダを作成
 		w := httptest.NewRecorder()

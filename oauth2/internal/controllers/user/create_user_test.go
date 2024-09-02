@@ -15,6 +15,7 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockCreateUserUsecase struct {
@@ -71,7 +72,7 @@ func TestCreateUserHandler(t *testing.T) {
 	values.Add("password", "test1234")
 
 	req, err := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(values.Encode()))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// レスポンスを記録するためのレスポンスレコーダを作成

@@ -20,7 +20,7 @@ func setupTestContext() *gin.Context {
 
 func TestGetSessionData(t *testing.T) {
 	mockRedis := &redis.RedisClientMock{
-		GetOrNilFunc: func(ctx context.Context, key string) ([]byte, error) {
+		GetOrNilFunc: func(_ context.Context, _ string) ([]byte, error) {
 			return []byte("testValue"), nil
 		},
 	}
@@ -34,13 +34,13 @@ func TestGetSessionData(t *testing.T) {
 
 	// Test GetSessionData
 	value, err := session.GetSessionData(c, "testKey")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []byte("testValue"), value)
 }
 
 func TestSetSessionData(t *testing.T) {
 	mockRedis := &redis.RedisClientMock{
-		SetFunc: func(ctx context.Context, key string, value any, expiration time.Duration) error {
+		SetFunc: func(_ context.Context, _ string, _ any, _ time.Duration) error {
 			return nil
 		},
 	}
@@ -54,12 +54,12 @@ func TestSetSessionData(t *testing.T) {
 
 	// Test GetSessionData
 	err := session.SetSessionData(c, "testKey", "testValue")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestDelSessionData(t *testing.T) {
 	mockRedis := &redis.RedisClientMock{
-		DelFunc: func(ctx context.Context, key string) error {
+		DelFunc: func(_ context.Context, _ string) error {
 			return nil
 		},
 	}
@@ -73,15 +73,15 @@ func TestDelSessionData(t *testing.T) {
 
 	// Test GetSessionData
 	err := session.DelSessionData(c, "testKey")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestPullSessionData(t *testing.T) {
 	mockRedis := &redis.RedisClientMock{
-		GetOrNilFunc: func(ctx context.Context, key string) ([]byte, error) {
+		GetOrNilFunc: func(_ context.Context, _ string) ([]byte, error) {
 			return []byte("testValue"), nil
 		},
-		DelFunc: func(ctx context.Context, key string) error {
+		DelFunc: func(_ context.Context, _ string) error {
 			return nil
 		},
 	}
@@ -95,7 +95,7 @@ func TestPullSessionData(t *testing.T) {
 
 	// Test GetSessionData
 	value, err := session.PullSessionData(c, "testKey")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []byte("testValue"), value)
 }
 
@@ -114,7 +114,7 @@ func TestGetNamedSessionData(t *testing.T) {
 	require.NoError(t, err)
 
 	mockRedis := &redis.RedisClientMock{
-		GetOrNilFunc: func(ctx context.Context, key string) ([]byte, error) {
+		GetOrNilFunc: func(_ context.Context, _ string) ([]byte, error) {
 			return data, nil
 		},
 	}
@@ -130,7 +130,7 @@ func TestGetNamedSessionData(t *testing.T) {
 
 	// Test GetSessionData
 	err = session.GetNamedSessionData(c, "testKey", &output)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, input, output)
 }
 
@@ -149,7 +149,7 @@ func TestSetNamedSessionData(t *testing.T) {
 	require.NoError(t, err)
 
 	mockRedis := &redis.RedisClientMock{
-		SetFunc: func(ctx context.Context, key string, value any, expiration time.Duration) error {
+		SetFunc: func(_ context.Context, _ string, _ any, _ time.Duration) error {
 			return nil
 		},
 	}
@@ -163,7 +163,7 @@ func TestSetNamedSessionData(t *testing.T) {
 
 	// Test SetSessionData
 	err = session.SetNamedSessionData(c, "testKey", data)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestFlushNamedSessionData(t *testing.T) {
@@ -183,10 +183,10 @@ func TestFlushNamedSessionData(t *testing.T) {
 	require.NoError(t, err)
 
 	mockRedis := &redis.RedisClientMock{
-		GetOrNilFunc: func(ctx context.Context, key string) ([]byte, error) {
+		GetOrNilFunc: func(_ context.Context, _ string) ([]byte, error) {
 			return data, nil
 		},
-		DelFunc: func(ctx context.Context, key string) error {
+		DelFunc: func(_ context.Context, _ string) error {
 			return nil
 		},
 	}
@@ -201,6 +201,6 @@ func TestFlushNamedSessionData(t *testing.T) {
 	var output TestStruct
 
 	err = session.FlushNamedSessionData(c, "testKey", &output)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, input, output)
 }

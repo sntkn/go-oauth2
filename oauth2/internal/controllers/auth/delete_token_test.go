@@ -49,7 +49,7 @@ func TestDeleteTokenHandler(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, "/delete_token", http.NoBody)
 	require.NoError(t, err)
 	req.Header.Add("Authorization", "AccessToken")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成
 	w := httptest.NewRecorder()

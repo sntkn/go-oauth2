@@ -11,6 +11,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSignupInvoke(t *testing.T) {
@@ -37,7 +38,7 @@ func TestSignupInvoke(t *testing.T) {
 		signup := NewSignup(cfg, mockSess)
 
 		result, err := signup.Invoke(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, form, result)
 	})
 
@@ -57,7 +58,7 @@ func TestSignupInvoke(t *testing.T) {
 		signup := NewSignup(cfg, mockSess)
 
 		result, err := signup.Invoke(c)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "flush error")
 		assert.Equal(t, entity.SessionRegistrationForm{}, result)

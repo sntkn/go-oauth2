@@ -11,6 +11,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInvoke(t *testing.T) {
@@ -39,7 +40,7 @@ func TestInvoke(t *testing.T) {
 		signin := NewSignin(cfg, mockSess)
 
 		result, err := signin.Invoke(c)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, form, result)
 	})
 
@@ -65,7 +66,7 @@ func TestInvoke(t *testing.T) {
 		signin := NewSignin(cfg, mockSess)
 
 		result, err := signin.Invoke(c)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "invalid client_id")
 		assert.Equal(t, entity.SessionSigninForm{}, result)
@@ -88,7 +89,7 @@ func TestInvoke(t *testing.T) {
 		signin := NewSignin(cfg, mockSess)
 
 		result, err := signin.Invoke(c)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "session error")
 		assert.Equal(t, entity.SessionSigninForm{}, result)
@@ -114,7 +115,7 @@ func TestInvoke(t *testing.T) {
 		signin := NewSignin(cfg, mockSess)
 
 		result, err := signin.Invoke(c)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "flush error")
 		assert.Equal(t, entity.SessionSigninForm{}, result)

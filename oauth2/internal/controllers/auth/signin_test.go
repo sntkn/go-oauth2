@@ -15,6 +15,7 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockSigninUsecase struct {
@@ -57,7 +58,7 @@ func TestSigninHandler(t *testing.T) {
 
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
 	req, err := http.NewRequest(http.MethodGet, "/signin", http.NoBody)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成
 	w := httptest.NewRecorder()

@@ -70,7 +70,9 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
+		if err := v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue); err != nil {
+			slog.Error("register validation error")
+		}
 	}
 
 	// エラーログを出力するミドルウェアを追加

@@ -25,7 +25,7 @@ type AuthorizeInput struct {
 	State        string `form:"state" binding:"required"`
 }
 
-func AuthorizeHandler(c *gin.Context) {
+func AuthorizeHandler(c *gin.Context) { //nolint:dupl
 	db, err := internal.GetFromContextIF[repository.OAuth2Repository](c, "db")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})

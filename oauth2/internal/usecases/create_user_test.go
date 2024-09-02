@@ -11,6 +11,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateUserInvoke(t *testing.T) {
@@ -45,7 +46,7 @@ func TestCreateUserInvoke(t *testing.T) {
 		signup := NewCreateUser(cfg, mockRepo, mockSess)
 
 		err := signup.Invoke(c, repository.User{})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("email already exists error", func(t *testing.T) {
@@ -76,7 +77,7 @@ func TestCreateUserInvoke(t *testing.T) {
 		signup := NewCreateUser(cfg, mockRepo, mockSess)
 
 		err := signup.Invoke(c, repository.User{})
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Contains(t, err.Error(), "input email already exists")
 	})
 	t.Run("successful invoke", func(t *testing.T) {
@@ -107,7 +108,7 @@ func TestCreateUserInvoke(t *testing.T) {
 		signup := NewCreateUser(cfg, mockRepo, mockSess)
 
 		err := signup.Invoke(c, repository.User{})
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "internal error")
 	})

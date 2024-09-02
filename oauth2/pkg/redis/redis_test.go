@@ -33,28 +33,28 @@ func TestRedisCli(t *testing.T) {
 
 	// Test Set and Get
 	err := rdb.Set(ctx, "testKey", "testValue", 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	val, err := rdb.Get(ctx, "testKey")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "testValue", string(val))
 
 	// Test GetOrNil with existing key
 	data, err := rdb.GetOrNil(ctx, "testKey")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []byte("testValue"), data)
 
 	// Test GetOrNil with non-existing key
 	data, err = rdb.GetOrNil(ctx, "nonExistingKey")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Nil(t, data)
 
 	// Test Del
 	err = rdb.Del(ctx, "testKey")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	val, err = rdb.Get(ctx, "testKey")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, redis.Nil, err)
 	assert.Nil(t, val)
 }
