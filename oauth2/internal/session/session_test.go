@@ -100,7 +100,6 @@ func TestPullSessionData(t *testing.T) {
 }
 
 func TestGetNamedSessionData(t *testing.T) {
-
 	type TestStruct struct {
 		Name  string
 		Value int
@@ -136,7 +135,6 @@ func TestGetNamedSessionData(t *testing.T) {
 }
 
 func TestSetNamedSessionData(t *testing.T) {
-
 	type TestStruct struct {
 		Name  string
 		Value int

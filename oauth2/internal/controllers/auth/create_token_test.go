@@ -20,6 +20,7 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockCreateTokenByCodeUsecase struct {
@@ -168,6 +169,7 @@ func TestCreateTokenHandler(t *testing.T) {
 		}
 		j, _ := json.Marshal(exampleToken)
 		req, err := http.NewRequest(http.MethodPost, "/token", strings.NewReader(string(j)))
+		require.NoError(t, err)
 		req.Header.Add("Authorization", "AccessToken")
 		req.Header.Set("Content-Type", "application/json")
 

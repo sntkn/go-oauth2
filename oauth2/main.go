@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -32,20 +31,7 @@ const (
 	shutdownTimeoutSecond = 5 * time.Second
 )
 
-func required_with_field_value(fl validator.FieldLevel) bool {
-	params := strings.Split(fl.Param(), " ")
-	if len(params) != 2 {
-		return false
-	}
-	targetFieldValue := fl.Parent().FieldByName(params[0])
-	if targetFieldValue.IsValid() && targetFieldValue.String() == params[1] {
-		return fl.Field().String() != ""
-	}
-	return true
-}
-
 func main() {
-
 	slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	cfg, err := config.GetEnv()
@@ -117,8 +103,8 @@ func main() {
 
 	// サーバーを非同期で起動
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+		if lasErr := srv.ListenAndServe(); lasErr != nil && lasErr != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", lasErr)
 		}
 	}()
 
@@ -132,8 +118,8 @@ func main() {
 	// タイムアウト付きのコンテキストを設定
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeoutSecond)
 	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("Server forced to shutdown: %+v\n", err)
+	if shutdownErr := srv.Shutdown(ctx); shutdownErr != nil {
+		log.Printf("Server forced to shutdown: %+v\n", shutdownErr)
 	}
 
 	// ctx.Done() をキャッチする。5秒間のタイムアウト。

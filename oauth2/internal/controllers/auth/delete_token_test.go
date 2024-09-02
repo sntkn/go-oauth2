@@ -11,6 +11,7 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockDeleteTokenUsecase struct {
@@ -46,6 +47,7 @@ func TestDeleteTokenHandler(t *testing.T) {
 
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
 	req, err := http.NewRequest(http.MethodGet, "/delete_token", nil)
+	require.NoError(t, err)
 	req.Header.Add("Authorization", "AccessToken")
 	assert.NoError(t, err)
 

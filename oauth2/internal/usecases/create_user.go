@@ -30,7 +30,6 @@ func NewCreateUser(cfg *config.Config, db repository.OAuth2Repository, sess sess
 }
 
 func (u *CreateUser) Invoke(c *gin.Context, user repository.User) error {
-
 	if err := u.sess.SetNamedSessionData(c, "signup_form", RegistrationData{
 		Name:  user.Name,
 		Email: user.Email,

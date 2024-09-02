@@ -32,7 +32,6 @@ func NewAuthorization(cfg *config.Config, db repository.OAuth2Repository, sess s
 }
 
 func (u *Authorization) Invoke(c *gin.Context, email string, password string) (string, error) {
-
 	// validate user credentials
 	user, err := u.db.FindUserByEmail(email)
 	if err != nil {

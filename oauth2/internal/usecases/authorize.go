@@ -32,7 +32,6 @@ func NewAuthorize(cfg *config.Config, db repository.OAuth2Repository) *Authorize
 }
 
 func (u *Authorize) Invoke(c *gin.Context, clientID string, redirectURI string) error {
-
 	// check client
 	client, err := u.db.FindClientByClientID(clientID)
 	if err != nil {
