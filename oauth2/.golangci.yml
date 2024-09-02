@@ -153,6 +153,7 @@ issues:
         - mnd
         - lll
         - revive
+        - goconst
 
     # The logic of creating a linter is similar between linters, it's not duplication.
     - path: pkg/golinters

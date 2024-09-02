@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -58,7 +59,8 @@ func TestSignupHandler(t *testing.T) {
 	})
 
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
-	req, err := http.NewRequest(http.MethodGet, "/signup", http.NoBody)
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/signup", http.NoBody)
 	require.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -46,7 +47,8 @@ func TestDeleteTokenHandler(t *testing.T) {
 	})
 
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
-	req, err := http.NewRequest(http.MethodGet, "/delete_token", http.NoBody)
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/delete_token", http.NoBody)
 	require.NoError(t, err)
 	req.Header.Add("Authorization", "AccessToken")
 	require.NoError(t, err)

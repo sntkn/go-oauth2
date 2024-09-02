@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -71,7 +72,8 @@ func TestCreateUserHandler(t *testing.T) {
 	values.Add("email", "test@example.com")
 	values.Add("password", "test1234")
 
-	req, err := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(values.Encode()))
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/signup", strings.NewReader(values.Encode()))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 

@@ -27,7 +27,7 @@ func NewCreateTokenByRefreshToken(cfg *config.Config, db repository.OAuth2Reposi
 	}
 }
 
-func (u *CreateTokenByRefreshToken) Invoke(c *gin.Context, refreshToken string) (entity.AuthTokens, error) {
+func (u *CreateTokenByRefreshToken) Invoke(_ *gin.Context, refreshToken string) (entity.AuthTokens, error) {
 	var atokn entity.AuthTokens
 	const (
 		randomStringLen = 32

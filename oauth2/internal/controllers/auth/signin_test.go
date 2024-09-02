@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -57,7 +58,8 @@ func TestSigninHandler(t *testing.T) {
 	})
 
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
-	req, err := http.NewRequest(http.MethodGet, "/signin", http.NoBody)
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/signin", http.NoBody)
 	require.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成

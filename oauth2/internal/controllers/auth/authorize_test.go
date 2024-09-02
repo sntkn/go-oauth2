@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +23,7 @@ type MockAuthorizeUsecase struct {
 	mock.Mock
 }
 
-func (m *MockAuthorizeUsecase) Invoke(c *gin.Context, clientID string, redirectURI string) error {
+func (m *MockAuthorizeUsecase) Invoke(c *gin.Context, clientID, redirectURI string) error {
 	args := m.Called(c)
 	return args.Error(0)
 }
@@ -65,7 +66,8 @@ func TestAuthorizeHandler(t *testing.T) {
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
 	url := "/authorize?response_type=code&client_id=00000000-0000-0000-0000-000000000000&scope=read&redirect_uri=http://example.com&state=xyz"
 
-	req, err := http.NewRequest(http.MethodGet, url, http.NoBody)
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	require.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成

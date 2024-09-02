@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -67,7 +68,8 @@ func TestGetUserHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
-	req, err := http.NewRequest(http.MethodGet, "/me", http.NoBody)
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/me", http.NoBody)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	require.NoError(t, err)
 
