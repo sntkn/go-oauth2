@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -63,12 +65,13 @@ func TestGetUserHandler(t *testing.T) {
 		Scope:     "read",
 		ExpiresAt: time.Now().Add(1 * time.Hour),
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
-	req, err := http.NewRequest(http.MethodGet, "/me", nil)
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/me", http.NoBody)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成
 	w := httptest.NewRecorder()

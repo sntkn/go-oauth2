@@ -14,6 +14,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetUserInvoke(t *testing.T) {
@@ -24,7 +25,7 @@ func TestGetUserInvoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 
 		token, err := accesstoken.Generate(accesstoken.TokenParams{
 			UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
@@ -32,7 +33,7 @@ func TestGetUserInvoke(t *testing.T) {
 			Scope:     "read",
 			ExpiresAt: time.Now().Add(1 * time.Hour),
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		c.Request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 
@@ -50,7 +51,7 @@ func TestGetUserInvoke(t *testing.T) {
 
 		user, err := getUser.Invoke(c)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "test@example.com", user.Email)
 	})
 
@@ -58,13 +59,13 @@ func TestGetUserInvoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 
 		mockRepo := &repository.OAuth2RepositoryMock{}
 		getUser := NewGetUser(mockRepo)
 		user, err := getUser.Invoke(c)
 
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		assert.Equal(t, repository.User{}, user)
 		assert.Equal(t, http.StatusUnauthorized, err.(*cerrs.UsecaseError).Code)
@@ -75,7 +76,7 @@ func TestGetUserInvoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 
 		token, err := accesstoken.Generate(accesstoken.TokenParams{
 			UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
@@ -83,7 +84,7 @@ func TestGetUserInvoke(t *testing.T) {
 			Scope:     "read",
 			ExpiresAt: time.Now().Add(-1 * time.Hour),
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		c.Request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 
@@ -101,7 +102,7 @@ func TestGetUserInvoke(t *testing.T) {
 
 		user, err := getUser.Invoke(c)
 
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		assert.Equal(t, repository.User{}, user)
 		assert.Equal(t, http.StatusUnauthorized, err.(*cerrs.UsecaseError).Code)
@@ -112,7 +113,7 @@ func TestGetUserInvoke(t *testing.T) {
 		t.Parallel()
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request = httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 
 		token, err := accesstoken.Generate(accesstoken.TokenParams{
 			UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
@@ -120,7 +121,7 @@ func TestGetUserInvoke(t *testing.T) {
 			Scope:     "read",
 			ExpiresAt: time.Now().Add(1 * time.Hour),
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		c.Request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 
@@ -132,7 +133,7 @@ func TestGetUserInvoke(t *testing.T) {
 
 		user, err := getUser.Invoke(c)
 
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		assert.Equal(t, repository.User{}, user)
 		assert.Equal(t, http.StatusUnauthorized, err.(*cerrs.UsecaseError).Code)

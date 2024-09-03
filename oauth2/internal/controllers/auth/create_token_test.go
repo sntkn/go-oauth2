@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -20,6 +21,7 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockCreateTokenByCodeUsecase struct {
@@ -76,7 +78,8 @@ func TestCreateTokenHandler(t *testing.T) {
 		})
 
 		if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-			v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
+			err := v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
+			require.NoError(t, err)
 		}
 
 		// サインインハンドラをセット
@@ -91,11 +94,12 @@ func TestCreateTokenHandler(t *testing.T) {
 			Code:      "test",
 		}
 		j, _ := json.Marshal(exampleToken)
-		req, err := http.NewRequest(http.MethodPost, "/token", strings.NewReader(string(j)))
+		ctx := context.Background()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/token", strings.NewReader(string(j)))
 		req.Header.Add("Authorization", "AccessToken")
 		req.Header.Set("Content-Type", "application/json")
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// レスポンスを記録するためのレスポンスレコーダを作成
 		w := httptest.NewRecorder()
@@ -152,7 +156,8 @@ func TestCreateTokenHandler(t *testing.T) {
 		})
 
 		if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-			v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
+			err := v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
+			require.NoError(t, err)
 		}
 
 		// サインインハンドラをセット
@@ -167,11 +172,13 @@ func TestCreateTokenHandler(t *testing.T) {
 			RefreshToken: "test",
 		}
 		j, _ := json.Marshal(exampleToken)
-		req, err := http.NewRequest(http.MethodPost, "/token", strings.NewReader(string(j)))
+		ctx := context.Background()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/token", strings.NewReader(string(j)))
+		require.NoError(t, err)
 		req.Header.Add("Authorization", "AccessToken")
 		req.Header.Set("Content-Type", "application/json")
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// レスポンスを記録するためのレスポンスレコーダを作成
 		w := httptest.NewRecorder()

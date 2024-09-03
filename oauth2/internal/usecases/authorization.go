@@ -31,8 +31,7 @@ func NewAuthorization(cfg *config.Config, db repository.OAuth2Repository, sess s
 	}
 }
 
-func (u *Authorization) Invoke(c *gin.Context, email string, password string) (string, error) {
-
+func (u *Authorization) Invoke(c *gin.Context, email, password string) (string, error) {
 	// validate user credentials
 	user, err := u.db.FindUserByEmail(email)
 	if err != nil {
@@ -43,12 +42,12 @@ func (u *Authorization) Invoke(c *gin.Context, email string, password string) (s
 	}
 
 	// パスワードを比較して認証
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return "", cerrs.NewUsecaseError(http.StatusBadRequest, err.Error())
 	}
+
 	var d AuthorizeInput
-	if err := u.sess.GetNamedSessionData(c, "auth", &d); err != nil {
+	if err = u.sess.GetNamedSessionData(c, "auth", &d); err != nil {
 		return "", cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 

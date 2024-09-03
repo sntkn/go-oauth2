@@ -13,6 +13,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateTokenByCode_Invoke(t *testing.T) {
@@ -49,7 +50,7 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 		c, _ := gin.CreateTestContext(nil)
 		authTokens, err := u.Invoke(c, authCode)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, authTokens.AccessToken)
 		assert.NotEmpty(t, authTokens.RefreshToken)
 		assert.NotZero(t, authTokens.Expiry)
@@ -72,7 +73,7 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 		c, _ := gin.CreateTestContext(nil)
 		authTokens, err := u.Invoke(c, authCode)
 
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Equal(t, http.StatusForbidden, err.(*cerrs.UsecaseError).Code)
 		assert.Empty(t, authTokens.AccessToken)
 		assert.Empty(t, authTokens.RefreshToken)
@@ -94,7 +95,7 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 		c, _ := gin.CreateTestContext(nil)
 		authTokens, err := u.Invoke(c, authCode)
 
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Equal(t, http.StatusInternalServerError, err.(*cerrs.UsecaseError).Code)
 		assert.Empty(t, authTokens.AccessToken)
 		assert.Empty(t, authTokens.RefreshToken)

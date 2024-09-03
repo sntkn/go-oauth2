@@ -27,7 +27,7 @@ func NewCreateTokenByCode(cfg *config.Config, db repository.OAuth2Repository) *C
 	}
 }
 
-func (u *CreateTokenByCode) Invoke(c *gin.Context, authCode string) (entity.AuthTokens, error) {
+func (u *CreateTokenByCode) Invoke(_ *gin.Context, authCode string) (entity.AuthTokens, error) {
 	var atokn entity.AuthTokens
 	const (
 		randomStringLen = 32

@@ -18,7 +18,7 @@ type SigninUsecaser interface {
 	Invoke(c *gin.Context) (entity.SessionSigninForm, error)
 }
 
-func SigninHandler(c *gin.Context) {
+func SigninHandler(c *gin.Context) { //nolint:dupl // No need for commonization.
 	s, err := internal.GetFromContextIF[session.SessionClient](c, "session")
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})

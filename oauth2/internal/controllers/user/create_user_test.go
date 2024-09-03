@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -15,13 +16,14 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockCreateUserUsecase struct {
 	mock.Mock
 }
 
-func (m *MockCreateUserUsecase) Invoke(c *gin.Context, user repository.User) error {
+func (m *MockCreateUserUsecase) Invoke(c *gin.Context, user *repository.User) error {
 	args := m.Called(c)
 	return args.Error(0)
 }
@@ -70,8 +72,9 @@ func TestCreateUserHandler(t *testing.T) {
 	values.Add("email", "test@example.com")
 	values.Add("password", "test1234")
 
-	req, err := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(values.Encode()))
-	assert.NoError(t, err)
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/signup", strings.NewReader(values.Encode()))
+	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// レスポンスを記録するためのレスポンスレコーダを作成

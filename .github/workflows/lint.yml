@@ -22,4 +22,6 @@ jobs:
           workdir: ${{ inputs.target }}
           golangci_lint_flags: "--config=.golangci.yml --timeout=5m ./..."
           fail_on_error: true
-          reporter: "github-pr-review"
+          filter_mode: nofilter
+          level: warning
+          reporter: github-pr-review

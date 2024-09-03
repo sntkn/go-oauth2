@@ -29,8 +29,6 @@ func (u *GetUser) Invoke(c *gin.Context) (repository.User, error) {
 
 	// "Authorization" ヘッダーが存在しない場合や、Bearer トークンでない場合はエラーを返す
 	if authHeader == "" {
-		// err := fmt.Errorf("missing or empty authorization header")
-		// c.Error(errors.WithStack(err)).SetType(gin.ErrorTypePublic).SetMeta(http.StatusUnauthorized)
 		return user, cerrs.NewUsecaseError(http.StatusUnauthorized, "missing or empty authorization header")
 	}
 

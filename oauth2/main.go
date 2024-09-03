@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -32,20 +31,7 @@ const (
 	shutdownTimeoutSecond = 5 * time.Second
 )
 
-func required_with_field_value(fl validator.FieldLevel) bool {
-	params := strings.Split(fl.Param(), " ")
-	if len(params) != 2 {
-		return false
-	}
-	targetFieldValue := fl.Parent().FieldByName(params[0])
-	if targetFieldValue.IsValid() && targetFieldValue.String() == params[1] {
-		return fl.Field().String() != ""
-	}
-	return true
-}
-
 func main() {
-
 	slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	cfg, err := config.GetEnv()
@@ -68,7 +54,7 @@ func main() {
 	// PostgreSQLに接続
 	db, err := repository.NewClient(repository.Conn{
 		Host:     cfg.DBHost,
-		Port:     uint32(cfg.DBPort),
+		Port:     uint16(cfg.DBPort),
 		User:     cfg.DBUser,
 		Password: cfg.DBPassword,
 		DBName:   cfg.DBName,
@@ -84,7 +70,9 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue)
+		if err := v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue); err != nil {
+			slog.Error("register validation error")
+		}
 	}
 
 	// エラーログを出力するミドルウェアを追加
@@ -117,8 +105,8 @@ func main() {
 
 	// サーバーを非同期で起動
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+		if lasErr := srv.ListenAndServe(); lasErr != nil && lasErr != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", lasErr)
 		}
 	}()
 
@@ -132,8 +120,8 @@ func main() {
 	// タイムアウト付きのコンテキストを設定
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeoutSecond)
 	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("Server forced to shutdown: %+v\n", err)
+	if shutdownErr := srv.Shutdown(ctx); shutdownErr != nil {
+		log.Printf("Server forced to shutdown: %+v\n", shutdownErr)
 	}
 
 	// ctx.Done() をキャッチする。5秒間のタイムアウト。
@@ -177,7 +165,7 @@ func ping() (bool, error) {
 
 	db, err := repository.NewClient(repository.Conn{
 		Host:     cfg.DBHost,
-		Port:     uint32(cfg.DBPort),
+		Port:     uint16(cfg.DBPort),
 		User:     cfg.DBUser,
 		Password: cfg.DBPassword,
 		DBName:   cfg.DBName,

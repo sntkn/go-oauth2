@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +19,7 @@ import (
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,7 +27,7 @@ type MockAuthorizationUsecase struct {
 	mock.Mock
 }
 
-func (m *MockAuthorizationUsecase) Invoke(c *gin.Context, email string, password string) (string, error) {
+func (m *MockAuthorizationUsecase) Invoke(c *gin.Context, email, password string) (string, error) {
 	args := m.Called(c)
 	return args.String(0), args.Error(1)
 }
@@ -86,10 +88,11 @@ func TestAuthorizationHandler(t *testing.T) {
 	values.Set("email", "test@example.com")
 	values.Add("password", "test1234")
 
-	req, err := http.NewRequest(http.MethodPost, "/authorization", strings.NewReader(values.Encode()))
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/authorization", strings.NewReader(values.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成
 	w := httptest.NewRecorder()

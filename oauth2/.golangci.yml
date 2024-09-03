@@ -152,6 +152,9 @@ issues:
         - dupl
         - mnd
         - lll
+        - revive
+        - goconst
+        - gosec
 
     # The logic of creating a linter is similar between linters, it's not duplication.
     - path: pkg/golinters
@@ -215,3 +218,5 @@ issues:
 
 run:
   timeout: 5m
+  issues-exit-code: 1 # 警告があればエラーとしてジョブが失敗する
+

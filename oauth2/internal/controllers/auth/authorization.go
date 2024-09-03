@@ -61,8 +61,8 @@ func authorization(c *gin.Context, uc AuthorizationUsecase, s session.SessionCli
 	}
 
 	if err := c.ShouldBind(&input); err != nil {
-		if err := flashmessage.AddMessage(c, s, "error", err.Error()); err != nil {
-			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		if flashErr := flashmessage.AddMessage(c, s, "error", err.Error()); flashErr != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": flashErr.Error()})
 			return
 		}
 		c.Redirect(http.StatusFound, "/signin")
@@ -74,8 +74,8 @@ func authorization(c *gin.Context, uc AuthorizationUsecase, s session.SessionCli
 		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
 			switch usecaseErr.Code {
 			case http.StatusBadRequest:
-				if err := flashmessage.AddMessage(c, s, "error", usecaseErr.Error()); err != nil {
-					c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+				if flashErr := flashmessage.AddMessage(c, s, "error", usecaseErr.Error()); flashErr != nil {
+					c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": flashErr.Error()})
 					return
 				}
 				c.Redirect(http.StatusFound, "/signin")

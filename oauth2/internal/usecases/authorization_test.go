@@ -14,6 +14,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -62,7 +63,7 @@ func TestAuthorizationInvoke(t *testing.T) {
 		authorization := NewAuthorization(cfg, mockRepo, mockSess)
 
 		result, err := authorization.Invoke(c, "test@example.com", "test1234")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Contains(t, result, "http://example.com?code=")
 	})
 
@@ -99,7 +100,7 @@ func TestAuthorizationInvoke(t *testing.T) {
 		authorization := NewAuthorization(cfg, mockRepo, mockSess)
 
 		result, err := authorization.Invoke(c, "test@example.com", "test1234")
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "no rows in result set")
 		assert.Equal(t, "", result)
@@ -146,7 +147,7 @@ func TestAuthorizationInvoke(t *testing.T) {
 		authorization := NewAuthorization(cfg, mockRepo, mockSess)
 
 		result, err := authorization.Invoke(c, "test@example.com", "test12345")
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		usecaseErr, ok := err.(*cerrs.UsecaseError)
 		assert.True(t, ok)
@@ -190,7 +191,7 @@ func TestAuthorizationInvoke(t *testing.T) {
 		authorization := NewAuthorization(cfg, mockRepo, mockSess)
 
 		result, err := authorization.Invoke(c, "test@example.com", "test1234")
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.IsType(t, &cerrs.UsecaseError{}, err)
 		usecaseErr, ok := err.(*cerrs.UsecaseError)
 		assert.True(t, ok)
