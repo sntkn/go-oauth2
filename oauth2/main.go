@@ -54,7 +54,7 @@ func main() {
 	// PostgreSQLに接続
 	db, err := repository.NewClient(repository.Conn{
 		Host:     cfg.DBHost,
-		Port:     cfg.DBPort,
+		Port:     uint16(cfg.DBPort),
 		User:     cfg.DBUser,
 		Password: cfg.DBPassword,
 		DBName:   cfg.DBName,
@@ -165,7 +165,7 @@ func ping() (bool, error) {
 
 	db, err := repository.NewClient(repository.Conn{
 		Host:     cfg.DBHost,
-		Port:     cfg.DBPort,
+		Port:     uint16(cfg.DBPort),
 		User:     cfg.DBUser,
 		Password: cfg.DBPassword,
 		DBName:   cfg.DBName,
