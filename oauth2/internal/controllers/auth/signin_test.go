@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +12,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -106,7 +105,7 @@ func TestSignin(t *testing.T) {
 
 		mess := &flashmessage.Messages{}
 		mockUC := new(MockSigninUsecase)
-		mockUC.On("Invoke", mock.Anything).Return(entity.SessionSigninForm{}, &cerrs.UsecaseError{Code: http.StatusBadRequest})
+		mockUC.On("Invoke", mock.Anything).Return(entity.SessionSigninForm{}, &errors.UsecaseError{Code: http.StatusBadRequest})
 
 		signin(c, mess, mockUC)
 

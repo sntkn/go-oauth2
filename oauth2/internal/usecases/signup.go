@@ -7,7 +7,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type Signup struct {
@@ -25,7 +25,7 @@ func NewSignup(cfg *config.Config, sess session.SessionClient) *Signup {
 func (u *Signup) Invoke(c *gin.Context) (entity.SessionRegistrationForm, error) {
 	var form entity.SessionRegistrationForm
 	if err := u.sess.FlushNamedSessionData(c, "signup_form", &form); err != nil {
-		return form, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return form, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 	return form, nil
 }

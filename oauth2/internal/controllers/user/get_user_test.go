@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -114,7 +113,7 @@ func TestGetUser(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 
 		mockUC := new(MockGetUserUsecase)
-		mockUC.On("Invoke", mock.Anything).Return(repository.User{}, &cerrs.UsecaseError{Code: http.StatusUnauthorized})
+		mockUC.On("Invoke", mock.Anything).Return(repository.User{}, &errors.UsecaseError{Code: http.StatusUnauthorized})
 
 		getUser(c, mockUC)
 

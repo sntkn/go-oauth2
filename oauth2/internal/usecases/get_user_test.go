@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,9 +66,9 @@ func TestGetUserInvoke(t *testing.T) {
 		user, err := getUser.Invoke(c)
 
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
+		assert.IsType(t, &errors.UsecaseError{}, err)
 		assert.Equal(t, repository.User{}, user)
-		assert.Equal(t, http.StatusUnauthorized, err.(*cerrs.UsecaseError).Code)
+		assert.Equal(t, http.StatusUnauthorized, err.(*errors.UsecaseError).Code)
 		assert.Equal(t, "Code: 401, Message: missing or empty authorization header", err.Error())
 	})
 
@@ -103,9 +103,9 @@ func TestGetUserInvoke(t *testing.T) {
 		user, err := getUser.Invoke(c)
 
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
+		assert.IsType(t, &errors.UsecaseError{}, err)
 		assert.Equal(t, repository.User{}, user)
-		assert.Equal(t, http.StatusUnauthorized, err.(*cerrs.UsecaseError).Code)
+		assert.Equal(t, http.StatusUnauthorized, err.(*errors.UsecaseError).Code)
 		assert.Contains(t, err.Error(), "token is expired by")
 	})
 
@@ -134,9 +134,9 @@ func TestGetUserInvoke(t *testing.T) {
 		user, err := getUser.Invoke(c)
 
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
+		assert.IsType(t, &errors.UsecaseError{}, err)
 		assert.Equal(t, repository.User{}, user)
-		assert.Equal(t, http.StatusUnauthorized, err.(*cerrs.UsecaseError).Code)
+		assert.Equal(t, http.StatusUnauthorized, err.(*errors.UsecaseError).Code)
 		assert.Contains(t, err.Error(), "no rows in result set")
 	})
 }

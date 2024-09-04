@@ -4,14 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type SigninUsecaser interface {
@@ -45,7 +44,7 @@ func SigninHandler(c *gin.Context) { //nolint:dupl // No need for commonization.
 func signin(c *gin.Context, mess *flashmessage.Messages, uc SigninUsecaser) {
 	form, err := uc.Invoke(c)
 	if err != nil {
-		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
+		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
 			switch usecaseErr.Code {
 			case http.StatusBadRequest:
 				c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})

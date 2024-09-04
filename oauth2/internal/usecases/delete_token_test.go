@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,8 +28,8 @@ func TestDeleteToken_Invoke(t *testing.T) {
 		err := deleteToken.Invoke(c)
 
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
-		assert.Equal(t, http.StatusUnauthorized, err.(*cerrs.UsecaseError).Code)
+		assert.IsType(t, &errors.UsecaseError{}, err)
+		assert.Equal(t, http.StatusUnauthorized, err.(*errors.UsecaseError).Code)
 	})
 
 	t.Run("successful token revocation", func(t *testing.T) {
@@ -56,13 +56,13 @@ func TestDeleteToken_Invoke(t *testing.T) {
 		c.Request.Header.Set("Authorization", "Bearer invalid-token")
 
 		mockRepo.RevokeTokenFunc = func(accessToken string) error {
-			return cerrs.NewUsecaseError(http.StatusInternalServerError, "revocation error")
+			return errors.NewUsecaseError(http.StatusInternalServerError, "revocation error")
 		}
 
 		err := deleteToken.Invoke(c)
 
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
-		assert.Equal(t, http.StatusInternalServerError, err.(*cerrs.UsecaseError).Code)
+		assert.IsType(t, &errors.UsecaseError{}, err)
+		assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
 	})
 }

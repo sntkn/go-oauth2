@@ -2,14 +2,13 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -88,7 +87,7 @@ func TestDeleteToken(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 
 		mockUC := new(MockDeleteTokenUsecase)
-		mockUC.On("Invoke", mock.Anything).Return(&cerrs.UsecaseError{Code: http.StatusBadRequest})
+		mockUC.On("Invoke", mock.Anything).Return(&errors.UsecaseError{Code: http.StatusBadRequest})
 
 		deleteToken(c, mockUC)
 

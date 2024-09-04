@@ -3,9 +3,9 @@ package accesstoken
 import (
 	"time"
 
-	"github.com/cockroachdb/errors"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 var secretKey = []byte("test")

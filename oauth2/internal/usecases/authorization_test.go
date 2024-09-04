@@ -12,7 +12,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
@@ -101,7 +101,7 @@ func TestAuthorizationInvoke(t *testing.T) {
 
 		result, err := authorization.Invoke(c, "test@example.com", "test1234")
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
+		assert.IsType(t, &errors.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "no rows in result set")
 		assert.Equal(t, "", result)
 	})
@@ -148,8 +148,8 @@ func TestAuthorizationInvoke(t *testing.T) {
 
 		result, err := authorization.Invoke(c, "test@example.com", "test12345")
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
-		usecaseErr, ok := err.(*cerrs.UsecaseError)
+		assert.IsType(t, &errors.UsecaseError{}, err)
+		usecaseErr, ok := err.(*errors.UsecaseError)
 		assert.True(t, ok)
 		assert.Equal(t, http.StatusBadRequest, usecaseErr.Code)
 		assert.Equal(t, "", result)
@@ -192,8 +192,8 @@ func TestAuthorizationInvoke(t *testing.T) {
 
 		result, err := authorization.Invoke(c, "test@example.com", "test1234")
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
-		usecaseErr, ok := err.(*cerrs.UsecaseError)
+		assert.IsType(t, &errors.UsecaseError{}, err)
+		usecaseErr, ok := err.(*errors.UsecaseError)
 		assert.True(t, ok)
 		assert.Equal(t, http.StatusInternalServerError, usecaseErr.Code)
 		assert.Equal(t, "", result)

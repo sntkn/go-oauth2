@@ -7,7 +7,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type DeleteTokenUsecaser interface {
@@ -26,7 +26,7 @@ func DeleteTokenHandler(c *gin.Context) {
 
 func deleteToken(c *gin.Context, uc DeleteTokenUsecaser) {
 	if err := uc.Invoke(c); err != nil {
-		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
+		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
 			c.AbortWithStatusJSON(usecaseErr.Code, gin.H{"error": usecaseErr.Error()})
 			return
 		}

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -16,7 +15,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -188,7 +187,7 @@ func TestAuthorization(t *testing.T) {
 			},
 		}
 		mockUC := new(MockAuthorizationUsecase)
-		mockUC.On("Invoke", mock.Anything).Return("", &cerrs.UsecaseError{Code: http.StatusBadRequest})
+		mockUC.On("Invoke", mock.Anything).Return("", &errors.UsecaseError{Code: http.StatusBadRequest})
 
 		authorization(c, mockUC, s)
 		c.Writer.WriteHeaderNow() // POST だとヘッダの書き込みが行われず、200を返してしまうのでここで書き込み https://stackoverflow.com/questions/76319196/unit-testing-of-gins-context-redirect-works-for-get-response-code-but-fails-for

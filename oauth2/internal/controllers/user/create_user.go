@@ -4,14 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type CreateUserUsecase interface {
@@ -63,7 +62,7 @@ func createUser(c *gin.Context, uc CreateUserUsecase, s session.SessionClient) {
 	}
 
 	if err := uc.Invoke(c, user); err != nil {
-		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
+		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
 			switch usecaseErr.Code {
 			case http.StatusBadRequest:
 				if flashErr := flashmessage.AddMessage(c, s, flashmessage.Error, usecaseErr.Error()); flashErr != nil {

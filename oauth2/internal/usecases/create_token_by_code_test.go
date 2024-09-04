@@ -6,12 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -74,7 +73,7 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 		authTokens, err := u.Invoke(c, authCode)
 
 		require.Error(t, err)
-		assert.Equal(t, http.StatusForbidden, err.(*cerrs.UsecaseError).Code)
+		assert.Equal(t, http.StatusForbidden, err.(*errors.UsecaseError).Code)
 		assert.Empty(t, authTokens.AccessToken)
 		assert.Empty(t, authTokens.RefreshToken)
 	})
@@ -96,7 +95,7 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 		authTokens, err := u.Invoke(c, authCode)
 
 		require.Error(t, err)
-		assert.Equal(t, http.StatusInternalServerError, err.(*cerrs.UsecaseError).Code)
+		assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
 		assert.Empty(t, authTokens.AccessToken)
 		assert.Empty(t, authTokens.RefreshToken)
 	})

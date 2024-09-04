@@ -4,12 +4,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	cdberr "github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -67,7 +66,7 @@ func TestInvoke(t *testing.T) {
 
 		result, err := signin.Invoke(c)
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
+		assert.IsType(t, &errors.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "invalid client_id")
 		assert.Equal(t, entity.SessionSigninForm{}, result)
 	})
@@ -79,7 +78,7 @@ func TestInvoke(t *testing.T) {
 
 		mockSess := &session.SessionClientMock{
 			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				return cdberr.New("session error")
+				return errors.New("session error")
 			},
 			FlushNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
 				return nil
@@ -90,7 +89,7 @@ func TestInvoke(t *testing.T) {
 
 		result, err := signin.Invoke(c)
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
+		assert.IsType(t, &errors.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "session error")
 		assert.Equal(t, entity.SessionSigninForm{}, result)
 	})
@@ -108,7 +107,7 @@ func TestInvoke(t *testing.T) {
 				return nil
 			},
 			FlushNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				return cdberr.New("flush error")
+				return errors.New("flush error")
 			},
 		}
 		cfg := &config.Config{}
@@ -116,7 +115,7 @@ func TestInvoke(t *testing.T) {
 
 		result, err := signin.Invoke(c)
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
+		assert.IsType(t, &errors.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "flush error")
 		assert.Equal(t, entity.SessionSigninForm{}, result)
 	})

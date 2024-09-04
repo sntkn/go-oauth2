@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type AuthorizeInput struct {
@@ -36,13 +35,13 @@ func (u *Authorize) Invoke(_ *gin.Context, clientID, redirectURI string) error {
 	client, err := u.db.FindClientByClientID(clientID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return cerrs.NewUsecaseError(http.StatusBadRequest, err.Error())
+			return errors.NewUsecaseError(http.StatusBadRequest, err.Error())
 		}
-		return cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
 	if client.RedirectURIs != redirectURI {
-		return cerrs.NewUsecaseError(http.StatusBadRequest, "redirect uri does not match")
+		return errors.NewUsecaseError(http.StatusBadRequest, "redirect uri does not match")
 	}
 
 	return nil
