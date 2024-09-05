@@ -1,6 +1,11 @@
 package errors
 
-import go_errors "github.com/go-errors/errors"
+import (
+	"fmt"
+	"log/slog"
+
+	go_errors "github.com/go-errors/errors"
+)
 
 // go_errorsのメソッドを全て公開
 var (
@@ -16,5 +21,21 @@ var (
 )
 
 func WithStack(err error) error {
-	return go_errors.Wrap(err, 0)
+	if err != nil {
+		return go_errors.Wrap(err, 0)
+	}
+	return nil
+}
+
+func LogStackTrace(err error) slog.Attr {
+	if err == nil {
+		return slog.Any("stacktrace", []any{})
+	}
+
+	// go-errors/errors の Error かどうか
+	goerror, ok := err.(*go_errors.Error)
+	if !ok {
+		return slog.String("details", fmt.Sprintf("%+v", err))
+	}
+	return slog.Any("stacktrace", goerror.StackFrames())
 }
