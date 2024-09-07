@@ -1,12 +1,23 @@
 package db
 
 import (
+	"fmt"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func Setup() (*gorm.DB, error) {
-	dsn := "host=localhost user=admin password=admin dbname=auth port=5432 sslmode=disable TimeZone=Asia/Tokyo"
+type DBConfig struct {
+	Host     string
+	Port     uint16
+	User     string
+	Password string
+	DBName   string
+}
+
+func Setup(cfg *DBConfig) (*gorm.DB, error) {
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Tokyo",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
