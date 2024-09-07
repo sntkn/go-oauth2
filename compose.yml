@@ -12,6 +12,7 @@ services:
       DBUser: app
       DBPassword: pass
       DBName: auth
+      GIN_MODE: debug
     volumes:
       - ./oauth2:/src
     depends_on:
@@ -31,7 +32,7 @@ services:
       DBPassword: pass
       DBName: auth
     volumes:
-      - ./oauth2:/src
+      - ./api:/src
     depends_on:
       - database
       - session
