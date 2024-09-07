@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -19,6 +18,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/validation"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 
 	"github.com/gin-gonic/gin"
@@ -32,11 +32,11 @@ const (
 )
 
 func main() {
-	slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	cfg, err := config.GetEnv()
 	if err != nil {
-		slog.Error("Config Load Error", "message:", err)
+		logger.Error("Config Load Error", "message:", err)
 		return
 	}
 
@@ -47,7 +47,7 @@ func main() {
 		DB:       0,              // データベース番号
 	})
 	if err != nil {
-		slog.Error("Session Error", "message:", err)
+		logger.Error("Session Error", "message:", err)
 		return
 	}
 
@@ -60,7 +60,7 @@ func main() {
 		DBName:   cfg.DBName,
 	})
 	if err != nil {
-		slog.Error("Database Error", "message:", err)
+		logger.Error("Database Error", "message:", err)
 		return
 	}
 	defer db.Close()
@@ -71,12 +71,12 @@ func main() {
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		if err := v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue); err != nil {
-			slog.Error("register validation error")
+			logger.Error("register validation error")
 		}
 	}
 
 	// エラーログを出力するミドルウェアを追加
-	r.Use(ErrorLoggerMiddleware())
+	r.Use(ErrorLoggerMiddleware(logger))
 	r.Use(func(c *gin.Context) {
 		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
 		messages, _ := flashmessage.Flash(c, sess)
@@ -132,27 +132,14 @@ func main() {
 }
 
 // ErrorLoggerMiddleware はエラーログを出力するためのミドルウェアです。
-func ErrorLoggerMiddleware() gin.HandlerFunc {
+func ErrorLoggerMiddleware(logger *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next() // 次のミドルウェアまたはハンドラを呼び出します
 
-		if len(c.Errors) > 0 {
-			for _, err := range c.Errors {
-				slog.Error(fmt.Sprintf("%+v\n", err.Err))
-			}
+		for _, err := range c.Errors {
+			logger.Error("errors occured", errors.LogStackTrace(err.Err))
 		}
 
-		err := c.Errors.ByType(gin.ErrorTypePublic).Last()
-		if err != nil {
-			// 短縮して型アサーションとデフォルト値の設定を一行で
-			statusCode := func() int {
-				if sc, ok := err.Meta.(int); ok {
-					return sc
-				}
-				return http.StatusInternalServerError
-			}()
-			c.JSON(statusCode, gin.H{"error": err.Error()})
-		}
 	}
 }
 

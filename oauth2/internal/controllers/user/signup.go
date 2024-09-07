@@ -4,14 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type SignupUsecase interface {
@@ -48,7 +47,7 @@ func SignupHandler(c *gin.Context) {
 func signup(c *gin.Context, mess *flashmessage.Messages, uc SignupUsecase) {
 	form, err := uc.Invoke(c)
 	if err != nil {
-		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
+		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
 			c.Error(errors.WithStack(err)) // TODO: trigger usecase
 			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
 			return

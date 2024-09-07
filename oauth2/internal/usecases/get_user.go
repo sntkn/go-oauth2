@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type GetUser struct {
@@ -29,7 +29,7 @@ func (u *GetUser) Invoke(c *gin.Context) (repository.User, error) {
 
 	// "Authorization" ヘッダーが存在しない場合や、Bearer トークンでない場合はエラーを返す
 	if authHeader == "" {
-		return user, cerrs.NewUsecaseError(http.StatusUnauthorized, "missing or empty authorization header")
+		return user, errors.NewUsecaseError(http.StatusUnauthorized, "missing or empty authorization header")
 	}
 
 	// "Bearer " のプレフィックスを取り除いてトークンを抽出
@@ -38,18 +38,18 @@ func (u *GetUser) Invoke(c *gin.Context) (repository.User, error) {
 	claims, err := accesstoken.Parse(tokenStr)
 
 	if err != nil {
-		return user, cerrs.NewUsecaseError(http.StatusUnauthorized, err.Error())
+		return user, errors.NewUsecaseError(http.StatusUnauthorized, err.Error())
 	}
 
 	// TODO: find user
 	userID, err := uuid.Parse(claims.UserID)
 	if err != nil {
-		return user, cerrs.NewUsecaseError(http.StatusUnauthorized, err.Error())
+		return user, errors.NewUsecaseError(http.StatusUnauthorized, err.Error())
 	}
 
 	user, err = u.db.FindUser(userID)
 	if err != nil {
-		return user, cerrs.NewUsecaseError(http.StatusUnauthorized, err.Error())
+		return user, errors.NewUsecaseError(http.StatusUnauthorized, err.Error())
 	}
 
 	return user, nil

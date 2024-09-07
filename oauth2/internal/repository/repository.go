@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cockroachdb/errors"
 	"github.com/jmoiron/sqlx"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/google/uuid"

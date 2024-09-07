@@ -4,13 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type CreateTokenByCodeUsecase interface {
@@ -63,7 +62,7 @@ func createToken(c *gin.Context, ctByCodeUC CreateTokenByCodeUsecase, ctByRefUC 
 	if input.GrantType == "authorization_code" {
 		token, err := ctByCodeUC.Invoke(c, input.Code)
 		if err != nil {
-			if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
+			if usecaseErr, ok := err.(*errors.UsecaseError); ok {
 				c.AbortWithStatusJSON(usecaseErr.Code, gin.H{"error": usecaseErr.Error()})
 				return
 			}
@@ -81,7 +80,7 @@ func createToken(c *gin.Context, ctByCodeUC CreateTokenByCodeUsecase, ctByRefUC 
 
 	token, err := ctByRefUC.Invoke(c, input.RefreshToken)
 	if err != nil {
-		if usecaseErr, ok := err.(*cerrs.UsecaseError); ok {
+		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
 			c.AbortWithStatusJSON(usecaseErr.Code, gin.H{"error": usecaseErr.Error()})
 			return
 		}

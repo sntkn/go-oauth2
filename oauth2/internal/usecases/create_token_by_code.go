@@ -5,13 +5,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
@@ -38,14 +37,14 @@ func (u *CreateTokenByCode) Invoke(_ *gin.Context, authCode string) (entity.Auth
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// TODO: redirect to autorize with parameters
-			return atokn, cerrs.NewUsecaseError(http.StatusForbidden, err.Error())
+			return atokn, errors.NewUsecaseError(http.StatusForbidden, err.Error())
 		}
-		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
 	currentTime := time.Now()
 	if currentTime.After(code.ExpiresAt) {
-		return atokn, cerrs.NewUsecaseError(http.StatusForbidden, "code has expired")
+		return atokn, errors.NewUsecaseError(http.StatusForbidden, "code has expired")
 	}
 
 	// create token and refresh token
@@ -58,7 +57,7 @@ func (u *CreateTokenByCode) Invoke(_ *gin.Context, authCode string) (entity.Auth
 	}
 	accessToken, err := accesstoken.Generate(t)
 	if err != nil {
-		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
 	if err = u.db.RegisterToken(&repository.Token{
@@ -68,12 +67,12 @@ func (u *CreateTokenByCode) Invoke(_ *gin.Context, authCode string) (entity.Auth
 		Scope:       code.Scope,
 		ExpiresAt:   expiration,
 	}); err != nil {
-		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
 	randomString, err := str.GenerateRandomString(randomStringLen)
 	if err != nil {
-		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 	refreshExpiration := time.Now().Add(time.Duration(u.cfg.AuthRefreshTokenExpiresDay) * day)
 	if err = u.db.RegisterRefreshToken(&repository.RefreshToken{
@@ -81,12 +80,12 @@ func (u *CreateTokenByCode) Invoke(_ *gin.Context, authCode string) (entity.Auth
 		AccessToken:  accessToken,
 		ExpiresAt:    refreshExpiration,
 	}); err != nil {
-		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
 	// revoke code
 	if err = u.db.RevokeCode(authCode); err != nil {
-		return atokn, cerrs.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
 	return entity.AuthTokens{

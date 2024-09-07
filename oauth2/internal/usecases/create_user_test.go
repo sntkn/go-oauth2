@@ -4,12 +4,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -109,7 +108,7 @@ func TestCreateUserInvoke(t *testing.T) {
 
 		err := signup.Invoke(c, &repository.User{})
 		require.Error(t, err)
-		assert.IsType(t, &cerrs.UsecaseError{}, err)
+		assert.IsType(t, &errors.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "internal error")
 	})
 }

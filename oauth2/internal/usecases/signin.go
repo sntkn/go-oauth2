@@ -7,7 +7,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type Signin struct {
@@ -27,15 +27,15 @@ func (u *Signin) Invoke(c *gin.Context) (entity.SessionSigninForm, error) {
 	var input AuthorizeInput
 
 	if err := u.sess.GetNamedSessionData(c, "auth", &input); err != nil {
-		return form, cerrs.NewUsecaseError(http.StatusBadRequest, err.Error())
+		return form, errors.NewUsecaseError(http.StatusBadRequest, err.Error())
 	}
 
 	if input.ClientID == "" {
-		return form, cerrs.NewUsecaseError(http.StatusBadRequest, "invalid client_id")
+		return form, errors.NewUsecaseError(http.StatusBadRequest, "invalid client_id")
 	}
 
 	if err := u.sess.FlushNamedSessionData(c, "signin_form", &form); err != nil {
-		return form, cerrs.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return form, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 	return form, nil
 }

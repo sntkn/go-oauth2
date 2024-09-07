@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 

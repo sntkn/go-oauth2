@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +11,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	cerrs "github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -111,7 +110,7 @@ func TestSignup(t *testing.T) {
 
 		mess := &flashmessage.Messages{}
 		mockUC := new(MockSignupUsecase)
-		mockUC.On("Invoke", mock.Anything).Return(entity.SessionRegistrationForm{}, &cerrs.UsecaseError{Code: http.StatusInternalServerError})
+		mockUC.On("Invoke", mock.Anything).Return(entity.SessionRegistrationForm{}, &errors.UsecaseError{Code: http.StatusInternalServerError})
 
 		signup(c, mess, mockUC)
 
