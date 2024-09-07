@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/sntkn/go-oauth2/api/internal/interfaces"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces/api"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -16,11 +17,12 @@ func main() {
 	e.Use(middleware.Recover())
 
 	db := initDB()
-	e.Use(dbMiddleware(db))
+
+	injections := interfaces.NewInjection(db)
 
 	// Define the routes
-	e.GET("/users/:id", api.GetUser)
-	e.GET("/timeline/:id", api.GetRecentlyTimeline)
+	e.GET("/users/:id", api.GetUser(injections))
+	e.GET("/timeline/:id", api.GetRecentlyTimeline(injections))
 
 	// Start the server
 	e.Logger.Fatal(e.Start(":18080"))
