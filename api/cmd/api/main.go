@@ -41,14 +41,3 @@ func main() {
 	// Start the server
 	e.Logger.Fatal(e.Start(":18080"))
 }
-
-func responseMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		next := next(c)
-
-		//if c.Response().Status == http.StatusInternalServerError {
-		//	c.Response()
-		//}
-		return next
-	}
-}

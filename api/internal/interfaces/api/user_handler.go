@@ -3,10 +3,12 @@ package api
 import (
 	"net/http"
 
+	"github.com/go-errors/errors"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sntkn/go-oauth2/api/internal/domain/user"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces"
+	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
 )
 
 type GetUserQueryParams struct {
@@ -23,9 +25,7 @@ func GetUser(i *interfaces.Injections, opts ...*interfaces.Ops) echo.HandlerFunc
 	return func(c echo.Context) error {
 		params := new(GetUserQueryParams)
 		if err := c.Bind(params); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{
-				"error": "Invalid parameters",
-			})
+			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
 		}
 
 		repo := user.NewRepository(i.DB)
@@ -34,15 +34,13 @@ func GetUser(i *interfaces.Injections, opts ...*interfaces.Ops) echo.HandlerFunc
 
 		user, err := s.FindUser(params.ID)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{
-				"error": "Failed to retrieve users",
-			})
+			return response.APIResponse(c, http.StatusInternalServerError, errors.Wrap("Failed to retrieve users", 0))
 		}
-		response := &GetUserResponse{
+		data := &GetUserResponse{
 			ID:    user.ID,
 			Name:  user.Name,
 			Email: user.Email,
 		}
-		return c.JSON(http.StatusOK, response)
+		return response.APIResponse(c, http.StatusOK, data)
 	}
 }
