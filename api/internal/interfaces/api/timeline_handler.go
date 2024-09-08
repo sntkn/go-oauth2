@@ -4,10 +4,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-errors/errors"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sntkn/go-oauth2/api/internal/domain/timeline"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces"
+	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
 )
 
 type GetRecentlyTimelineParams struct {
@@ -32,9 +34,7 @@ func GetRecentlyTimeline(i *interfaces.Injections, opts ...*interfaces.Ops) echo
 	return func(c echo.Context) error {
 		params := new(GetRecentlyTimelineParams)
 		if err := c.Bind(params); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{
-				"error": "Invalid parameters",
-			})
+			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
 		}
 
 		repo := timeline.NewRepository(i.DB)
@@ -42,13 +42,11 @@ func GetRecentlyTimeline(i *interfaces.Injections, opts ...*interfaces.Ops) echo
 
 		tl, err := s.RecentlyTimeline(timeline.UserID(params.ID))
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{
-				"error": "Failed to retrieve users",
-			})
+			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Failed to retrieve timeline", 0))
 		}
-		response := make([]GetRecentlyTimelineResponse, len(tl))
+		res := make([]GetRecentlyTimelineResponse, len(tl))
 		for i, l := range tl {
-			response[i] = GetRecentlyTimelineResponse{
+			res[i] = GetRecentlyTimelineResponse{
 				PostTime:    l.PostTime,
 				Content:     l.Content,
 				PostUser:    UserResponse{ID: uuid.UUID(l.PostUser.ID), Name: l.PostUser.Name},
@@ -58,6 +56,6 @@ func GetRecentlyTimeline(i *interfaces.Injections, opts ...*interfaces.Ops) echo
 			}
 		}
 
-		return c.JSON(http.StatusOK, response)
+		return response.APIResponse(c, http.StatusOK, res)
 	}
 }
