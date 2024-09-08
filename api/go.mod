@@ -4,6 +4,7 @@ go 1.23.0
 
 require (
 	github.com/caarlos0/env v3.5.0+incompatible
+	github.com/go-errors/errors v1.5.1
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.12.0
@@ -17,7 +18,6 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -26,6 +26,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
