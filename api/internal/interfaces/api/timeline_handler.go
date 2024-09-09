@@ -13,7 +13,7 @@ import (
 )
 
 type GetRecentlyTimelineParams struct {
-	ID uuid.UUID `query:"id"`
+	ID uuid.UUID `param:"id"`
 }
 
 type GetRecentlyTimelineResponse struct {
