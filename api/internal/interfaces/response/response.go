@@ -7,33 +7,41 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type Response[T any] struct {
+type Response struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
-	Data    T      `json:"data"`
+	Data    any    `json:"data"`
 }
 
-func APIResponse[T any](c echo.Context, code int, message T) error {
+func APIResponse(c echo.Context, code int, message any) error {
 	switch code {
 	case http.StatusOK:
-		response := Response[T]{
-			Status:  "success",
-			Message: "",
-			Data:    message,
-		}
-		return c.JSON(code, response)
-
+		return sendSuccessResponse(c, code, message)
 	case http.StatusBadRequest, http.StatusForbidden, http.StatusInternalServerError:
-		err, ok := any(message).(*errors.Error)
-		if !ok {
-			return c.JSON(http.StatusInternalServerError, "could not bind error")
-		}
-		response := Response[any]{
-			Status:  "error",
-			Message: err.Error(),
-			Data:    nil,
-		}
-		return c.JSON(code, response)
+		return sendErrorResponse(c, code, message)
+	default:
+		return c.JSON(http.StatusInternalServerError, "status not found")
 	}
-	return c.JSON(http.StatusInternalServerError, "status not found")
+}
+
+func sendSuccessResponse(c echo.Context, code int, data any) error {
+	response := Response{
+		Status:  "success",
+		Message: "",
+		Data:    data,
+	}
+	return c.JSON(code, response)
+}
+
+func sendErrorResponse(c echo.Context, code int, message any) error {
+	err, ok := message.(*errors.Error)
+	if !ok {
+		return c.JSON(http.StatusInternalServerError, "could not bind error")
+	}
+	response := Response{
+		Status:  "error",
+		Message: err.Error(),
+		Data:    nil,
+	}
+	return c.JSON(code, response)
 }

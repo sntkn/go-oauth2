@@ -3,9 +3,9 @@ package user
 import (
 	"testing"
 
+	"github.com/go-errors/errors"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
