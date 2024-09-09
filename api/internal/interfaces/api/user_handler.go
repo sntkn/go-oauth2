@@ -11,8 +11,8 @@ import (
 	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
 )
 
-type GetUserQueryParams struct {
-	ID string `query:"id"`
+type GetUserParams struct {
+	ID string `param:"id"`
 }
 
 type GetUserResponse struct {
@@ -23,7 +23,7 @@ type GetUserResponse struct {
 
 func GetUser(i *interfaces.Injections, opts ...*interfaces.Ops) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		params := new(GetUserQueryParams)
+		params := new(GetUserParams)
 		if err := c.Bind(params); err != nil {
 			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
 		}
