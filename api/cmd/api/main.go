@@ -31,9 +31,12 @@ func main() {
 	}
 
 	e := echo.New()
+	e.Use(middleware.RequestID())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-
+	e.Use(middleware.CORS())
+	e.Use(middleware.Gzip())
+	e.Use(middleware.Secure())
 	injections := interfaces.NewInjection(database)
 
 	routes.Setup(e, injections)
