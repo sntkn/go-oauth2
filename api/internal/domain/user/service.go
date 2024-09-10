@@ -1,10 +1,10 @@
 package user
 
 type Service struct {
-	repository *Repository
+	repository UserRepository
 }
 
-func NewService(repo *Repository) *Service {
+func NewService(repo UserRepository) *Service {
 	return &Service{
 		repository: repo,
 	}
