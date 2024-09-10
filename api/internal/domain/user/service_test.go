@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/go-errors/errors"
-	"github.com/golang/mock/gomock"
+	gomock "github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
 
-func TestRepository_FindByID(t *testing.T) {
+func TestServece_FindByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -61,8 +61,9 @@ func TestRepository_FindByID(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.mockFunc()
 
-			repo := mockQuery
-			got, err := repo.FindByID(tc.id)
+			service := NewService(mockQuery)
+
+			got, err := service.FindUser(tc.id)
 
 			if tc.wantErr {
 				require.Error(t, err)

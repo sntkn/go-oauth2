@@ -1,16 +1,12 @@
 package user
 
-import "gorm.io/gorm"
-
 type Service struct {
-	repository *Repository
+	repository UserRepository
 }
 
-func NewService(db *gorm.DB) *Service {
-	r := NewRepository(db)
-
+func NewService(repo UserRepository) *Service {
 	return &Service{
-		repository: r,
+		repository: repo,
 	}
 }
 

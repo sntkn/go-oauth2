@@ -5,43 +5,42 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/sntkn/go-oauth2/api/internal/interfaces/api"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/sntkn/go-oauth2/api/config"
+	"github.com/sntkn/go-oauth2/api/internal/infrastructure/db"
+	"github.com/sntkn/go-oauth2/api/internal/interfaces"
+	"github.com/sntkn/go-oauth2/api/internal/interfaces/routes"
 )
 
 func main() {
-	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
-	db := initDB()
-	e.Use(dbMiddleware(db))
-
-	// Define the routes
-	e.GET("/users/:id", api.GetUser)
-	e.GET("/timeline/:id", api.GetRecentlyTimeline)
-
-	// Start the server
-	e.Logger.Fatal(e.Start(":18080"))
-}
-
-func dbMiddleware(db *gorm.DB) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			// Store db in context
-			c.Set("db", db)
-			return next(c)
-		}
+	cfg, err := config.GetEnv()
+	if err != nil {
+		log.Fatal("could not get env:", err)
 	}
-}
 
-// Initialize DB connection
-func initDB() *gorm.DB {
-	dsn := "host=localhost user=admin password=admin dbname=auth port=5432 sslmode=disable TimeZone=Asia/Tokyo"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	dbConfig := &db.DBConfig{
+		Host:     cfg.DBHost,
+		Port:     uint16(cfg.DBPort),
+		User:     cfg.DBUser,
+		Password: cfg.DBPassword,
+		DBName:   cfg.DBName,
+	}
+
+	database, err := db.Setup(dbConfig)
 	if err != nil {
 		log.Fatal("Failed to connect to the database:", err)
 	}
-	return db
+
+	e := echo.New()
+	e.Use(middleware.RequestID())
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+	e.Use(middleware.Gzip())
+	e.Use(middleware.Secure())
+	injections := interfaces.NewInjection(database)
+
+	routes.Setup(e, injections)
+
+	// Start the server
+	e.Logger.Fatal(e.Start(":18080"))
 }
