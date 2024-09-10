@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-errors/errors"
 	"github.com/google/uuid"
+	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
 	"github.com/sntkn/go-oauth2/api/internal/domain/timeline"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces"
@@ -44,18 +45,13 @@ func GetRecentlyTimeline(i *interfaces.Injections, opts ...*interfaces.Ops) echo
 		if err != nil {
 			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Failed to retrieve timeline", 0))
 		}
-		res := make([]GetRecentlyTimelineResponse, len(tl))
-		for i, l := range tl {
-			res[i] = GetRecentlyTimelineResponse{
-				PostTime:    l.PostTime,
-				Content:     l.Content,
-				PostUser:    UserResponse{ID: uuid.UUID(l.PostUser.ID), Name: l.PostUser.Name},
-				Inpressions: l.Inpressions,
-				Likes:       []uuid.UUID{},
-				Reposts:     []GetRecentlyTimelineResponse{},
-			}
+
+		var timelineResponse []GetRecentlyTimelineResponse
+
+		if err := copier.Copy(&timelineResponse, &tl); err != nil {
+			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Cant copy response parameters", 0))
 		}
 
-		return response.APIResponse(c, http.StatusOK, res)
+		return response.APIResponse(c, http.StatusOK, &timelineResponse)
 	}
 }

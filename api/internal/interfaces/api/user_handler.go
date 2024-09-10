@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-errors/errors"
 	"github.com/google/uuid"
+	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
 	"github.com/sntkn/go-oauth2/api/internal/domain/user"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces"
@@ -36,11 +37,13 @@ func GetUser(i *interfaces.Injections, opts ...*interfaces.Ops) echo.HandlerFunc
 		if err != nil {
 			return response.APIResponse(c, http.StatusInternalServerError, errors.Wrap("Failed to retrieve users", 0))
 		}
-		data := &GetUserResponse{
-			ID:    user.ID,
-			Name:  user.Name,
-			Email: user.Email,
+
+		var userResponse GetUserResponse
+
+		if err := copier.Copy(&userResponse, &user); err != nil {
+			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Cant copy response parameters", 0))
 		}
-		return response.APIResponse(c, http.StatusOK, data)
+
+		return response.APIResponse(c, http.StatusOK, &userResponse)
 	}
 }
