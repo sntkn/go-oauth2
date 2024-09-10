@@ -46,12 +46,12 @@ func GetRecentlyTimeline(i *interfaces.Injections, opts ...*interfaces.Ops) echo
 			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Failed to retrieve timeline", 0))
 		}
 
-		var timelineResponse []GetRecentlyTimelineResponse
+		res := make([]GetRecentlyTimelineResponse, len(tl))
 
-		if err := copier.Copy(&timelineResponse, &tl); err != nil {
+		if err := copier.Copy(&res, &tl); err != nil {
 			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Cant copy response parameters", 0))
 		}
 
-		return response.APIResponse(c, http.StatusOK, &timelineResponse)
+		return response.APIResponse(c, http.StatusOK, &res)
 	}
 }
