@@ -21,8 +21,11 @@ run = "docker compose build"
 
 [tasks.test]
 description = "Run tests"
-run = "(cd oauth2 && go test ./...) && (cd api && go test ./...)"
+run = ["(cd oauth2 && go test ./...)", "& (cd api && go test ./...)"]
 
 [tasks.fmt]
 description = "Run go fmt"
-run = "(cd oauth2 && go mod tidy && go fmt ./...) && (cd api && go mod tidy && go fmt ./...)"
+run = [
+  "(cd oauth2 && go mod tidy && go fmt ./...)",
+  "(cd api && go mod tidy && go fmt ./...)",
+]
