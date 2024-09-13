@@ -12,8 +12,8 @@ require (
 	github.com/stretchr/testify v1.9.0
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gen v0.3.26
-	gorm.io/gorm v1.25.11
-	gorm.io/plugin/dbresolver v1.5.2
+	gorm.io/gorm v1.25.12
+	gorm.io/plugin/dbresolver v1.5.3
 )
 
 require (
