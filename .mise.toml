@@ -13,7 +13,7 @@ shellcheck = "latest"
 
 [tasks.setup]
 description = "Setup project"
-run = "mise i && pre-commit install && go mod download"
+run = "mise i && go mod download"
 
 [tasks.build]
 description = "Build"
