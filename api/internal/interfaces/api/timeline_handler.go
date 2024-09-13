@@ -9,7 +9,6 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
 	"github.com/sntkn/go-oauth2/api/internal/domain/timeline"
-	"github.com/sntkn/go-oauth2/api/internal/interfaces"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
 )
 
@@ -31,27 +30,25 @@ type UserResponse struct {
 	Name string    `json:"name"`
 }
 
-func GetRecentlyTimeline(i *interfaces.Injections, opts ...*interfaces.Ops) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		params := new(GetRecentlyTimelineParams)
-		if err := c.Bind(params); err != nil {
-			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
-		}
-
-		repo := timeline.NewRepository(i.DB)
-		s := timeline.NewService(repo)
-
-		tl, err := s.RecentlyTimeline(timeline.UserID(params.ID))
-		if err != nil {
-			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Failed to retrieve timeline", 0))
-		}
-
-		res := make([]GetRecentlyTimelineResponse, len(tl))
-
-		if err := copier.Copy(&res, &tl); err != nil {
-			return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Cant copy response parameters", 0))
-		}
-
-		return response.APIResponse(c, http.StatusOK, &res)
+func (h *Handler) GetRecentlyTimeline(c echo.Context) error {
+	params := new(GetRecentlyTimelineParams)
+	if err := c.Bind(params); err != nil {
+		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
 	}
+
+	repo := timeline.NewRepository(h.i.DB)
+	s := timeline.NewService(repo)
+
+	tl, err := s.RecentlyTimeline(timeline.UserID(params.ID))
+	if err != nil {
+		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Failed to retrieve timeline", 0))
+	}
+
+	res := make([]GetRecentlyTimelineResponse, len(tl))
+
+	if err := copier.Copy(&res, &tl); err != nil {
+		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Cant copy response parameters", 0))
+	}
+
+	return response.APIResponse(c, http.StatusOK, &res)
 }

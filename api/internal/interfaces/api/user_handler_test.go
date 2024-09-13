@@ -62,8 +62,8 @@ func TestGetUser(t *testing.T) {
 	}
 
 	// ハンドラーの実行
-	handler := api.GetUser(i)
-	if assert.NoError(t, handler(c)) {
+	handler := api.NewHandler(i)
+	if assert.NoError(t, handler.GetUser(c)) {
 
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 

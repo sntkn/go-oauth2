@@ -7,7 +7,9 @@ import (
 )
 
 func Setup(e *echo.Echo, injections *interfaces.Injections) {
+	h := api.NewHandler(injections)
+
 	// Define the routes
-	e.GET("/users/:id", api.GetUser(injections))
-	e.GET("/timeline/:id", api.GetRecentlyTimeline(injections))
+	e.GET("/users/:id", h.GetUser)
+	e.GET("/timeline/:id", h.GetRecentlyTimeline)
 }
