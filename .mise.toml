@@ -1,0 +1,34 @@
+[env]
+# インラインで環境変数を定義可能
+ENV_NAME = "develop"
+
+# .env に設定された環境変数を反映する
+#mise.file = ".env"
+
+[tools]
+go = "1.23"
+python = "3.12.4"
+pre-commit = "latest"
+shellcheck = "latest"
+
+[tasks.setup]
+description = "Setup project"
+run = "mise i && pre-commit install && go mod download"
+
+[tasks.build]
+description = "Build"
+run = "docker compose build"
+
+[tasks.test]
+description = "Run tests"
+run = '''
+(cd oauth2 && go test ./...)
+(cd api && go test ./...)
+'''
+
+[tasks.fmt]
+description = "Run go fmt"
+run = '''
+(cd oauth2 && go mod tidy && go fmt ./...)
+(cd api && go mod tidy && go fmt ./...)
+'''
