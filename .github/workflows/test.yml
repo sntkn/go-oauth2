@@ -73,7 +73,7 @@ jobs:
           docker compose up -d database session
 
       - name: Wait for Services
-        run: ./wait-for-services.sh
+        run: ./docker/wait-for-services.sh
 
       # 7. テスト実行
       - name: Test
