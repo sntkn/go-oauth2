@@ -40,7 +40,10 @@ func (r *Repository) FindByID(id string) (*User, error) {
 	}
 
 	return &User{
-		ID: userID,
+		ID:        userID,
+		Name:      user.Name,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
 		// ここに他のフィールドを追加
 	}, nil
 }
