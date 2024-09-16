@@ -4,6 +4,8 @@ CREATE DATABASE auth;
 --ユーザーにDBの権限をまとめて付与
 GRANT ALL PRIVILEGES ON DATABASE auth TO app;
 
+\c auth
+
 -- users テーブル
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
