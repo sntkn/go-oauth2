@@ -16,10 +16,8 @@ services:
     volumes:
       - ./oauth2:/src
     depends_on:
-      database:
-        condition: service_healthy
-      session:
-        condition: service_healthy
+      - database
+      - session
   api:
     build:
       context: ./api

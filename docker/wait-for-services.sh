@@ -22,3 +22,5 @@ until docker exec "$session_container_id" redis-cli -h session ping; do
 done
 
 >&2 echo "Session service is up - all services are ready"
+
+sleep 5
