@@ -71,6 +71,9 @@ jobs:
 
       - name: Wait for Services
         run: ./docker/wait-for-services.sh
+      
+      - name: Log
+        run: docker compose logs database
 
       - name: Wait for table creation
         run: |
