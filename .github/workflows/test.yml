@@ -75,6 +75,9 @@ jobs:
       - name: Wait for Services
         run: ./docker/wait-for-services.sh
 
+      - name: Log
+        run: docker compose logs database
+
       # 7. テスト実行
       - name: Test
         run: |
