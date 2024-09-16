@@ -75,6 +75,14 @@ jobs:
       - name: Wait for Services
         run: ./docker/wait-for-services.sh
 
+      - name: Wait for table creation
+        run: |
+          until psql -U admin -d auth -c "SELECT to_regclass('public.users');" | grep -q "users"; do
+            echo "Waiting for table creation"
+            sleep 1
+          done
+          echo "Table 'users' exists"
+
       # 7. テスト実行
       - name: Test
         run: |
