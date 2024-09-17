@@ -90,3 +90,5 @@ jobs:
         run: |
           cd ${{ inputs.target }}
           go test -v ./...
+      - name: Compose Down
+        run: docker compose down
