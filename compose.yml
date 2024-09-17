@@ -42,7 +42,7 @@ services:
     container_name: database
     restart: always
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - ./docker/pgdata:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
@@ -56,5 +56,4 @@ services:
     volumes:
       - redisdata:/data
 volumes:
-  pgdata:
   redisdata:
