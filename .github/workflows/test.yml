@@ -25,6 +25,8 @@ jobs:
         with:
           path: docker/pgdata
           key: ${{ runner.os }}-pgdata
+          restore-keys: |
+            ${{ runner.os }}-pgdata
       # 1. Buildxのセットアップ
       - name: Set up Docker Buildx
         id: buildx
