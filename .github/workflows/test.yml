@@ -95,4 +95,3 @@ jobs:
       - name: Change volume permissions
         run: |
           sudo chown -R $USER:$USER ./docker/pgdata
-          sudo chmod -R 777 ./docker/pgdata
