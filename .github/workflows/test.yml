@@ -59,9 +59,3 @@ jobs:
         run: |
           cd ${{ inputs.target }}
           go test -v ./...
-
-      - name: Compose Down
-        run: docker compose down
-      - name: Change volume permissions
-        run: |
-          sudo chown -R $USER:$USER ./docker/pgdata
