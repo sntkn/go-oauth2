@@ -30,7 +30,7 @@ jobs:
         with:
           context: ./docker/database
           load: true
-          tags: test-db
+          tags: postgres:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           no-cache: false
