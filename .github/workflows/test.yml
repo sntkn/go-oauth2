@@ -20,12 +20,12 @@ jobs:
           check-latest: true
           cache-dependency-path: |
               ${{ inputs.target }}/go.sum
-      # 1. Buildxのセットアップ
+
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push Docker database image
+      - name: Cache database image
         uses: docker/build-push-action@v5
         with:
           context: ./docker/database
@@ -35,7 +35,7 @@ jobs:
           cache-to: type=gha,mode=max
           no-cache: false
 
-      - name: Build and push Docker session image
+      - name: Cache session image
         uses: docker/build-push-action@v5
         with:
           context: ./docker/session
@@ -45,7 +45,6 @@ jobs:
           cache-to: type=gha,mode=max
           no-cache: false
 
-      # 6. docker composeビルド/起動
       - name: Compose Build & UP
         run: |
           docker compose up -d database session
@@ -56,11 +55,11 @@ jobs:
       - name: Log
         run: docker compose logs database
 
-      # 7. テスト実行
       - name: Test
         run: |
           cd ${{ inputs.target }}
           go test -v ./...
+
       - name: Compose Down
         run: docker compose down
       - name: Change volume permissions
