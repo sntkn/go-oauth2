@@ -25,51 +25,29 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v3
 
-      # 2. GHCRログイン
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # 3. メタデータセットアップ
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-
-      # 4. Buildxのセットアップ
       - name: Build and push Docker database image
         uses: docker/build-push-action@v5
         with:
           context: ./docker/database
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}-db
-          labels: ${{ steps.meta.outputs.labels }}-db
+          load: true
+          tags: test-db
           cache-from: type=gha
           cache-to: type=gha,mode=max
           no-cache: false
 
-      # 5. Buildxのセットアップ
       - name: Build and push Docker session image
         uses: docker/build-push-action@v5
         with:
           context: ./docker/session
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}-session
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ steps.meta.outputs.tags }}-session
-          cache-to: type=inline
+          load: true
+          tags: test-session
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           no-cache: false
 
       # 6. docker composeビルド/起動
       - name: Compose Build & UP
         run: |
-          docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }}-db ./docker/database --load
-          docker buildx build --cache-from type=registry,ref=${{ steps.meta.outputs.tags }}-session ./docker/session --load
-          docker buildx bake -f compose.yml database session
           docker compose up -d database session
 
       - name: Wait for Services
