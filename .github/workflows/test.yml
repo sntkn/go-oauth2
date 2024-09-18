@@ -40,7 +40,7 @@ jobs:
         with:
           context: ./docker/session
           load: true
-          tags: test-session
+          tags: redis:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           no-cache: false
