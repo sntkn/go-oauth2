@@ -54,6 +54,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Sanitize branch name
         run: echo "SANITIZED_BRANCH_NAME=${SANITIZED_BRANCH_NAME//\//-}" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
