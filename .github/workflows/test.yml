@@ -20,6 +20,13 @@ jobs:
           check-latest: true
           cache-dependency-path: |
               ${{ inputs.target }}/go.sum
+      - name: Cache PG Data
+        uses: actions/cache@v4
+        with:
+          path: docker/pgdata
+          key: ${{ runner.os }}-pgdata
+          restore-keys: |
+            ${{ runner.os }}-
       # 1. Buildxのセットアップ
       - name: Set up Docker Buildx
         id: buildx
@@ -83,3 +90,8 @@ jobs:
         run: |
           cd ${{ inputs.target }}
           go test -v ./...
+      - name: Compose Down
+        run: docker compose down
+      - name: Change volume permissions
+        run: |
+          sudo chown -R $USER:$USER ./docker/pgdata
