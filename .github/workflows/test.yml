@@ -20,13 +20,6 @@ jobs:
           check-latest: true
           cache-dependency-path: |
               ${{ inputs.target }}/go.sum
-      - name: Cache PG Data
-        uses: actions/cache@v4
-        with:
-          path: docker/pgdata
-          key: ${{ runner.os }}-pgdata
-          restore-keys: |
-            ${{ runner.os }}-
       # 1. Buildxのセットアップ
       - name: Set up Docker Buildx
         id: buildx
@@ -54,9 +47,9 @@ jobs:
           context: ./docker/database
           push: true
           tags: ${{ steps.meta.outputs.tags }}-db
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ steps.meta.outputs.tags }}-db
-          cache-to: type=inline
+          labels: ${{ steps.meta.outputs.labels }}-db
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           no-cache: false
 
       # 5. Buildxのセットアップ
