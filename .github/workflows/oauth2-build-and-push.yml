@@ -33,7 +33,7 @@ jobs:
       matrix:
         go-version: ["1.23.x"]
     env:
-      SANITIZED_BRANCH_NAME: ${{ github.ref_name }}
+      DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go ${{ matrix.go-version }}
@@ -43,15 +43,13 @@ jobs:
           check-latest: true
           cache-dependency-path: |
               oauth2/go.sum
-      # You can test your matrix by printing the current Go version
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Sanitize branch name
-        run: echo "SANITIZED_BRANCH_NAME=${SANITIZED_BRANCH_NAME//\//-}" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         id: buildx
@@ -67,7 +65,7 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=,suffix=,format=long
       - name: Display image name
-        run: echo ${{ steps.meta.outputs.tags.args.DOCKER_META_IMAGES }}
+        run: echo "${ DOCKER_META_IMAGES } / ${ DOCKER_IMAGE }"
 
       - name: Build and push
         uses: docker/build-push-action@v5
