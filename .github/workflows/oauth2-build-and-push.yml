@@ -66,6 +66,8 @@ jobs:
             type=raw,value=latest
             type=ref,event=branch
             type=sha,prefix=,suffix=,format=long
+      - name: Display image name
+        run: echo ${{ steps.meta.outputs.tags.args.DOCKER_META_IMAGES }}
 
       - name: Build and push
         uses: docker/build-push-action@v5
