@@ -64,7 +64,8 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2
           tags: |
             type=raw,value=latest
-            type=sha,prefix=,suffix=,format=short
+            type=ref,event=branch
+            type=sha,prefix=,suffix=,format=long
 
       - name: Build and push
         uses: docker/build-push-action@v5
