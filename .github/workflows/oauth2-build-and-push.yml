@@ -70,7 +70,7 @@ jobs:
           context: ./oauth2
           target: final
           push: true
-          cache-from: type=registry,ref=${{ steps.meta.outputs.tags }}
-          cache-to: type=inline
+          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache,mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
