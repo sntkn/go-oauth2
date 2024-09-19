@@ -21,30 +21,6 @@ jobs:
           cache-dependency-path: |
               ${{ inputs.target }}/go.sum
 
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache database image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./docker/database
-          load: true
-          tags: test-db
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          no-cache: false
-
-      - name: Cache session image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./docker/session
-          load: true
-          tags: test-session
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          no-cache: false
-
       - name: Compose Build & UP
         run: |
           docker compose up -d database session
