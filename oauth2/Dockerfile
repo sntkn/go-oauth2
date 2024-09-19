@@ -56,6 +56,8 @@ RUN --mount=type=cache,target=/var/cache/apk \
     && \
     update-ca-certificates
 
+RUN echo "TEST"
+
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
 ARG UID=10001
