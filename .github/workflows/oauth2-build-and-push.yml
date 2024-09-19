@@ -52,20 +52,17 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        id: buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2
+          images: ${{ env.DOCKER_IMAGE }}
           tags: |
             type=raw,value=latest
             type=ref,event=branch
             type=sha,prefix=,suffix=,format=long
-      - name: Display image name
-        run: echo "${ DOCKER_META_IMAGES } / ${ DOCKER_IMAGE }"
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -73,7 +70,7 @@ jobs:
           context: ./oauth2
           target: final
           push: true
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2:buildcache,mode=max
+          cache-from: type=registry,ref=${{ steps.meta.outputs.tags }}
+          cache-to: type=inline
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
