@@ -19,8 +19,7 @@ jobs:
           go-version-file: ${{ inputs.target }}/go.mod
           check-latest: true
           cache: true
-          cache-dependency-path: |
-              ${{ inputs.target }}/go.sum
+          cache-dependency-path: ${{ inputs.target }}
 
       - name: Compose Build & UP
         run: |
