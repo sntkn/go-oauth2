@@ -18,6 +18,7 @@ jobs:
         with:
           go-version-file: ${{ inputs.target }}/go.mod
           check-latest: true
+          cache: false
           cache-dependency-path: |
               ${{ inputs.target }}/go.sum
 
