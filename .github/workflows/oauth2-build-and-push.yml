@@ -25,52 +25,9 @@ jobs:
   build-and-push:
     needs: [lint, test]
     if: ${{ github.actor != 'dependabot[bot]' }}
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/build-and-push.yml
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        go-version: ["1.23.x"]
-    env:
-      DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/go-oauth2-oauth2
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Go ${{ matrix.go-version }}
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go-version }}
-          check-latest: true
-          cache-dependency-path: |
-              oauth2/go.sum
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKER_IMAGE }}
-          tags: |
-            type=raw,value=latest
-            type=ref,event=branch
-            type=sha,prefix=,suffix=,format=long
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./oauth2
-          target: final
-          push: true
-          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache
-          cache-to: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache,mode=max
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+    with:
+      target: oauth2
