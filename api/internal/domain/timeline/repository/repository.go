@@ -1,9 +1,10 @@
-package timeline
+package repository
 
 import (
 	"log"
 
 	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/api/internal/domain/timeline"
 	"github.com/sntkn/go-oauth2/api/internal/infrastructure/db/query"
 	"gorm.io/gorm"
 )
@@ -20,7 +21,7 @@ func NewRepository(db *gorm.DB) *Repository {
 	}
 }
 
-func (r *Repository) RecentlyTimeline(userIDs []UserID) ([]*Timeline, error) {
+func (r *Repository) RecentlyTimeline(userIDs []timeline.UserID) ([]*timeline.Timeline, error) {
 	postQuery := r.query.Post
 	userIDStrings := make([]string, len(userIDs))
 
@@ -34,18 +35,18 @@ func (r *Repository) RecentlyTimeline(userIDs []UserID) ([]*Timeline, error) {
 		return nil, err
 	}
 
-	var timeline []*Timeline
+	var tl []*timeline.Timeline
 
 	for _, l := range posts {
-		timeline = append(timeline, &Timeline{
+		tl = append(tl, &timeline.Timeline{
 			PostTime:    l.CreatedAt,
 			Content:     l.Content,
-			PostUser:    User{},
+			PostUser:    timeline.User{},
 			Inpressions: 0,
-			Likes:       []UserID{},
-			Reposts:     []Timeline{},
+			Likes:       []timeline.UserID{},
+			Reposts:     []timeline.Timeline{},
 		})
 	}
 
-	return timeline, nil
+	return tl, nil
 }

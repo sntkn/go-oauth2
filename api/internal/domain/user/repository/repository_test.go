@@ -1,4 +1,4 @@
-package user
+package repository
 
 import (
 	"testing"
@@ -6,6 +6,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/api/internal/domain/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
@@ -15,24 +16,24 @@ func TestRepository_FindByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockQuery := NewMockUserRepository(ctrl)
+	mockQuery := user.NewMockUserRepository(ctrl)
 
 	testCases := []struct {
 		name     string
 		id       string
 		mockFunc func()
-		want     *User
+		want     *user.User
 		wantErr  bool
 	}{
 		{
 			name: "正常なケース",
 			id:   "550e8400-e29b-41d4-a716-446655440000",
 			mockFunc: func() {
-				mockQuery.EXPECT().FindByID("550e8400-e29b-41d4-a716-446655440000").Return(&User{
+				mockQuery.EXPECT().FindByID("550e8400-e29b-41d4-a716-446655440000").Return(&user.User{
 					ID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 				}, nil)
 			},
-			want: &User{
+			want: &user.User{
 				ID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 			},
 			wantErr: false,

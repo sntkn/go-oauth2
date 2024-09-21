@@ -8,6 +8,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
 	"github.com/sntkn/go-oauth2/api/internal/domain/user"
+	"github.com/sntkn/go-oauth2/api/internal/domain/user/repository"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
 )
 
@@ -27,7 +28,7 @@ func (h *Handler) GetUser(c echo.Context) error {
 		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
 	}
 
-	repo := user.NewRepository(h.i.DB)
+	repo := repository.NewRepository(h.i.DB)
 
 	s := user.NewService(repo)
 

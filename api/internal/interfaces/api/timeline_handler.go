@@ -9,6 +9,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
 	"github.com/sntkn/go-oauth2/api/internal/domain/timeline"
+	"github.com/sntkn/go-oauth2/api/internal/domain/timeline/repository"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
 )
 
@@ -36,7 +37,7 @@ func (h *Handler) GetRecentlyTimeline(c echo.Context) error {
 		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
 	}
 
-	repo := timeline.NewRepository(h.i.DB)
+	repo := repository.NewRepository(h.i.DB)
 	s := timeline.NewService(repo)
 
 	tl, err := s.RecentlyTimeline(timeline.UserID(params.ID))

@@ -1,10 +1,14 @@
 package timeline
 
-type Service struct {
-	repository *Repository
+type IRepository interface {
+	RecentlyTimeline(userIDs []UserID) ([]*Timeline, error)
 }
 
-func NewService(repo *Repository) *Service {
+type Service struct {
+	repository IRepository
+}
+
+func NewService(repo IRepository) *Service {
 	return &Service{
 		repository: repo,
 	}
