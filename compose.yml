@@ -1,9 +1,9 @@
 services:
-  server:
+  oauth2:
     build:
       context: ./oauth2
       target: development
-    container_name: server
+    container_name: oauth2
     ports:
       - 8080:8080
     environment:
