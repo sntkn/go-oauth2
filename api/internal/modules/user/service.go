@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/api/internal/domain/user/domain"
+	"github.com/sntkn/go-oauth2/api/internal/modules/user/domain"
 )
 
 func NewService(repo domain.Repository) *Service {
