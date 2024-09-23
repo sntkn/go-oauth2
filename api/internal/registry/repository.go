@@ -1,10 +1,9 @@
-package repository
+package registry
 
 import (
 	"log"
 
-	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/api/internal/domain/user"
+	"github.com/sntkn/go-oauth2/api/internal/infrastructure/db/model"
 	"github.com/sntkn/go-oauth2/api/internal/infrastructure/db/query"
 	"gorm.io/gorm"
 )
@@ -21,7 +20,7 @@ func NewRepository(db *gorm.DB) *Repository {
 	}
 }
 
-func (r *Repository) FindByID(id string) (*user.User, error) {
+func (r *Repository) FindByID(id string) (*model.User, error) {
 	userQuery := r.query.User
 	u, err := userQuery.Where(userQuery.ID.Eq(id)).First()
 
@@ -30,17 +29,5 @@ func (r *Repository) FindByID(id string) (*user.User, error) {
 		return nil, err
 	}
 
-	userID, err := uuid.Parse(u.ID)
-	if err != nil {
-		log.Printf("UUIDの解析に失敗しました: %v", err)
-		return nil, err
-	}
-
-	return &user.User{
-		ID:        userID,
-		Name:      u.Name,
-		Email:     u.Email,
-		CreatedAt: u.CreatedAt,
-		// ここに他のフィールドを追加
-	}, nil
+	return u, nil
 }

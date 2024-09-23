@@ -6,6 +6,7 @@ import (
 	"github.com/go-errors/errors"
 	gomock "github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/api/internal/domain/user/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
@@ -15,24 +16,24 @@ func TestServece_FindByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockQuery := NewMockUserRepository(ctrl)
+	mockQuery := domain.NewMockRepository(ctrl)
 
 	testCases := []struct {
 		name     string
 		id       string
 		mockFunc func()
-		want     *User
+		want     *domain.User
 		wantErr  bool
 	}{
 		{
 			name: "正常なケース",
 			id:   "550e8400-e29b-41d4-a716-446655440000",
 			mockFunc: func() {
-				mockQuery.EXPECT().FindByID("550e8400-e29b-41d4-a716-446655440000").Return(&User{
+				mockQuery.EXPECT().FindByID("550e8400-e29b-41d4-a716-446655440000").Return(&domain.User{
 					ID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 				}, nil)
 			},
-			want: &User{
+			want: &domain.User{
 				ID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 			},
 			wantErr: false,
