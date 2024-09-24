@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestServece_FindByID(t *testing.T) {
+func TestService_FindByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -62,7 +62,7 @@ func TestServece_FindByID(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.mockFunc()
 
-			service := NewService(mockQuery)
+			service := NewUsecase(mockQuery)
 
 			got, err := service.FindUser(tc.id)
 

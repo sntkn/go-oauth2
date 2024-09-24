@@ -30,7 +30,7 @@ func (h *Handler) GetUser(c echo.Context) error {
 
 	repo := registry.NewRepository(h.i.DB)
 
-	s := user.NewService(repo)
+	s := user.NewUsecase(repo)
 
 	user, err := s.FindUser(params.ID)
 	if err != nil {
