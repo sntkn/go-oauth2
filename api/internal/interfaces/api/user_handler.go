@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
 	"github.com/sntkn/go-oauth2/api/internal/modules/user"
-	"github.com/sntkn/go-oauth2/api/internal/registry"
+	"github.com/sntkn/go-oauth2/api/internal/modules/user/registry"
 )
 
 type GetUserParams struct {
