@@ -1,9 +1,6 @@
 package user
 
 import (
-	"log"
-
-	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/api/internal/modules/user/domain"
 )
 
@@ -22,17 +19,10 @@ func (s *Service) FindUser(id string) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	userID, err := uuid.Parse(u.ID)
+
+	user, err := domain.NewUser(u)
 	if err != nil {
-		log.Printf("UUIDの解析に失敗しました: %v", err)
 		return nil, err
 	}
-
-	return &domain.User{
-		ID:        userID,
-		Name:      u.Name,
-		Email:     u.Email,
-		CreatedAt: u.CreatedAt,
-		// ここに他のフィールドを追加
-	}, nil
+	return user, nil
 }
