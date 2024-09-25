@@ -8,9 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
-	"github.com/sntkn/go-oauth2/api/internal/domain/timeline"
-	"github.com/sntkn/go-oauth2/api/internal/domain/timeline/repository"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
+	"github.com/sntkn/go-oauth2/api/internal/modules/timeline"
+	"github.com/sntkn/go-oauth2/api/internal/modules/timeline/domain"
+	"github.com/sntkn/go-oauth2/api/internal/modules/timeline/registry"
 )
 
 type GetRecentlyTimelineParams struct {
@@ -37,10 +38,10 @@ func (h *Handler) GetRecentlyTimeline(c echo.Context) error {
 		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
 	}
 
-	repo := repository.NewRepository(h.i.DB)
-	s := timeline.NewService(repo)
+	repo := registry.NewRepository(h.i.DB)
+	s := timeline.NewUsecase(repo)
 
-	tl, err := s.RecentlyTimeline(timeline.UserID(params.ID))
+	tl, err := s.RecentlyTimeline(domain.UserID(params.ID))
 	if err != nil {
 		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Failed to retrieve timeline", 0))
 	}

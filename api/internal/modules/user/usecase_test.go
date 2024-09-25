@@ -1,39 +1,40 @@
-package repository
+package user
 
 import (
 	"testing"
 
 	"github.com/go-errors/errors"
-	"github.com/golang/mock/gomock"
+	gomock "github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/api/internal/domain/user"
+	"github.com/sntkn/go-oauth2/api/internal/infrastructure/db/model"
+	"github.com/sntkn/go-oauth2/api/internal/modules/user/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
 
-func TestRepository_FindByID(t *testing.T) {
+func TestService_FindByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockQuery := user.NewMockUserRepository(ctrl)
+	mockQuery := domain.NewMockRepository(ctrl)
 
 	testCases := []struct {
 		name     string
 		id       string
 		mockFunc func()
-		want     *user.User
+		want     *domain.User
 		wantErr  bool
 	}{
 		{
 			name: "正常なケース",
 			id:   "550e8400-e29b-41d4-a716-446655440000",
 			mockFunc: func() {
-				mockQuery.EXPECT().FindByID("550e8400-e29b-41d4-a716-446655440000").Return(&user.User{
-					ID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
+				mockQuery.EXPECT().FindByID("550e8400-e29b-41d4-a716-446655440000").Return(&model.User{
+					ID: "550e8400-e29b-41d4-a716-446655440000",
 				}, nil)
 			},
-			want: &user.User{
+			want: &domain.User{
 				ID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 			},
 			wantErr: false,
@@ -62,8 +63,9 @@ func TestRepository_FindByID(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.mockFunc()
 
-			repo := mockQuery
-			got, err := repo.FindByID(tc.id)
+			service := NewUsecase(mockQuery)
+
+			got, err := service.FindUser(tc.id)
 
 			if tc.wantErr {
 				require.Error(t, err)

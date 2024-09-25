@@ -7,9 +7,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
-	"github.com/sntkn/go-oauth2/api/internal/domain/user"
-	"github.com/sntkn/go-oauth2/api/internal/domain/user/repository"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
+	"github.com/sntkn/go-oauth2/api/internal/modules/user"
+	"github.com/sntkn/go-oauth2/api/internal/modules/user/registry"
 )
 
 type GetUserParams struct {
@@ -28,9 +28,9 @@ func (h *Handler) GetUser(c echo.Context) error {
 		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
 	}
 
-	repo := repository.NewRepository(h.i.DB)
+	repo := registry.NewRepository(h.i.DB)
 
-	s := user.NewService(repo)
+	s := user.NewUsecase(repo)
 
 	user, err := s.FindUser(params.ID)
 	if err != nil {

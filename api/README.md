@@ -63,5 +63,5 @@ Generate Mock.
 
 ```bash
 # ex.
-mockgen -source=internal/domain/user/repository.go -destination=internal/domain/user/mock_repository.go -package=user
+mockgen -source=internal/modules/user/repository.go -destination=internal/modules/user/mock_repository.go -package=user
 ```
