@@ -15,5 +15,13 @@ func NewUsecase(repo domain.Repository) *Usecase {
 func (s *Usecase) RecentlyTimeline(userID domain.UserID) ([]*domain.Timeline, error) {
 	// TODO: get follow userID
 	userIDs := []domain.UserID{userID}
-	return s.repository.RecentlyTimeline(userIDs)
+	posts, err := s.repository.RecentlyTimeline(userIDs)
+	if err != nil {
+		return nil, err
+	}
+	tl, err := domain.NewTimeline(posts)
+	if err != nil {
+		return nil, err
+	}
+	return tl, err
 }
