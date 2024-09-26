@@ -65,3 +65,5 @@ Generate Mock.
 # ex.
 mockgen -source=internal/modules/user/repository.go -destination=internal/modules/user/mock_repository.go -package=user
 ```
+
+#### go-errors/errors
