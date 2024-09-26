@@ -1,0 +1,12 @@
+api:
+  - changed-files:
+      - any-glob-to-any-file: "api/*"
+oauth2:
+  - changed-files:
+      - any-glob-to-any-file: "oauth2/*"
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: "front/*"
+client:
+  - changed-files:
+      - any-glob-to-any-file: "client/*"

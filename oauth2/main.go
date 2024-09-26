@@ -40,7 +40,6 @@ func main() {
 		return
 	}
 
-	// Redis configuration
 	redisCli, err := redis.NewClient(context.Background(), redis.Options{
 		Addr:     "session:6379", // Redisのアドレスとポート番号に合わせて変更してください
 		Password: "",             // Redisにパスワードが設定されている場合は設定してください
@@ -51,7 +50,6 @@ func main() {
 		return
 	}
 
-	// PostgreSQLに接続
 	db, err := repository.NewClient(repository.Conn{
 		Host:     cfg.DBHost,
 		Port:     uint16(cfg.DBPort),
@@ -65,7 +63,6 @@ func main() {
 	}
 	defer db.Close()
 
-	// Ginルーターの初期化
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
@@ -75,7 +72,6 @@ func main() {
 		}
 	}
 
-	// エラーログを出力するミドルウェアを追加
 	r.Use(ErrorLoggerMiddleware(logger))
 	r.Use(func(c *gin.Context) {
 		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
