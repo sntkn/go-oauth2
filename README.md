@@ -76,6 +76,15 @@
 email: test@example.com  
 password: mypassword1234!
 
+### tasks
+
+```bash
+mise run setup
+mise run build
+mise run test
+mise run fmt
+```
+
 ## Reference
 
 - <https://qiita.com/TakahikoKawasaki/items/e508a14ed960347cff11>

@@ -7,13 +7,11 @@ ENV_NAME = "develop"
 
 [tools]
 go = "1.23"
-python = "3.12.4"
-pre-commit = "latest"
-shellcheck = "latest"
+node = "22.9.0"
 
 [tasks.setup]
 description = "Setup project"
-run = "mise i && go mod download"
+run = ["mise i", "go mod download", "npm i -g yarn"]
 
 [tasks.build]
 description = "Build"
