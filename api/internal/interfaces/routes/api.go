@@ -8,13 +8,9 @@ import (
 )
 
 func Setup(e *echo.Echo, injections *interfaces.Injections) {
-	h := api.NewHandler(injections)
-
 	// Define the routes
-	u := e.Group("/users")
-	u.Use(echojwt.JWT([]byte("test")))
-	u.GET("/:id", h.GetUser)
-	tl := e.Group("/timeline")
-	tl.Use(echojwt.JWT([]byte("test")))
-	tl.GET("/timeline/:id", h.GetRecentlyTimeline)
+	p := e.Group("/")
+	p.Use(echojwt.JWT([]byte("test")))
+	p.GET("user/:id", api.NewUserHandler(injections).GetUser)
+	p.GET("/timeline/:id", api.NewTimelineHandler(injections).GetRecentlyTimeline)
 }
