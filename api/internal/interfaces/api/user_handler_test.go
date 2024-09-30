@@ -78,7 +78,7 @@ func TestGetUserExists(t *testing.T) {
 	c, rec := setupEchoContext(http.MethodGet, "/users/"+testID.String(), map[string]string{"id": testID.String()})
 
 	i := &interfaces.Injections{DB: tx}
-	handler := api.NewHandler(i)
+	handler := api.NewUserHandler(i)
 	require.NoError(t, handler.GetUser(c))
 
 	assert.Equal(t, http.StatusOK, rec.Code)
@@ -107,7 +107,7 @@ func TestGetUserNotExists(t *testing.T) {
 	c, rec := setupEchoContext(http.MethodGet, "/users/"+testID.String(), map[string]string{"id": testID.String()})
 
 	i := &interfaces.Injections{DB: tx}
-	handler := api.NewHandler(i)
+	handler := api.NewUserHandler(i)
 	require.NoError(t, handler.GetUser(c))
 
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)

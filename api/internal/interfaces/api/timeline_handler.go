@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
+	"github.com/sntkn/go-oauth2/api/internal/interfaces"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
 	"github.com/sntkn/go-oauth2/api/internal/modules/timeline"
 	"github.com/sntkn/go-oauth2/api/internal/modules/timeline/domain"
@@ -32,16 +33,30 @@ type UserResponse struct {
 	Name string    `json:"name"`
 }
 
-func (h *Handler) GetRecentlyTimeline(c echo.Context) error {
+type Usecase interface {
+	RecentlyTimeline(userID domain.UserID) ([]*domain.Timeline, error)
+}
+
+type TimelineHandler struct {
+	i  *interfaces.Injections
+	uc Usecase
+}
+
+func NewTimelineHandler(injections *interfaces.Injections) *TimelineHandler {
+	repo := registry.NewRepository(injections.DB)
+	return &TimelineHandler{
+		i:  injections,
+		uc: timeline.NewUsecase(repo),
+	}
+}
+
+func (h *TimelineHandler) GetRecentlyTimeline(c echo.Context) error {
 	params := new(GetRecentlyTimelineParams)
 	if err := c.Bind(params); err != nil {
 		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
 	}
 
-	repo := registry.NewRepository(h.i.DB)
-	s := timeline.NewUsecase(repo)
-
-	tl, err := s.RecentlyTimeline(domain.UserID(params.ID))
+	tl, err := h.uc.RecentlyTimeline(domain.UserID(params.ID))
 	if err != nil {
 		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Failed to retrieve timeline", 0))
 	}
