@@ -13,9 +13,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
-	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/validation"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
@@ -73,16 +71,8 @@ func main() {
 	}
 
 	r.Use(ErrorLoggerMiddleware(logger))
-	r.Use(func(c *gin.Context) {
-		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
-		messages, _ := flashmessage.Flash(c, sess)
-		c.Set("session", sess)
-		c.Set("flashMessages", messages)
-		c.Set("cfg", *cfg)
-		c.Set("db", db)
-	})
 
-	r.GET("/signin", auth.SigninHandler)
+	r.GET("/signin", auth.NewOAuthHandler(db, redisCli, cfg).SigninHandler)
 	r.GET("/authorize", auth.AuthorizeHandler)
 	r.POST("/authorization", auth.AuthorizationHandler)
 	r.POST("/token", auth.CreateTokenHandler)
