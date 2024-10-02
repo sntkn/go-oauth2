@@ -72,9 +72,11 @@ func main() {
 
 	r.Use(ErrorLoggerMiddleware(logger))
 
-	r.GET("/signin", auth.NewOAuthHandler(db, redisCli, cfg).SigninHandler)
+	oauthFormHandler := auth.NewOAuthHandler(db, cfg, redisCli)
+	r.GET("/signin", oauthFormHandler.SigninHandler)
 	r.GET("/authorize", auth.AuthorizeHandler)
 	r.POST("/authorization", auth.AuthorizationHandler)
+
 	r.POST("/token", auth.CreateTokenHandler)
 	r.DELETE("/token", auth.DeleteTokenHandler)
 	r.GET("/me", user.GetUserHandler)
