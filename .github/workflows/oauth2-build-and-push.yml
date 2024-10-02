@@ -31,3 +31,10 @@ jobs:
       packages: write
     with:
       target: oauth2
+  actions-timeline:
+    needs: [lint, test, build-and-push]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: Kesin11/actions-timeline@v2
+      with:
+        github-token: ${{ github.token }}
