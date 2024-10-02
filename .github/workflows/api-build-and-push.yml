@@ -13,6 +13,10 @@ on:
       - "go.work.som"
 
 jobs:
+  limeline:
+    uses: Kesin11/actions-timeline@v1
+    with:
+      github-token: ${{ github.token }}
   lint:
     uses: ./.github/workflows/lint.yml
     with:
