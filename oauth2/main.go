@@ -72,9 +72,8 @@ func main() {
 
 	r.Use(ErrorLoggerMiddleware(logger))
 
-	oauthFormHandler := auth.NewOAuthHandler(db, cfg, redisCli)
-	r.GET("/signin", oauthFormHandler.SigninHandler)
-	r.GET("/authorize", auth.AuthorizeHandler)
+	r.GET("/signin", auth.NewSigninHandler(db, cfg, redisCli).Signin)
+	r.GET("/authorize", auth.NewAuthorizeHandler(db, cfg, redisCli).Authorize)
 	r.POST("/authorization", auth.AuthorizationHandler)
 
 	r.POST("/token", auth.CreateTokenHandler)

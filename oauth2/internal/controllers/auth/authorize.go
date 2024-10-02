@@ -4,16 +4,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
 type AuthorizeUsecase interface {
-	Invoke(c *gin.Context, clientID string, redirectURI string) error
+	Invoke(clientID string, redirectURI string) error
 }
 
 type AuthorizeInput struct {
@@ -24,28 +24,20 @@ type AuthorizeInput struct {
 	State        string `form:"state" binding:"required"`
 }
 
-func AuthorizeHandler(c *gin.Context) { //nolint:dupl // No need for commonization.
-	db, err := internal.GetFromContextIF[repository.OAuth2Repository](c, "db")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-	s, err := internal.GetFromContextIF[session.SessionClient](c, "session")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-	cfg, err := internal.GetFromContext[config.Config](c, "cfg")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	authorizeUsecase := usecases.NewAuthorize(cfg, db)
-	authorize(c, s, authorizeUsecase)
+type AuthorizeHandler struct {
+	sessionManager session.SessionManager
+	uc             AuthorizeUsecase
 }
 
-func authorize(c *gin.Context, s session.SessionClient, uc AuthorizeUsecase) {
+func NewAuthorizeHandler(repo repository.OAuth2Repository, cfg *config.Config, redisCli redis.RedisClient) *AuthorizeHandler {
+	return &AuthorizeHandler{
+		sessionManager: session.NewSessionManager(redisCli, cfg.SessionExpires),
+		uc:             usecases.NewAuthorize(repo),
+	}
+}
+
+func (h *AuthorizeHandler) Authorize(c *gin.Context) { //nolint:dupl // No need for commonization.
+	sess := h.sessionManager.NewSession(c)
 	var input AuthorizeInput
 
 	if err := c.ShouldBind(&input); err != nil {
@@ -53,7 +45,7 @@ func authorize(c *gin.Context, s session.SessionClient, uc AuthorizeUsecase) {
 		return
 	}
 
-	if err := uc.Invoke(c, input.ClientID, input.RedirectURI); err != nil {
+	if err := h.uc.Invoke(input.ClientID, input.RedirectURI); err != nil {
 		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
 			switch usecaseErr.Code {
 			case http.StatusBadRequest:
@@ -69,7 +61,7 @@ func authorize(c *gin.Context, s session.SessionClient, uc AuthorizeUsecase) {
 	}
 
 	// セッションデータを書き込む
-	if err := s.SetNamedSessionData(c, "auth", &input); err != nil {
+	if err := sess.SetNamedSessionData(c, "auth", &input); err != nil {
 		c.Error(err)
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return

@@ -12,24 +12,17 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
-type SigninUsecaser interface {
-	Invoke(c *gin.Context) (entity.SessionSigninForm, error)
-}
-
-type OAuthHandler struct {
-	db             repository.OAuth2Repository
+type SigninHandler struct {
 	sessionManager session.SessionManager
 }
 
-func NewOAuthHandler(db repository.OAuth2Repository, cfg *config.Config, redisCli redis.RedisClient) *OAuthHandler {
-	sess := session.NewSessionManager(redisCli, cfg.SessionExpires)
-	return &OAuthHandler{
-		db:             db,
-		sessionManager: sess,
+func NewSigninHandler(db repository.OAuth2Repository, cfg *config.Config, redisCli redis.RedisClient) *SigninHandler {
+	return &SigninHandler{
+		sessionManager: session.NewSessionManager(redisCli, cfg.SessionExpires),
 	}
 }
 
-func (h *OAuthHandler) SigninHandler(c *gin.Context) { //nolint:dupl // No need for commonization.
+func (h *SigninHandler) Signin(c *gin.Context) { //nolint:dupl // No need for commonization.
 	sess := h.sessionManager.NewSession(c)
 	mess, err := flashmessage.Flash(c, sess)
 	if err != nil {
