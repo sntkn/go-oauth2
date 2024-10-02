@@ -74,7 +74,7 @@ func main() {
 
 	r.GET("/signin", auth.NewSigninHandler(db, cfg, redisCli).Signin)
 	r.GET("/authorize", auth.NewAuthorizeHandler(db, cfg, redisCli).Authorize)
-	r.POST("/authorization", auth.AuthorizationHandler)
+	r.POST("/authorization", auth.NewAuthorizationHandler(db, cfg, redisCli).Authorization)
 
 	r.POST("/token", auth.CreateTokenHandler)
 	r.DELETE("/token", auth.DeleteTokenHandler)
