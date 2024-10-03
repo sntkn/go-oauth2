@@ -3,14 +3,12 @@ package usecases
 import (
 	"database/sql"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +22,6 @@ func TestAuthorizationInvoke(t *testing.T) {
 
 	t.Run("successful invoke", func(t *testing.T) {
 		t.Parallel()
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
 
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindUserByEmailFunc: func(email string) (repository.User, error) {
@@ -43,34 +39,24 @@ func TestAuthorizationInvoke(t *testing.T) {
 				return nil
 			},
 		}
-		mockSess := &session.SessionClientMock{
-			DelSessionDataFunc: func(c *gin.Context, key string) error {
-				return nil
-			},
-			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				return nil
-			},
-			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				*t.(*AuthorizeInput) = AuthorizeInput{
-					ClientID:    "00000000-0000-0000-0000-000000000000",
-					Scope:       "read",
-					RedirectURI: "http://example.com",
-				}
-				return nil
-			},
-		}
 		cfg := &config.Config{}
-		authorization := NewAuthorization(cfg, mockRepo, mockSess)
+		authorization := NewAuthorization(cfg, mockRepo)
+		params := AuthorizationInput{
+			Email:       "test@example.com",
+			Password:    "test1234",
+			ClientID:    "00000000-0000-0000-0000-000000000000",
+			Scope:       "read",
+			RedirectURI: "http://example.com",
+			Expires:     0,
+		}
 
-		result, err := authorization.Invoke(c, "test@example.com", "test1234")
+		result, err := authorization.Invoke(params)
 		require.NoError(t, err)
 		assert.Contains(t, result, "http://example.com?code=")
 	})
 
 	t.Run("user not found error", func(t *testing.T) {
 		t.Parallel()
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
 
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindUserByEmailFunc: func(email string) (repository.User, error) {
@@ -80,26 +66,18 @@ func TestAuthorizationInvoke(t *testing.T) {
 				return nil
 			},
 		}
-		mockSess := &session.SessionClientMock{
-			DelSessionDataFunc: func(c *gin.Context, key string) error {
-				return nil
-			},
-			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				return nil
-			},
-			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				*t.(*AuthorizeInput) = AuthorizeInput{
-					ClientID:    "00000000-0000-0000-0000-000000000000",
-					Scope:       "read",
-					RedirectURI: "http://example.com",
-				}
-				return nil
-			},
-		}
 		cfg := &config.Config{}
-		authorization := NewAuthorization(cfg, mockRepo, mockSess)
+		authorization := NewAuthorization(cfg, mockRepo)
+		params := AuthorizationInput{
+			Email:       "test@example.com",
+			Password:    "test1234",
+			ClientID:    "00000000-0000-0000-0000-000000000000",
+			Scope:       "read",
+			RedirectURI: "http://example.com",
+			Expires:     0,
+		}
 
-		result, err := authorization.Invoke(c, "test@example.com", "test1234")
+		result, err := authorization.Invoke(params)
 		require.Error(t, err)
 		assert.IsType(t, &errors.UsecaseError{}, err)
 		assert.Contains(t, err.Error(), "no rows in result set")
@@ -108,8 +86,6 @@ func TestAuthorizationInvoke(t *testing.T) {
 
 	t.Run("hashed password does not match error", func(t *testing.T) {
 		t.Parallel()
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
 
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindUserByEmailFunc: func(email string) (repository.User, error) {
@@ -127,26 +103,18 @@ func TestAuthorizationInvoke(t *testing.T) {
 				return nil
 			},
 		}
-		mockSess := &session.SessionClientMock{
-			DelSessionDataFunc: func(c *gin.Context, key string) error {
-				return nil
-			},
-			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				return nil
-			},
-			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				*t.(*AuthorizeInput) = AuthorizeInput{
-					ClientID:    "00000000-0000-0000-0000-000000000000",
-					Scope:       "read",
-					RedirectURI: "http://example.com",
-				}
-				return nil
-			},
-		}
 		cfg := &config.Config{}
-		authorization := NewAuthorization(cfg, mockRepo, mockSess)
+		authorization := NewAuthorization(cfg, mockRepo)
+		params := AuthorizationInput{
+			Email:       "test@example.com",
+			Password:    "test12345",
+			ClientID:    "00000000-0000-0000-0000-000000000000",
+			Scope:       "read",
+			RedirectURI: "http://example.com",
+			Expires:     0,
+		}
 
-		result, err := authorization.Invoke(c, "test@example.com", "test12345")
+		result, err := authorization.Invoke(params)
 		require.Error(t, err)
 		assert.IsType(t, &errors.UsecaseError{}, err)
 		usecaseErr, ok := err.(*errors.UsecaseError)
@@ -157,8 +125,6 @@ func TestAuthorizationInvoke(t *testing.T) {
 
 	t.Run("could not parse client_id error", func(t *testing.T) {
 		t.Parallel()
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
 
 		mockRepo := &repository.OAuth2RepositoryMock{
 			FindUserByEmailFunc: func(email string) (repository.User, error) {
@@ -176,21 +142,18 @@ func TestAuthorizationInvoke(t *testing.T) {
 				return nil
 			},
 		}
-		mockSess := &session.SessionClientMock{
-			DelSessionDataFunc: func(c *gin.Context, key string) error {
-				return nil
-			},
-			SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				return nil
-			},
-			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				return nil
-			},
-		}
 		cfg := &config.Config{}
-		authorization := NewAuthorization(cfg, mockRepo, mockSess)
+		authorization := NewAuthorization(cfg, mockRepo)
+		params := AuthorizationInput{
+			Email:       "test@example.com",
+			Password:    "test1234",
+			ClientID:    "00000000-0000-0000-0000-0000000000001",
+			Scope:       "read",
+			RedirectURI: "http://example.com",
+			Expires:     0,
+		}
 
-		result, err := authorization.Invoke(c, "test@example.com", "test1234")
+		result, err := authorization.Invoke(params)
 		require.Error(t, err)
 		assert.IsType(t, &errors.UsecaseError{}, err)
 		usecaseErr, ok := err.(*errors.UsecaseError)
