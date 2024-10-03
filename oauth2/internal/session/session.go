@@ -12,8 +12,9 @@ import (
 
 type Creator func(c *gin.Context) *Session
 
+//go:generate go run github.com/matryer/moq -out session_manager_mock.go . SessionManager
 type SessionManager interface {
-	NewSession(c *gin.Context) *Session
+	NewSession(c *gin.Context) SessionClient
 }
 
 type DefaultSessionManager struct {
@@ -28,7 +29,7 @@ func NewSessionManager(cli redis.RedisClient, expires int) *DefaultSessionManage
 	}
 }
 
-func (m *DefaultSessionManager) NewSession(c *gin.Context) *Session {
+func (m *DefaultSessionManager) NewSession(c *gin.Context) SessionClient {
 	// セッションIDをクッキーから取得
 	sessionID, err := c.Cookie("sessionID")
 	if err != nil {
