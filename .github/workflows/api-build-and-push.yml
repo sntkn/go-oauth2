@@ -33,3 +33,10 @@ jobs:
       packages: write
     with:
       target: api
+  actions-timeline:
+    needs: [lint, test, build-and-push]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: Kesin11/actions-timeline@v2
+      with:
+        github-token: ${{ github.token }}
