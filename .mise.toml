@@ -27,3 +27,7 @@ run = [
   "(cd oauth2 && go mod tidy && go fmt ./...)",
   "(cd api && go mod tidy && go fmt ./...)",
 ]
+
+[tasks.generate]
+description = "Run go generate"
+run = ["(cd oauth2 && go generate ./...)", "(cd api && go generate ./...)"]
