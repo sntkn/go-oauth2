@@ -15,7 +15,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        go-version: ["1.23.x"]
+        go-version: ["1.23.2"]
     env:
       DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/go-oauth2-${{ inputs.target }}
     steps:
