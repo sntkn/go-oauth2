@@ -10,6 +10,10 @@ on:
       - "compose.yml"
       - "docker/**"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     uses: ./.github/workflows/lint.yml
