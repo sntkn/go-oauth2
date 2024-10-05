@@ -13,6 +13,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
+//go:generate go run github.com/matryer/moq -out authorization_usecase_mock.go . AuthorizationUsecase
 type AuthorizationUsecase interface {
 	Invoke(input usecases.AuthorizationInput) (string, error)
 }
