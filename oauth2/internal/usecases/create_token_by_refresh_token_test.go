@@ -87,8 +87,7 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Equal(t, http.StatusForbidden, err.(*errors.UsecaseError).Code)
-		assert.Empty(t, authTokens.AccessToken)
-		assert.Empty(t, authTokens.RefreshToken)
+		assert.Nil(t, authTokens)
 	})
 
 	t.Run("database error on finding refresh token", func(t *testing.T) {
@@ -108,8 +107,7 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
-		assert.Empty(t, authTokens.AccessToken)
-		assert.Empty(t, authTokens.RefreshToken)
+		assert.Nil(t, authTokens)
 	})
 
 	t.Run("invalid access token", func(t *testing.T) {
@@ -138,8 +136,7 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Equal(t, http.StatusForbidden, err.(*errors.UsecaseError).Code)
-		assert.Empty(t, authTokens.AccessToken)
-		assert.Empty(t, authTokens.RefreshToken)
+		assert.Nil(t, authTokens)
 	})
 
 	t.Run("database error on finding access token", func(t *testing.T) {
@@ -168,7 +165,6 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
-		assert.Empty(t, authTokens.AccessToken)
-		assert.Empty(t, authTokens.RefreshToken)
+		assert.Nil(t, authTokens)
 	})
 }

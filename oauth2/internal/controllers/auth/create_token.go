@@ -11,14 +11,14 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
-//go:generate go run github.com/matryer/moq -out create_token_usecase_mock.go . CreateTokenByCodeUsecase
+//go:generate go run github.com/matryer/moq -out create_token_by_code_usecase_mock.go . CreateTokenByCodeUsecase
 type CreateTokenByCodeUsecase interface {
-	Invoke(authCode string) (entity.AuthTokens, error)
+	Invoke(authCode string) (*entity.AuthTokens, error)
 }
 
 //go:generate go run github.com/matryer/moq -out create_token_by_refresh_token_usecase_mock.go . CreateTokenByRefreshTokenUsecase
 type CreateTokenByRefreshTokenUsecase interface {
-	Invoke(refreshToken string) (entity.AuthTokens, error)
+	Invoke(refreshToken string) (*entity.AuthTokens, error)
 }
 
 type TokenInput struct {

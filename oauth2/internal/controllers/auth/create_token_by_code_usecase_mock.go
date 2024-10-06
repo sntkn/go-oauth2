@@ -18,7 +18,7 @@ var _ CreateTokenByCodeUsecase = &CreateTokenByCodeUsecaseMock{}
 //
 //		// make and configure a mocked CreateTokenByCodeUsecase
 //		mockedCreateTokenByCodeUsecase := &CreateTokenByCodeUsecaseMock{
-//			InvokeFunc: func(authCode string) (entity.AuthTokens, error) {
+//			InvokeFunc: func(authCode string) (*entity.AuthTokens, error) {
 //				panic("mock out the Invoke method")
 //			},
 //		}
@@ -29,7 +29,7 @@ var _ CreateTokenByCodeUsecase = &CreateTokenByCodeUsecaseMock{}
 //	}
 type CreateTokenByCodeUsecaseMock struct {
 	// InvokeFunc mocks the Invoke method.
-	InvokeFunc func(authCode string) (entity.AuthTokens, error)
+	InvokeFunc func(authCode string) (*entity.AuthTokens, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -43,7 +43,7 @@ type CreateTokenByCodeUsecaseMock struct {
 }
 
 // Invoke calls InvokeFunc.
-func (mock *CreateTokenByCodeUsecaseMock) Invoke(authCode string) (entity.AuthTokens, error) {
+func (mock *CreateTokenByCodeUsecaseMock) Invoke(authCode string) (*entity.AuthTokens, error) {
 	if mock.InvokeFunc == nil {
 		panic("CreateTokenByCodeUsecaseMock.InvokeFunc: method is nil but CreateTokenByCodeUsecase.Invoke was just called")
 	}

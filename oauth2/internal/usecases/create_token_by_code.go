@@ -25,8 +25,8 @@ func NewCreateTokenByCode(cfg *config.Config, db repository.OAuth2Repository) *C
 	}
 }
 
-func (u *CreateTokenByCode) Invoke(authCode string) (entity.AuthTokens, error) {
-	var atokn entity.AuthTokens
+func (u *CreateTokenByCode) Invoke(authCode string) (*entity.AuthTokens, error) {
+	var atokn *entity.AuthTokens
 	const (
 		randomStringLen = 32
 		day             = 24 * time.Hour
@@ -87,7 +87,7 @@ func (u *CreateTokenByCode) Invoke(authCode string) (entity.AuthTokens, error) {
 		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
-	return entity.AuthTokens{
+	return &entity.AuthTokens{
 		AccessToken:  accessToken,
 		RefreshToken: randomString,
 		Expiry:       expiration.Unix(),

@@ -37,8 +37,8 @@ func TestCreateTokenHandler(t *testing.T) {
 
 		handler := &CreateTokenHandler{
 			tokenUC: &CreateTokenByCodeUsecaseMock{
-				InvokeFunc: func(refreshToken string) (entity.AuthTokens, error) {
-					return entity.AuthTokens{
+				InvokeFunc: func(refreshToken string) (*entity.AuthTokens, error) {
+					return &entity.AuthTokens{
 						AccessToken:  "test",
 						RefreshToken: "test",
 						Expiry:       time.Now().Add(1 * time.Hour).Unix(),
@@ -76,8 +76,8 @@ func TestCreateTokenHandler(t *testing.T) {
 		handler := &CreateTokenHandler{
 			tokenUC: &CreateTokenByCodeUsecaseMock{},
 			refreshTokenUC: &CreateTokenByRefreshTokenUsecaseMock{
-				InvokeFunc: func(refreshToken string) (entity.AuthTokens, error) {
-					return entity.AuthTokens{
+				InvokeFunc: func(refreshToken string) (*entity.AuthTokens, error) {
+					return &entity.AuthTokens{
 						AccessToken:  "test",
 						RefreshToken: "test",
 						Expiry:       time.Now().Add(1 * time.Hour).Unix(),
@@ -144,8 +144,8 @@ func TestCreateTokenHandler(t *testing.T) {
 
 		handler := &CreateTokenHandler{
 			tokenUC: &CreateTokenByCodeUsecaseMock{
-				InvokeFunc: func(refreshToken string) (entity.AuthTokens, error) {
-					return entity.AuthTokens{}, errors.NewUsecaseError(http.StatusBadRequest, "bad request")
+				InvokeFunc: func(refreshToken string) (*entity.AuthTokens, error) {
+					return nil, errors.NewUsecaseError(http.StatusBadRequest, "bad request")
 				},
 			},
 			refreshTokenUC: &CreateTokenByRefreshTokenUsecaseMock{},
@@ -178,8 +178,8 @@ func TestCreateTokenHandler(t *testing.T) {
 
 		handler := &CreateTokenHandler{
 			tokenUC: &CreateTokenByCodeUsecaseMock{
-				InvokeFunc: func(refreshToken string) (entity.AuthTokens, error) {
-					return entity.AuthTokens{}, errors.New("internal server error")
+				InvokeFunc: func(refreshToken string) (*entity.AuthTokens, error) {
+					return nil, errors.New("internal server error")
 				},
 			},
 			refreshTokenUC: &CreateTokenByRefreshTokenUsecaseMock{},
@@ -213,8 +213,8 @@ func TestCreateTokenHandler(t *testing.T) {
 		handler := &CreateTokenHandler{
 			tokenUC: &CreateTokenByCodeUsecaseMock{},
 			refreshTokenUC: &CreateTokenByRefreshTokenUsecaseMock{
-				InvokeFunc: func(refreshToken string) (entity.AuthTokens, error) {
-					return entity.AuthTokens{}, errors.NewUsecaseError(http.StatusBadRequest, "bad request")
+				InvokeFunc: func(refreshToken string) (*entity.AuthTokens, error) {
+					return nil, errors.NewUsecaseError(http.StatusBadRequest, "bad request")
 				},
 			},
 		}
@@ -247,8 +247,8 @@ func TestCreateTokenHandler(t *testing.T) {
 		handler := &CreateTokenHandler{
 			tokenUC: &CreateTokenByCodeUsecaseMock{},
 			refreshTokenUC: &CreateTokenByRefreshTokenUsecaseMock{
-				InvokeFunc: func(refreshToken string) (entity.AuthTokens, error) {
-					return entity.AuthTokens{}, errors.New("internal server error")
+				InvokeFunc: func(refreshToken string) (*entity.AuthTokens, error) {
+					return nil, errors.New("internal server error")
 				},
 			},
 		}

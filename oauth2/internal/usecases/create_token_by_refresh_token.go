@@ -25,8 +25,8 @@ func NewCreateTokenByRefreshToken(cfg *config.Config, db repository.OAuth2Reposi
 	}
 }
 
-func (u *CreateTokenByRefreshToken) Invoke(refreshToken string) (entity.AuthTokens, error) {
-	var atokn entity.AuthTokens
+func (u *CreateTokenByRefreshToken) Invoke(refreshToken string) (*entity.AuthTokens, error) {
+	var atokn *entity.AuthTokens
 	const (
 		randomStringLen = 32
 		day             = 24 * time.Hour
@@ -97,7 +97,7 @@ func (u *CreateTokenByRefreshToken) Invoke(refreshToken string) (entity.AuthToke
 		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	return entity.AuthTokens{
+	return &entity.AuthTokens{
 		AccessToken:  accessToken,
 		RefreshToken: randomString,
 		Expiry:       expiration.Unix(),
