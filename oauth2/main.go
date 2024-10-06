@@ -72,12 +72,12 @@ func main() {
 
 	r.Use(ErrorLoggerMiddleware(logger))
 
-	r.GET("/signin", auth.NewSigninHandler(db, cfg, redisCli).Signin)
+	r.GET("/signin", auth.NewSigninHandler(cfg, redisCli).Signin)
 	r.GET("/authorize", auth.NewAuthorizeHandler(db, cfg, redisCli).Authorize)
 	r.POST("/authorization", auth.NewAuthorizationHandler(db, cfg, redisCli).Authorization)
 
-	r.POST("/token", auth.CreateTokenHandler)
-	r.DELETE("/token", auth.DeleteTokenHandler)
+	r.POST("/token", auth.NewCreateTokenHandler(db, cfg).CreateToken)
+	r.DELETE("/token", auth.NewDeleteTokenHandler(db).DeleteToken)
 	r.GET("/me", user.GetUserHandler)
 	r.GET("/signup", user.SignupHandler)
 	r.POST("/signup", user.CreateUserHandler)

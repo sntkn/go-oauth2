@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
@@ -16,6 +18,12 @@ type DeleteTokenUsecase interface {
 
 type DeleteTokenHandler struct {
 	uc DeleteTokenUsecase
+}
+
+func NewDeleteTokenHandler(repo repository.OAuth2Repository) *DeleteTokenHandler {
+	return &DeleteTokenHandler{
+		uc: usecases.NewDeleteToken(repo),
+	}
 }
 
 func (h *DeleteTokenHandler) DeleteToken(c *gin.Context) {
