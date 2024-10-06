@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
@@ -26,7 +25,7 @@ func NewCreateTokenByRefreshToken(cfg *config.Config, db repository.OAuth2Reposi
 	}
 }
 
-func (u *CreateTokenByRefreshToken) Invoke(_ *gin.Context, refreshToken string) (entity.AuthTokens, error) {
+func (u *CreateTokenByRefreshToken) Invoke(refreshToken string) (entity.AuthTokens, error) {
 	var atokn entity.AuthTokens
 	const (
 		randomStringLen = 32

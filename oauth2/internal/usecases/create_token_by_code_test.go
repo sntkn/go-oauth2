@@ -46,8 +46,7 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 		}
 
 		authCode := "valid_auth_code"
-		c, _ := gin.CreateTestContext(nil)
-		authTokens, err := u.Invoke(c, authCode)
+		authTokens, err := u.Invoke(authCode)
 
 		require.NoError(t, err)
 		assert.NotEmpty(t, authTokens.AccessToken)
@@ -69,8 +68,7 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 
 		authCode := "invalid_auth_code"
 
-		c, _ := gin.CreateTestContext(nil)
-		authTokens, err := u.Invoke(c, authCode)
+		authTokens, err := u.Invoke(authCode)
 
 		require.Error(t, err)
 		assert.Equal(t, http.StatusForbidden, err.(*errors.UsecaseError).Code)
@@ -91,8 +89,7 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 		}
 		authCode := "db_error_auth_code"
 
-		c, _ := gin.CreateTestContext(nil)
-		authTokens, err := u.Invoke(c, authCode)
+		authTokens, err := u.Invoke(authCode)
 
 		require.Error(t, err)
 		assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
