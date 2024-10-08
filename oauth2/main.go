@@ -81,7 +81,7 @@ func main() {
 	r.GET("/me", user.NewGetUserHandler(db).GetUser)
 	r.GET("/signup", user.NewSignupHandler(cfg, redisCli).Signup)
 	r.POST("/signup", user.NewCreateUserHandler(db, cfg, redisCli).CreateUser)
-	r.GET("/signup-finished", user.SignupFinishedHandler)
+	r.GET("/signup-finished", user.NewSignupFinishedHandler(cfg, redisCli).SignupFinished)
 
 	// サーバーの設定
 	srv := &http.Server{

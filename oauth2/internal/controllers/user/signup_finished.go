@@ -4,12 +4,25 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
-func SignupFinishedHandler(c *gin.Context) {
-	mess, err := internal.GetFromContext[flashmessage.Messages](c, "flashMessages")
+func NewSignupFinishedHandler(cfg *config.Config, redisCli redis.RedisClient) *SignupFinishedHandler {
+	return &SignupFinishedHandler{
+		sessionManager: session.NewSessionManager(redisCli, cfg.SessionExpires),
+	}
+}
+
+type SignupFinishedHandler struct {
+	sessionManager session.SessionManager
+}
+
+func (h *SignupFinishedHandler) SignupFinished(c *gin.Context) {
+	sess := h.sessionManager.NewSession(c)
+	mess, err := flashmessage.Flash(c, sess)
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
