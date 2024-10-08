@@ -7,11 +7,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
-type RegistrationData struct {
-	Name  string
-	Email string
-}
-
 type CreateUser struct {
 	db repository.OAuth2Repository
 }
