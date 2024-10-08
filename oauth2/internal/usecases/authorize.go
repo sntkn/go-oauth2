@@ -4,9 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
@@ -19,18 +17,16 @@ type AuthorizeInput struct {
 }
 
 type Authorize struct {
-	cfg *config.Config
-	db  repository.OAuth2Repository
+	db repository.OAuth2Repository
 }
 
-func NewAuthorize(cfg *config.Config, db repository.OAuth2Repository) *Authorize {
+func NewAuthorize(db repository.OAuth2Repository) *Authorize {
 	return &Authorize{
-		cfg: cfg,
-		db:  db,
+		db: db,
 	}
 }
 
-func (u *Authorize) Invoke(_ *gin.Context, clientID, redirectURI string) error {
+func (u *Authorize) Invoke(clientID, redirectURI string) error {
 	// check client
 	client, err := u.db.FindClientByClientID(clientID)
 	if err != nil {

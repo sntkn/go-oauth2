@@ -2,30 +2,44 @@ package auth
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
-type DeleteTokenUsecaser interface {
-	Invoke(c *gin.Context) error
+//go:generate go run github.com/matryer/moq -out delete_token_usecase_mock.go . DeleteTokenUsecase
+
+type DeleteTokenUsecase interface {
+	Invoke(tokenStr string) error
 }
 
-func DeleteTokenHandler(c *gin.Context) {
-	db, err := internal.GetFromContextIF[repository.OAuth2Repository](c, "db")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+type DeleteTokenHandler struct {
+	uc DeleteTokenUsecase
+}
+
+func NewDeleteTokenHandler(repo repository.OAuth2Repository) *DeleteTokenHandler {
+	return &DeleteTokenHandler{
+		uc: usecases.NewDeleteToken(repo),
+	}
+}
+
+func (h *DeleteTokenHandler) DeleteToken(c *gin.Context) {
+	// "Authorization" ヘッダーを取得
+	authHeader := c.GetHeader("Authorization")
+
+	// "Authorization" ヘッダーが存在しない場合や、Bearer トークンでない場合はエラーを返す
+	if authHeader == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, "Missing or empty Authorization header")
 		return
 	}
-	uc := usecases.NewDeleteToken(db)
-	deleteToken(c, uc)
-}
 
-func deleteToken(c *gin.Context, uc DeleteTokenUsecaser) {
-	if err := uc.Invoke(c); err != nil {
+	// "Bearer " のプレフィックスを取り除いてトークンを抽出
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+	if err := h.uc.Invoke(tokenStr); err != nil {
 		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
 			c.AbortWithStatusJSON(usecaseErr.Code, gin.H{"error": usecaseErr.Error()})
 			return

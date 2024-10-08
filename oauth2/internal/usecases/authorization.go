@@ -6,33 +6,38 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Authorization struct {
-	cfg  *config.Config
-	db   repository.OAuth2Repository
-	sess session.SessionClient
+type AuthorizationInput struct {
+	Email       string
+	Password    string
+	Scope       string
+	RedirectURI string
+	ClientID    string
+	Expires     int
 }
 
-func NewAuthorization(cfg *config.Config, db repository.OAuth2Repository, sess session.SessionClient) *Authorization {
+type Authorization struct {
+	cfg *config.Config
+	db  repository.OAuth2Repository
+}
+
+func NewAuthorization(cfg *config.Config, db repository.OAuth2Repository) *Authorization {
 	return &Authorization{
-		cfg:  cfg,
-		db:   db,
-		sess: sess,
+		cfg: cfg,
+		db:  db,
 	}
 }
 
-func (u *Authorization) Invoke(c *gin.Context, email, password string) (string, error) {
+func (u *Authorization) Invoke(input AuthorizationInput) (string, error) {
 	// validate user credentials
-	user, err := u.db.FindUserByEmail(email)
+	user, err := u.db.FindUserByEmail(input.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", errors.NewUsecaseError(http.StatusBadRequest, err.Error())
@@ -41,24 +46,19 @@ func (u *Authorization) Invoke(c *gin.Context, email, password string) (string, 
 	}
 
 	// パスワードを比較して認証
-	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
 		return "", errors.NewUsecaseError(http.StatusBadRequest, err.Error())
 	}
 
-	var d AuthorizeInput
-	if err = u.sess.GetNamedSessionData(c, "auth", &d); err != nil {
-		return "", errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
-	}
-
 	// create code
-	expired := time.Now().Add(time.Duration(u.cfg.AuthCodeExpires) * time.Second)
+	expired := time.Now().Add(time.Duration(input.Expires) * time.Second)
 	randomStringLen := 32
 	randomString, err := str.GenerateRandomString(randomStringLen)
 	if err != nil {
 		return "", errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	clientID, err := uuid.Parse(d.ClientID)
+	clientID, err := uuid.Parse(input.ClientID)
 	if err != nil {
 		return "", errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -67,8 +67,8 @@ func (u *Authorization) Invoke(c *gin.Context, email, password string) (string, 
 		Code:        randomString,
 		ClientID:    clientID,
 		UserID:      user.ID,
-		Scope:       d.Scope,
-		RedirectURI: d.RedirectURI,
+		Scope:       input.Scope,
+		RedirectURI: input.RedirectURI,
 		ExpiresAt:   expired,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -77,9 +77,5 @@ func (u *Authorization) Invoke(c *gin.Context, email, password string) (string, 
 		return "", errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	if err := u.sess.DelSessionData(c, "auth"); err != nil {
-		return "", errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
-	}
-
-	return fmt.Sprintf("%s?code=%s", d.RedirectURI, randomString), nil
+	return fmt.Sprintf("%s?code=%s", input.RedirectURI, randomString), nil
 }

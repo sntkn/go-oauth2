@@ -61,8 +61,7 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 		}
 
 		refreshToken := "valid_refresh_token"
-		c, _ := gin.CreateTestContext(nil)
-		authTokens, err := u.Invoke(c, refreshToken)
+		authTokens, err := u.Invoke(refreshToken)
 
 		require.NoError(t, err)
 		assert.NotEmpty(t, authTokens.AccessToken)
@@ -84,13 +83,11 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 
 		refreshToken := "invalid_refresh_token"
 
-		c, _ := gin.CreateTestContext(nil)
-		authTokens, err := u.Invoke(c, refreshToken)
+		authTokens, err := u.Invoke(refreshToken)
 
 		require.Error(t, err)
 		assert.Equal(t, http.StatusForbidden, err.(*errors.UsecaseError).Code)
-		assert.Empty(t, authTokens.AccessToken)
-		assert.Empty(t, authTokens.RefreshToken)
+		assert.Nil(t, authTokens)
 	})
 
 	t.Run("database error on finding refresh token", func(t *testing.T) {
@@ -106,13 +103,11 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 		}
 		refreshToken := "db_error_refresh_token"
 
-		c, _ := gin.CreateTestContext(nil)
-		authTokens, err := u.Invoke(c, refreshToken)
+		authTokens, err := u.Invoke(refreshToken)
 
 		require.Error(t, err)
 		assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
-		assert.Empty(t, authTokens.AccessToken)
-		assert.Empty(t, authTokens.RefreshToken)
+		assert.Nil(t, authTokens)
 	})
 
 	t.Run("invalid access token", func(t *testing.T) {
@@ -137,13 +132,11 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 		}
 		refreshToken := "valid_refresh_token"
 
-		c, _ := gin.CreateTestContext(nil)
-		authTokens, err := u.Invoke(c, refreshToken)
+		authTokens, err := u.Invoke(refreshToken)
 
 		require.Error(t, err)
 		assert.Equal(t, http.StatusForbidden, err.(*errors.UsecaseError).Code)
-		assert.Empty(t, authTokens.AccessToken)
-		assert.Empty(t, authTokens.RefreshToken)
+		assert.Nil(t, authTokens)
 	})
 
 	t.Run("database error on finding access token", func(t *testing.T) {
@@ -168,12 +161,10 @@ func TestCreateTokenByRefreshToken_Invoke(t *testing.T) {
 		}
 		refreshToken := "valid_refresh_token"
 
-		c, _ := gin.CreateTestContext(nil)
-		authTokens, err := u.Invoke(c, refreshToken)
+		authTokens, err := u.Invoke(refreshToken)
 
 		require.Error(t, err)
 		assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
-		assert.Empty(t, authTokens.AccessToken)
-		assert.Empty(t, authTokens.RefreshToken)
+		assert.Nil(t, authTokens)
 	})
 }

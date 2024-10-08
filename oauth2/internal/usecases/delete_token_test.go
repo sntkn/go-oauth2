@@ -2,7 +2,6 @@ package usecases
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -19,47 +18,26 @@ func TestDeleteToken_Invoke(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 
-	t.Run("missing authorization header", func(t *testing.T) {
-		t.Parallel()
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodPost, "/", http.NoBody)
-
-		err := deleteToken.Invoke(c)
-
-		require.Error(t, err)
-		assert.IsType(t, &errors.UsecaseError{}, err)
-		assert.Equal(t, http.StatusUnauthorized, err.(*errors.UsecaseError).Code)
-	})
-
 	t.Run("successful token revocation", func(t *testing.T) {
 		t.Parallel()
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodPost, "/", http.NoBody)
-		c.Request.Header.Set("Authorization", "Bearer valid-token")
 
 		mockRepo.RevokeTokenFunc = func(accessToken string) error {
 			return nil
 		}
 
-		err := deleteToken.Invoke(c)
+		err := deleteToken.Invoke("token")
 
 		require.NoError(t, err)
 	})
 
 	t.Run("token revocation error", func(t *testing.T) {
 		t.Parallel()
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodPost, "/", http.NoBody)
-		c.Request.Header.Set("Authorization", "Bearer invalid-token")
 
 		mockRepo.RevokeTokenFunc = func(accessToken string) error {
 			return errors.NewUsecaseError(http.StatusInternalServerError, "revocation error")
 		}
 
-		err := deleteToken.Invoke(c)
+		err := deleteToken.Invoke("token")
 
 		require.Error(t, err)
 		assert.IsType(t, &errors.UsecaseError{}, err)

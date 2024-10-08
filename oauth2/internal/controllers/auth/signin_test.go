@@ -2,32 +2,19 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-type MockSigninUsecase struct {
-	mock.Mock
-}
-
-func (m *MockSigninUsecase) Invoke(c *gin.Context) (entity.SessionSigninForm, error) {
-	args := m.Called(c)
-	return args.Get(0).(entity.SessionSigninForm), args.Error(1)
-}
-
-func TestSigninHandler(t *testing.T) {
+func TestSigninSuccessful(t *testing.T) {
 	t.Parallel()
 	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
@@ -36,29 +23,37 @@ func TestSigninHandler(t *testing.T) {
 	r := gin.Default()
 	r.LoadHTMLGlob("../../../templates/*") // HTMLテンプレートのパスを指定
 
-	r.Use(func(c *gin.Context) {
-		c.Set("session", &session.SessionClientMock{
-			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				*t.(*usecases.AuthorizeInput) = usecases.AuthorizeInput{ClientID: "1234-abcd-qwer-asdf"}
-				return nil
+	handler := &SigninHandler{
+		sessionManager: &session.SessionManagerMock{
+			NewSessionFunc: func(c *gin.Context) session.SessionClient {
+				return &session.SessionClientMock{
+					GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+						switch v := t.(type) {
+						case *AuthorizeInput:
+							*v = AuthorizeInput{ClientID: "1234-abcd-qwer-asdf"}
+						case *flashmessage.Messages:
+							*v = flashmessage.Messages{}
+						default:
+							return errors.New("interface conversion error")
+						}
+						return nil
+					},
+					SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+						return nil
+					},
+					FlushNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+						return nil
+					},
+				}
 			},
-			FlushNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				return nil
-			},
-		})
-		c.Set("flashMessages", &flashmessage.Messages{})
-		c.Set("cfg", &config.Config{})
-		c.Next() // 次のミドルウェア/ハンドラへ
-	})
+		},
+	}
 
 	// サインインハンドラをセット
-	r.GET("/signin", func(c *gin.Context) {
-		SigninHandler(c)
-	})
+	r.GET("/signin", handler.Signin)
 
 	// テスト用のHTTPリクエストとレスポンスレコーダを作成
-	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/signin", http.NoBody)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/signin", http.NoBody)
 	require.NoError(t, err)
 
 	// レスポンスを記録するためのレスポンスレコーダを作成
@@ -74,58 +69,49 @@ func TestSigninHandler(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "<h2>Signin</h2>")
 }
 
-func TestSignin(t *testing.T) {
+func TestSigninClientNotFound(t *testing.T) {
 	t.Parallel()
+	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
-	t.Run("successful sign-in", func(t *testing.T) {
-		t.Parallel()
-		w := httptest.NewRecorder()
-		c, r := gin.CreateTestContext(w)
-		r.LoadHTMLGlob("../../../templates/*")
+	// テスト用のルーターを作成
+	r := gin.Default()
+	r.LoadHTMLGlob("../../../templates/*") // HTMLテンプレートのパスを指定
 
-		mess := &flashmessage.Messages{}
-		mockUC := new(MockSigninUsecase)
-		mockForm := entity.SessionSigninForm{}
-		mockUC.On("Invoke", mock.Anything).Return(mockForm, nil)
+	handler := &SigninHandler{
+		sessionManager: &session.SessionManagerMock{
+			NewSessionFunc: func(c *gin.Context) session.SessionClient {
+				return &session.SessionClientMock{
+					GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+						switch v := t.(type) {
+						case *AuthorizeInput:
+							*v = AuthorizeInput{}
+						case *flashmessage.Messages:
+							*v = flashmessage.Messages{}
+						default:
+							return errors.New("interface conversion error")
+						}
+						return nil
+					},
+					SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+						return nil
+					},
+					FlushNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+						return nil
+					},
+				}
+			},
+		},
+	}
 
-		signin(c, mess, mockUC)
+	r.GET("/signin", handler.Signin)
 
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Contains(t, w.Body.String(), "<h2>Signin</h2>")
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/signin", http.NoBody)
+	require.NoError(t, err)
 
-		mockUC.AssertExpectations(t)
-	})
+	w := httptest.NewRecorder()
 
-	t.Run("bad request error", func(t *testing.T) {
-		t.Parallel()
-		w := httptest.NewRecorder()
-		c, r := gin.CreateTestContext(w)
-		r.LoadHTMLGlob("../../../templates/*")
+	r.ServeHTTP(w, req)
 
-		mess := &flashmessage.Messages{}
-		mockUC := new(MockSigninUsecase)
-		mockUC.On("Invoke", mock.Anything).Return(entity.SessionSigninForm{}, &errors.UsecaseError{Code: http.StatusBadRequest})
-
-		signin(c, mess, mockUC)
-
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-		mockUC.AssertExpectations(t)
-	})
-
-	t.Run("internal server error", func(t *testing.T) {
-		t.Parallel()
-		w := httptest.NewRecorder()
-		c, r := gin.CreateTestContext(w)
-		r.LoadHTMLGlob("../../../templates/*")
-
-		mess := &flashmessage.Messages{}
-		mockUC := new(MockSigninUsecase)
-		mockUC.On("Invoke", mock.Anything).Return(entity.SessionSigninForm{}, errors.New("internal error"))
-
-		signin(c, mess, mockUC)
-
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		mockUC.AssertExpectations(t)
-	})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }

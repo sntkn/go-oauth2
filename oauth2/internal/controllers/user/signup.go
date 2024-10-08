@@ -4,18 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
-
-type SignupUsecase interface {
-	Invoke(c *gin.Context) (entity.SessionRegistrationForm, error)
-}
 
 type RegistrationForm struct {
 	Name  string `form:"name"`
@@ -23,35 +17,26 @@ type RegistrationForm struct {
 	Error string
 }
 
-func SignupHandler(c *gin.Context) {
-	s, err := internal.GetFromContextIF[session.SessionClient](c, "session")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
+func NewSignupHandler(cfg *config.Config, redisCli redis.RedisClient) *SignupHandler {
+	return &SignupHandler{
+		sessionManager: session.NewSessionManager(redisCli, cfg.SessionExpires),
 	}
-	cfg, err := internal.GetFromContext[config.Config](c, "cfg")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-	mess, err := internal.GetFromContext[flashmessage.Messages](c, "flashMessages")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	uc := usecases.NewSignup(cfg, s)
-	signup(c, mess, uc)
 }
 
-func signup(c *gin.Context, mess *flashmessage.Messages, uc SignupUsecase) {
-	form, err := uc.Invoke(c)
+type SignupHandler struct {
+	sessionManager session.SessionManager
+}
+
+func (h *SignupHandler) Signup(c *gin.Context) {
+	sess := h.sessionManager.NewSession(c)
+	mess, err := flashmessage.Flash(c, sess)
 	if err != nil {
-		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
-			c.Error(errors.WithStack(err)) // TODO: trigger usecase
-			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
-			return
-		}
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	var form entity.SessionRegistrationForm
+	if err := sess.FlushNamedSessionData(c, "signup_form", &form); err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}

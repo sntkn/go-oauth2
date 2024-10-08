@@ -4,59 +4,46 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
-	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
-type SigninUsecaser interface {
-	Invoke(c *gin.Context) (entity.SessionSigninForm, error)
+type SigninHandler struct {
+	sessionManager session.SessionManager
 }
 
-func SigninHandler(c *gin.Context) { //nolint:dupl // No need for commonization.
-	s, err := internal.GetFromContextIF[session.SessionClient](c, "session")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
+func NewSigninHandler(cfg *config.Config, redisCli redis.RedisClient) *SigninHandler {
+	return &SigninHandler{
+		sessionManager: session.NewSessionManager(redisCli, cfg.SessionExpires),
 	}
-
-	mess, err := internal.GetFromContext[flashmessage.Messages](c, "flashMessages")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	cfg, err := internal.GetFromContext[config.Config](c, "cfg")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	form := usecases.NewSignin(cfg, s)
-
-	signin(c, mess, form)
 }
 
-func signin(c *gin.Context, mess *flashmessage.Messages, uc SigninUsecaser) {
-	form, err := uc.Invoke(c)
+func (h *SigninHandler) Signin(c *gin.Context) { //nolint:dupl // No need for commonization.
+	sess := h.sessionManager.NewSession(c)
+	mess, err := flashmessage.Flash(c, sess)
 	if err != nil {
-		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
-			switch usecaseErr.Code {
-			case http.StatusBadRequest:
-				c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-			case http.StatusInternalServerError:
-				c.Error(errors.WithStack(err)) // TODO: trigger usecase
-				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
-			}
-			return
-		}
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
+	var input AuthorizeInput
+	var form entity.SessionSigninForm
 
+	if err := sess.GetNamedSessionData(c, "auth", &input); err != nil {
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	if input.ClientID == "" {
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": "invalid client_id"})
+		return
+	}
+
+	if err := sess.FlushNamedSessionData(c, "signin_form", &form); err != nil {
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
 	c.HTML(http.StatusOK, "signin.html", gin.H{"f": form, "mess": mess})
 }

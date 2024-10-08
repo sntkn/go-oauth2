@@ -12,6 +12,39 @@ import (
 
 type Creator func(c *gin.Context) *Session
 
+//go:generate go run github.com/matryer/moq -out session_manager_mock.go . SessionManager
+type SessionManager interface {
+	NewSession(c *gin.Context) SessionClient
+}
+
+type DefaultSessionManager struct {
+	cli     redis.RedisClient
+	expires int
+}
+
+func NewSessionManager(cli redis.RedisClient, expires int) *DefaultSessionManager {
+	return &DefaultSessionManager{
+		cli:     cli,
+		expires: expires,
+	}
+}
+
+func (m *DefaultSessionManager) NewSession(c *gin.Context) SessionClient {
+	// セッションIDをクッキーから取得
+	sessionID, err := c.Cookie("sessionID")
+	if err != nil {
+		// セッションIDがない場合は新しいセッションIDを生成
+		sessionID = GenerateSessionID()
+		// クッキーにセッションIDをセット
+		c.SetCookie("sessionID", sessionID, m.expires, "/", "localhost", false, true)
+	}
+
+	return &Session{
+		SessionID:    sessionID,
+		SessionStore: m.cli,
+	}
+}
+
 type Session struct {
 	SessionID    string
 	SessionStore redis.RedisClient
@@ -26,22 +59,6 @@ type SessionClient interface {
 	GetNamedSessionData(c *gin.Context, key string, t any) error
 	SetNamedSessionData(c *gin.Context, key string, v any) error
 	FlushNamedSessionData(c *gin.Context, key string, t any) error
-}
-
-func NewSession(c *gin.Context, r redis.RedisClient, expires int) *Session {
-	// セッションIDをクッキーから取得
-	sessionID, err := c.Cookie("sessionID")
-	if err != nil {
-		// セッションIDがない場合は新しいセッションIDを生成
-		sessionID = GenerateSessionID()
-		// クッキーにセッションIDをセット
-		c.SetCookie("sessionID", sessionID, expires, "/", "localhost", false, true)
-	}
-
-	return &Session{
-		SessionID:    sessionID,
-		SessionStore: r,
-	}
 }
 
 // セッションIDを生成する関数

@@ -1,20 +1,22 @@
 package user
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/internal"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
 )
 
+//go:generate go run github.com/matryer/moq -out create_user_usecase_mock.go . CreateUserUsecase
 type CreateUserUsecase interface {
-	Invoke(c *gin.Context, user *repository.User) error
+	Invoke(user *repository.User) error
 }
 
 type SignupInput struct {
@@ -23,31 +25,30 @@ type SignupInput struct {
 	Password string `form:"password" binding:"required"`
 }
 
-func CreateUserHandler(c *gin.Context) {
-	db, err := internal.GetFromContextIF[repository.OAuth2Repository](c, "db")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
+func NewCreateUserHandler(repo repository.OAuth2Repository, cfg *config.Config, redisCli redis.RedisClient) *CreateUserHandler {
+	uc := usecases.NewCreateUser(repo)
+	return &CreateUserHandler{
+		sessionManager: session.NewSessionManager(redisCli, cfg.SessionExpires),
+		uc:             uc,
 	}
-	s, err := internal.GetFromContextIF[session.SessionClient](c, "session")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-	cfg, err := internal.GetFromContext[config.Config](c, "cfg")
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	uc := usecases.NewCreateUser(cfg, db, s)
-	createUser(c, uc, s)
 }
 
-func createUser(c *gin.Context, uc CreateUserUsecase, s session.SessionClient) {
+type RegistrationData struct {
+	Name  string
+	Email string
+}
+
+type CreateUserHandler struct {
+	sessionManager session.SessionManager
+	uc             CreateUserUsecase
+}
+
+func (h *CreateUserHandler) CreateUser(c *gin.Context) {
+	sess := h.sessionManager.NewSession(c)
+
 	var input SignupInput
 	if err := c.ShouldBind(&input); err != nil {
-		if flashErr := flashmessage.AddMessage(c, s, "error", err.Error()); flashErr != nil {
+		if flashErr := flashmessage.AddMessage(c, sess, "error", err.Error()); flashErr != nil {
 			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": flashErr.Error()})
 			return
 		}
@@ -61,28 +62,40 @@ func createUser(c *gin.Context, uc CreateUserUsecase, s session.SessionClient) {
 		Password: input.Password,
 	}
 
-	if err := uc.Invoke(c, user); err != nil {
+	if err := sess.SetNamedSessionData(c, "signup_form", RegistrationData{
+		Name:  user.Name,
+		Email: user.Email,
+	}); err != nil {
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.uc.Invoke(user); err != nil {
 		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
 			switch usecaseErr.Code {
 			case http.StatusBadRequest:
-				if flashErr := flashmessage.AddMessage(c, s, flashmessage.Error, usecaseErr.Error()); flashErr != nil {
+				if flashErr := flashmessage.AddMessage(c, sess, flashmessage.Error, usecaseErr.Error()); flashErr != nil {
 					c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": flashErr.Error()})
 					return
 				}
 				c.Redirect(http.StatusFound, "/signup")
-			case http.StatusInternalServerError:
+				return
+			default:
 				c.Error(errors.WithStack(err)) // TODO: trigger usecase
 				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
+				return
 			}
-			return
 		}
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := flashmessage.AddMessage(c, s, flashmessage.Success, "create user succeeded"); err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
+	if err := sess.DelSessionData(c, "signup_form"); err != nil {
+		log.Printf("Error deleting session data: %v", err)
+	}
+
+	if err := flashmessage.AddMessage(c, sess, flashmessage.Success, "create user succeeded"); err != nil {
+		log.Printf("Error adding flash message: %v", err)
 	}
 	c.Redirect(http.StatusFound, "/signup-finished")
 }

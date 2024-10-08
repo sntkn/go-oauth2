@@ -3,39 +3,21 @@ package usecases
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/session"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
-type RegistrationData struct {
-	Name  string
-	Email string
-}
-
 type CreateUser struct {
-	cfg  *config.Config
-	db   repository.OAuth2Repository
-	sess session.SessionClient
+	db repository.OAuth2Repository
 }
 
-func NewCreateUser(cfg *config.Config, db repository.OAuth2Repository, sess session.SessionClient) *CreateUser {
+func NewCreateUser(db repository.OAuth2Repository) *CreateUser {
 	return &CreateUser{
-		cfg:  cfg,
-		db:   db,
-		sess: sess,
+		db: db,
 	}
 }
 
-func (u *CreateUser) Invoke(c *gin.Context, user *repository.User) error {
-	if err := u.sess.SetNamedSessionData(c, "signup_form", RegistrationData{
-		Name:  user.Name,
-		Email: user.Email,
-	}); err != nil {
-		return errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
-	}
+func (u *CreateUser) Invoke(user *repository.User) error {
 
 	// check email is existing
 	eu, err := u.db.ExistsUserByEmail(user.Email)
@@ -47,10 +29,6 @@ func (u *CreateUser) Invoke(c *gin.Context, user *repository.User) error {
 
 	if err := u.db.CreateUser(user); err != nil {
 		return errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
-	}
-
-	if err := u.sess.DelSessionData(c, "signup_form"); err != nil {
-		return errors.NewUsecaseError(http.StatusBadRequest, "input email already exists")
 	}
 
 	return nil

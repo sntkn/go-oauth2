@@ -13,9 +13,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
-	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/validation"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
@@ -73,24 +71,17 @@ func main() {
 	}
 
 	r.Use(ErrorLoggerMiddleware(logger))
-	r.Use(func(c *gin.Context) {
-		sess := session.NewSession(c, redisCli, cfg.SessionExpires)
-		messages, _ := flashmessage.Flash(c, sess)
-		c.Set("session", sess)
-		c.Set("flashMessages", messages)
-		c.Set("cfg", *cfg)
-		c.Set("db", db)
-	})
 
-	r.GET("/signin", auth.SigninHandler)
-	r.GET("/authorize", auth.AuthorizeHandler)
-	r.POST("/authorization", auth.AuthorizationHandler)
-	r.POST("/token", auth.CreateTokenHandler)
-	r.DELETE("/token", auth.DeleteTokenHandler)
-	r.GET("/me", user.GetUserHandler)
-	r.GET("/signup", user.SignupHandler)
-	r.POST("/signup", user.CreateUserHandler)
-	r.GET("/signup-finished", user.SignupFinishedHandler)
+	r.GET("/signin", auth.NewSigninHandler(cfg, redisCli).Signin)
+	r.GET("/authorize", auth.NewAuthorizeHandler(db, cfg, redisCli).Authorize)
+	r.POST("/authorization", auth.NewAuthorizationHandler(db, cfg, redisCli).Authorization)
+
+	r.POST("/token", auth.NewCreateTokenHandler(db, cfg).CreateToken)
+	r.DELETE("/token", auth.NewDeleteTokenHandler(db).DeleteToken)
+	r.GET("/me", user.NewGetUserHandler(db).GetUser)
+	r.GET("/signup", user.NewSignupHandler(cfg, redisCli).Signup)
+	r.POST("/signup", user.NewCreateUserHandler(db, cfg, redisCli).CreateUser)
+	r.GET("/signup-finished", user.NewSignupFinishedHandler(cfg, redisCli).SignupFinished)
 
 	// サーバーの設定
 	srv := &http.Server{

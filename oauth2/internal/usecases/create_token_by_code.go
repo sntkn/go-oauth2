@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
@@ -26,8 +25,8 @@ func NewCreateTokenByCode(cfg *config.Config, db repository.OAuth2Repository) *C
 	}
 }
 
-func (u *CreateTokenByCode) Invoke(_ *gin.Context, authCode string) (entity.AuthTokens, error) {
-	var atokn entity.AuthTokens
+func (u *CreateTokenByCode) Invoke(authCode string) (*entity.AuthTokens, error) {
+	var atokn *entity.AuthTokens
 	const (
 		randomStringLen = 32
 		day             = 24 * time.Hour
@@ -88,7 +87,7 @@ func (u *CreateTokenByCode) Invoke(_ *gin.Context, authCode string) (entity.Auth
 		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
-	return entity.AuthTokens{
+	return &entity.AuthTokens{
 		AccessToken:  accessToken,
 		RefreshToken: randomString,
 		Expiry:       expiration.Unix(),

@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,40 +26,48 @@ func (m *MockSignupFinishedUsecase) Invoke(c *gin.Context) (entity.SessionRegist
 
 func TestSignupFinishedHandler(t *testing.T) {
 	t.Parallel()
-	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
 	t.Run("signup finished successful", func(t *testing.T) {
 		t.Parallel()
-		// テスト用のルーターを作成
 		r := gin.Default()
-		r.LoadHTMLGlob("../../../templates/*") // HTMLテンプレートのパスを指定
+		r.LoadHTMLGlob("../../../templates/*")
 
 		r.Use(func(c *gin.Context) {
 			c.Set("flashMessages", &flashmessage.Messages{})
-			c.Next() // 次のミドルウェア/ハンドラへ
+			c.Next()
 		})
 
-		// サインインハンドラをセット
-		r.GET("/signup_finished", func(c *gin.Context) {
-			SignupFinishedHandler(c)
-		})
+		handler := &SignupFinishedHandler{
+			sessionManager: &session.SessionManagerMock{
+				NewSessionFunc: func(c *gin.Context) session.SessionClient {
+					return &session.SessionClientMock{
+						SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+							return nil
+						},
+						DelSessionDataFunc: func(c *gin.Context, key string) error {
+							return nil
+						},
+						GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+							*t.(*flashmessage.Messages) = flashmessage.Messages{}
+							return nil
+						},
+					}
+				},
+			},
+		}
 
-		// テスト用のHTTPリクエストとレスポンスレコーダを作成
-		ctx := context.Background()
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/signup_finished", http.NoBody)
+		r.GET("/signup_finished", handler.SignupFinished)
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/signup_finished", http.NoBody)
 		require.NoError(t, err)
 
-		// レスポンスを記録するためのレスポンスレコーダを作成
 		w := httptest.NewRecorder()
 
-		// リクエストをルーターに送信
 		r.ServeHTTP(w, req)
 
-		// ステータスコードが200 OKであることを確認
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		// レスポンスに含まれるべきHTMLコンテンツが含まれているか確認
 		assert.Contains(t, w.Body.String(), "User creation was successful.")
 	})
 }
