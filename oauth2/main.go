@@ -78,9 +78,9 @@ func main() {
 
 	r.POST("/token", auth.NewCreateTokenHandler(db, cfg).CreateToken)
 	r.DELETE("/token", auth.NewDeleteTokenHandler(db).DeleteToken)
-	r.GET("/me", user.GetUserHandler)
-	r.GET("/signup", user.SignupHandler)
-	r.POST("/signup", user.CreateUserHandler)
+	r.GET("/me", user.NewGetUserHandler(db).GetUser)
+	r.GET("/signup", user.NewSignupHandler(cfg, redisCli).Signup)
+	r.POST("/signup", user.NewCreateUserHandler(db, cfg, redisCli).CreateUser)
 	r.GET("/signup-finished", user.SignupFinishedHandler)
 
 	// サーバーの設定
