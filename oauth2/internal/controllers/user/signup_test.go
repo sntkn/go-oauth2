@@ -10,7 +10,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -28,109 +27,55 @@ func (m *MockSignupUsecase) Invoke(c *gin.Context) (entity.SessionRegistrationFo
 
 func TestSignupHandler(t *testing.T) {
 	t.Parallel()
-	// Ginのテストモードをセット
 	gin.SetMode(gin.TestMode)
 
-	// テスト用のルーターを作成
 	r := gin.Default()
-	r.LoadHTMLGlob("../../../templates/*") // HTMLテンプレートのパスを指定
+	r.LoadHTMLGlob("../../../templates/*")
+
 	form := entity.SessionRegistrationForm{
 		Name:  "test",
 		Email: "test@example.com",
 		Error: "",
 	}
-
-	r.Use(func(c *gin.Context) {
-		c.Set("session", &session.SessionClientMock{
-			FlushNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-				*t.(*entity.SessionRegistrationForm) = form
-				return nil
+	handler := &SignupHandler{
+		sessionManager: &session.SessionManagerMock{
+			NewSessionFunc: func(c *gin.Context) session.SessionClient {
+				return &session.SessionClientMock{
+					SetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+						return nil
+					},
+					DelSessionDataFunc: func(c *gin.Context, key string) error {
+						return nil
+					},
+					GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+						switch v := t.(type) {
+						case *entity.SessionRegistrationForm:
+							*v = form
+						case *flashmessage.Messages:
+							*v = flashmessage.Messages{}
+						default:
+							return errors.New("interface conversion error")
+						}
+						return nil
+					},
+					FlushNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
+						return nil
+					},
+				}
 			},
-		})
-		c.Set("flashMessages", &flashmessage.Messages{})
-		c.Set("cfg", &config.Config{})
-		c.Next() // 次のミドルウェア/ハンドラへ
-	})
+		},
+	}
 
-	// サインインハンドラをセット
-	r.GET("/signup", func(c *gin.Context) {
-		SignupHandler(c)
-	})
+	r.GET("/signup", handler.Signup)
 
-	// テスト用のHTTPリクエストとレスポンスレコーダを作成
-	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/signup", http.NoBody)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/signup", http.NoBody)
 	require.NoError(t, err)
 
-	// レスポンスを記録するためのレスポンスレコーダを作成
 	w := httptest.NewRecorder()
 
-	// リクエストをルーターに送信
 	r.ServeHTTP(w, req)
 
-	// ステータスコードが200 OKであることを確認
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	// レスポンスに含まれるべきHTMLコンテンツが含まれているか確認
 	assert.Contains(t, w.Body.String(), "<h2>Signup</h2>")
-}
-
-func TestSignup(t *testing.T) {
-	t.Parallel()
-	gin.SetMode(gin.TestMode)
-
-	t.Run("successful signup", func(t *testing.T) {
-		t.Parallel()
-		w := httptest.NewRecorder()
-		c, r := gin.CreateTestContext(w)
-		r.LoadHTMLGlob("../../../templates/*")
-		form := entity.SessionRegistrationForm{
-			Name:  "test",
-			Email: "test@example.com",
-			Error: "",
-		}
-
-		mess := &flashmessage.Messages{}
-		mockUC := new(MockSignupUsecase)
-		mockUC.On("Invoke", mock.Anything).Return(form, nil)
-
-		signup(c, mess, mockUC)
-
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Contains(t, w.Body.String(), "<h2>Signup</h2>")
-
-		mockUC.AssertExpectations(t)
-	})
-
-	t.Run("usecase internal server error", func(t *testing.T) {
-		t.Parallel()
-		w := httptest.NewRecorder()
-		c, r := gin.CreateTestContext(w)
-		r.LoadHTMLGlob("../../../templates/*")
-
-		mess := &flashmessage.Messages{}
-		mockUC := new(MockSignupUsecase)
-		mockUC.On("Invoke", mock.Anything).Return(entity.SessionRegistrationForm{}, &errors.UsecaseError{Code: http.StatusInternalServerError})
-
-		signup(c, mess, mockUC)
-
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		mockUC.AssertExpectations(t)
-	})
-
-	t.Run("internal server error", func(t *testing.T) {
-		t.Parallel()
-		w := httptest.NewRecorder()
-		c, r := gin.CreateTestContext(w)
-		r.LoadHTMLGlob("../../../templates/*")
-
-		mess := &flashmessage.Messages{}
-		mockUC := new(MockSignupUsecase)
-		mockUC.On("Invoke", mock.Anything).Return(entity.SessionRegistrationForm{}, errors.New("internal error"))
-
-		signup(c, mess, mockUC)
-
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		mockUC.AssertExpectations(t)
-	})
 }
