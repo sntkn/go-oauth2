@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 # go-oauth2
 
 ## Endpoint
@@ -57,4 +55,3 @@
 | access_token  | string    |
 | refresh_token | string    |
 | expires_at    | timestamp |
->>>>>>> Stashed changes
