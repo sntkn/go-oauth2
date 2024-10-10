@@ -19,6 +19,7 @@
 | email    | string |
 | password | string |
 
+<<<<<<< Updated upstream
 ### oauth2_clients
 
 | name          | type   |
@@ -55,6 +56,10 @@
 | access_token  | string    |
 | refresh_token | string    |
 | expires_at    | timestamp |
+=======
+- Next.js
+- tailwindcss
+>>>>>>> Stashed changes
 
 ## Sample data
 
