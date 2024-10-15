@@ -7,12 +7,12 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/valkey"
 )
 
-func NewSignupFinishedHandler(cfg *config.Config, redisCli redis.RedisClient) *SignupFinishedHandler {
+func NewSignupFinishedHandler(cfg *config.Config, valkeyCli valkey.ClientIF) *SignupFinishedHandler {
 	return &SignupFinishedHandler{
-		sessionManager: session.NewSessionManager(redisCli, cfg.SessionExpires),
+		sessionManager: session.NewSessionManager(valkeyCli, cfg.SessionExpires),
 	}
 }
 

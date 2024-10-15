@@ -9,7 +9,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/valkey"
 )
 
 //go:generate go run github.com/matryer/moq -out authorize_usecase_mock.go . AuthorizeUsecase
@@ -30,9 +30,9 @@ type AuthorizeHandler struct {
 	uc             AuthorizeUsecase
 }
 
-func NewAuthorizeHandler(repo repository.OAuth2Repository, cfg *config.Config, redisCli redis.RedisClient) *AuthorizeHandler {
+func NewAuthorizeHandler(repo repository.OAuth2Repository, cfg *config.Config, valkeyCli valkey.ClientIF) *AuthorizeHandler {
 	return &AuthorizeHandler{
-		sessionManager: session.NewSessionManager(redisCli, cfg.SessionExpires),
+		sessionManager: session.NewSessionManager(valkeyCli, cfg.SessionExpires),
 		uc:             usecases.NewAuthorize(repo),
 	}
 }

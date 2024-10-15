@@ -12,11 +12,11 @@ done
 >&2 echo "Postgres is up - executing command"
 
 
-# session コンテナのIDを取得
-session_container_id=$(docker compose ps -q session)
+# kev コンテナのIDを取得
+session_container_id=$(docker compose ps -q kvs)
 
 # セッションサービスが起動するまで待つ
-until docker exec "$session_container_id" redis-cli -h session ping; do
+until docker exec "$session_container_id" redis-cli -h kvs ping; do
   >&2 echo "Session service is unavailable - sleeping"
   sleep 1
 done

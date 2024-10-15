@@ -11,7 +11,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/valkey"
 )
 
 //go:generate go run github.com/matryer/moq -out create_user_usecase_mock.go . CreateUserUsecase
@@ -25,10 +25,10 @@ type SignupInput struct {
 	Password string `form:"password" binding:"required"`
 }
 
-func NewCreateUserHandler(repo repository.OAuth2Repository, cfg *config.Config, redisCli redis.RedisClient) *CreateUserHandler {
+func NewCreateUserHandler(repo repository.OAuth2Repository, cfg *config.Config, valkeyCli valkey.ClientIF) *CreateUserHandler {
 	uc := usecases.NewCreateUser(repo)
 	return &CreateUserHandler{
-		sessionManager: session.NewSessionManager(redisCli, cfg.SessionExpires),
+		sessionManager: session.NewSessionManager(valkeyCli, cfg.SessionExpires),
 		uc:             uc,
 	}
 }

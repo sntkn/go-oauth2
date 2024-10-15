@@ -17,7 +17,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/validation"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/valkey"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -38,10 +38,8 @@ func main() {
 		return
 	}
 
-	redisCli, err := redis.NewClient(context.Background(), redis.Options{
-		Addr:     "session:6379", // Redisのアドレスとポート番号に合わせて変更してください
-		Password: "",             // Redisにパスワードが設定されている場合は設定してください
-		DB:       0,              // データベース番号
+	valkeyCli, err := valkey.NewClient(context.Background(), valkey.Options{
+		Addr: []string{"kvs:6379"},
 	})
 	if err != nil {
 		logger.Error("Session Error", "message:", err)
@@ -72,16 +70,16 @@ func main() {
 
 	r.Use(ErrorLoggerMiddleware(logger))
 
-	r.GET("/signin", auth.NewSigninHandler(cfg, redisCli).Signin)
-	r.GET("/authorize", auth.NewAuthorizeHandler(db, cfg, redisCli).Authorize)
-	r.POST("/authorization", auth.NewAuthorizationHandler(db, cfg, redisCli).Authorization)
+	r.GET("/signin", auth.NewSigninHandler(cfg, valkeyCli).Signin)
+	r.GET("/authorize", auth.NewAuthorizeHandler(db, cfg, valkeyCli).Authorize)
+	r.POST("/authorization", auth.NewAuthorizationHandler(db, cfg, valkeyCli).Authorization)
 
 	r.POST("/token", auth.NewCreateTokenHandler(db, cfg).CreateToken)
 	r.DELETE("/token", auth.NewDeleteTokenHandler(db).DeleteToken)
 	r.GET("/me", user.NewGetUserHandler(db).GetUser)
-	r.GET("/signup", user.NewSignupHandler(cfg, redisCli).Signup)
-	r.POST("/signup", user.NewCreateUserHandler(db, cfg, redisCli).CreateUser)
-	r.GET("/signup-finished", user.NewSignupFinishedHandler(cfg, redisCli).SignupFinished)
+	r.GET("/signup", user.NewSignupHandler(cfg, valkeyCli).Signup)
+	r.POST("/signup", user.NewCreateUserHandler(db, cfg, valkeyCli).CreateUser)
+	r.GET("/signup-finished", user.NewSignupFinishedHandler(cfg, valkeyCli).SignupFinished)
 
 	// サーバーの設定
 	srv := &http.Server{

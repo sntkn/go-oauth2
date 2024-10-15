@@ -7,7 +7,7 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
-//go:generate go run github.com/matryer/moq -out redis_mock.go . ClientIF
+//go:generate go run github.com/matryer/moq -out valkey_mock.go . ClientIF
 type ClientIF interface {
 	Set(ctx context.Context, key string, value string, expiration int64) error
 	Get(ctx context.Context, key string) (string, error)

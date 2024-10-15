@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/valkey"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,9 +18,9 @@ func setupTestContext() *gin.Context {
 }
 
 func TestGetSessionData(t *testing.T) {
-	mockRedis := &redis.RedisClientMock{
-		GetOrNilFunc: func(_ context.Context, _ string) ([]byte, error) {
-			return []byte("testValue"), nil
+	mockValkey := &valkey.ClientIFMock{
+		GetFunc: func(_ context.Context, _ string) (string, error) {
+			return "testValue", nil
 		},
 	}
 
@@ -29,18 +28,18 @@ func TestGetSessionData(t *testing.T) {
 
 	session := &Session{
 		SessionID:    "sessionID",
-		SessionStore: mockRedis,
+		SessionStore: mockValkey,
 	}
 
 	// Test GetSessionData
 	value, err := session.GetSessionData(c, "testKey")
 	require.NoError(t, err)
-	assert.Equal(t, []byte("testValue"), value)
+	assert.Equal(t, "testValue", value)
 }
 
 func TestSetSessionData(t *testing.T) {
-	mockRedis := &redis.RedisClientMock{
-		SetFunc: func(_ context.Context, _ string, _ any, _ time.Duration) error {
+	mockValkey := &valkey.ClientIFMock{
+		SetFunc: func(_ context.Context, _ string, _ string, _ int64) error {
 			return nil
 		},
 	}
@@ -49,7 +48,7 @@ func TestSetSessionData(t *testing.T) {
 
 	session := &Session{
 		SessionID:    "sessionID",
-		SessionStore: mockRedis,
+		SessionStore: mockValkey,
 	}
 
 	// Test GetSessionData
@@ -58,7 +57,7 @@ func TestSetSessionData(t *testing.T) {
 }
 
 func TestDelSessionData(t *testing.T) {
-	mockRedis := &redis.RedisClientMock{
+	mockValkey := &valkey.ClientIFMock{
 		DelFunc: func(_ context.Context, _ string) error {
 			return nil
 		},
@@ -68,7 +67,7 @@ func TestDelSessionData(t *testing.T) {
 
 	session := &Session{
 		SessionID:    "sessionID",
-		SessionStore: mockRedis,
+		SessionStore: mockValkey,
 	}
 
 	// Test GetSessionData
@@ -77,9 +76,9 @@ func TestDelSessionData(t *testing.T) {
 }
 
 func TestPullSessionData(t *testing.T) {
-	mockRedis := &redis.RedisClientMock{
-		GetOrNilFunc: func(_ context.Context, _ string) ([]byte, error) {
-			return []byte("testValue"), nil
+	mockValkey := &valkey.ClientIFMock{
+		GetFunc: func(_ context.Context, _ string) (string, error) {
+			return "testValue", nil
 		},
 		DelFunc: func(_ context.Context, _ string) error {
 			return nil
@@ -90,13 +89,13 @@ func TestPullSessionData(t *testing.T) {
 
 	session := &Session{
 		SessionID:    "sessionID",
-		SessionStore: mockRedis,
+		SessionStore: mockValkey,
 	}
 
 	// Test GetSessionData
 	value, err := session.PullSessionData(c, "testKey")
 	require.NoError(t, err)
-	assert.Equal(t, []byte("testValue"), value)
+	assert.Equal(t, "testValue", value)
 }
 
 func TestGetNamedSessionData(t *testing.T) {
@@ -113,9 +112,9 @@ func TestGetNamedSessionData(t *testing.T) {
 	data, err := json.Marshal(input)
 	require.NoError(t, err)
 
-	mockRedis := &redis.RedisClientMock{
-		GetOrNilFunc: func(_ context.Context, _ string) ([]byte, error) {
-			return data, nil
+	mockValkey := &valkey.ClientIFMock{
+		GetFunc: func(_ context.Context, _ string) (string, error) {
+			return string(data), nil
 		},
 	}
 
@@ -123,7 +122,7 @@ func TestGetNamedSessionData(t *testing.T) {
 
 	session := &Session{
 		SessionID:    "sessionID",
-		SessionStore: mockRedis,
+		SessionStore: mockValkey,
 	}
 
 	var output TestStruct
@@ -148,8 +147,8 @@ func TestSetNamedSessionData(t *testing.T) {
 	data, err := json.Marshal(input)
 	require.NoError(t, err)
 
-	mockRedis := &redis.RedisClientMock{
-		SetFunc: func(_ context.Context, _ string, _ any, _ time.Duration) error {
+	mockValkey := &valkey.ClientIFMock{
+		SetFunc: func(_ context.Context, _ string, _ string, _ int64) error {
 			return nil
 		},
 	}
@@ -158,7 +157,7 @@ func TestSetNamedSessionData(t *testing.T) {
 
 	session := &Session{
 		SessionID:    "sessionID",
-		SessionStore: mockRedis,
+		SessionStore: mockValkey,
 	}
 
 	// Test SetSessionData
@@ -182,9 +181,9 @@ func TestFlushNamedSessionData(t *testing.T) {
 	data, err := json.Marshal(input)
 	require.NoError(t, err)
 
-	mockRedis := &redis.RedisClientMock{
-		GetOrNilFunc: func(_ context.Context, _ string) ([]byte, error) {
-			return data, nil
+	mockValkey := &valkey.ClientIFMock{
+		GetFunc: func(_ context.Context, _ string) (string, error) {
+			return string(data), nil
 		},
 		DelFunc: func(_ context.Context, _ string) error {
 			return nil
@@ -195,7 +194,7 @@ func TestFlushNamedSessionData(t *testing.T) {
 
 	session := &Session{
 		SessionID:    "sessionID",
-		SessionStore: mockRedis,
+		SessionStore: mockValkey,
 	}
 
 	var output TestStruct
