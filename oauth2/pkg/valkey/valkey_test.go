@@ -1,4 +1,4 @@
-package kvs
+package valkey
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// テスト用の kvs サーバーをセットアップする関数
-func setupTest(t *testing.T) *KVSClient {
+// テスト用の valkey サーバーをセットアップする関数
+func setupTest(t *testing.T) *Client {
 
 	cli, err := NewClient(context.Background(), Options{
 		Addr: []string{"127.0.0.1:6379"},
