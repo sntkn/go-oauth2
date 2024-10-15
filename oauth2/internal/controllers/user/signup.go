@@ -8,7 +8,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/valkey"
 )
 
 type RegistrationForm struct {
@@ -17,9 +17,9 @@ type RegistrationForm struct {
 	Error string
 }
 
-func NewSignupHandler(cfg *config.Config, redisCli redis.RedisClient) *SignupHandler {
+func NewSignupHandler(cfg *config.Config, valkeyCli valkey.ClientIF) *SignupHandler {
 	return &SignupHandler{
-		sessionManager: session.NewSessionManager(redisCli, cfg.SessionExpires),
+		sessionManager: session.NewSessionManager(valkeyCli, cfg.SessionExpires),
 	}
 }
 

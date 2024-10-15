@@ -27,16 +27,16 @@ var _ SessionClient = &SessionClientMock{}
 //			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
 //				panic("mock out the GetNamedSessionData method")
 //			},
-//			GetSessionDataFunc: func(c *gin.Context, key string) ([]byte, error) {
+//			GetSessionDataFunc: func(c *gin.Context, key string) (string, error) {
 //				panic("mock out the GetSessionData method")
 //			},
-//			PullSessionDataFunc: func(c *gin.Context, key string) ([]byte, error) {
+//			PullSessionDataFunc: func(c *gin.Context, key string) (string, error) {
 //				panic("mock out the PullSessionData method")
 //			},
 //			SetNamedSessionDataFunc: func(c *gin.Context, key string, v any) error {
 //				panic("mock out the SetNamedSessionData method")
 //			},
-//			SetSessionDataFunc: func(c *gin.Context, key string, input any) error {
+//			SetSessionDataFunc: func(c *gin.Context, key string, input string) error {
 //				panic("mock out the SetSessionData method")
 //			},
 //		}
@@ -56,16 +56,16 @@ type SessionClientMock struct {
 	GetNamedSessionDataFunc func(c *gin.Context, key string, t any) error
 
 	// GetSessionDataFunc mocks the GetSessionData method.
-	GetSessionDataFunc func(c *gin.Context, key string) ([]byte, error)
+	GetSessionDataFunc func(c *gin.Context, key string) (string, error)
 
 	// PullSessionDataFunc mocks the PullSessionData method.
-	PullSessionDataFunc func(c *gin.Context, key string) ([]byte, error)
+	PullSessionDataFunc func(c *gin.Context, key string) (string, error)
 
 	// SetNamedSessionDataFunc mocks the SetNamedSessionData method.
 	SetNamedSessionDataFunc func(c *gin.Context, key string, v any) error
 
 	// SetSessionDataFunc mocks the SetSessionData method.
-	SetSessionDataFunc func(c *gin.Context, key string, input any) error
+	SetSessionDataFunc func(c *gin.Context, key string, input string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -124,7 +124,7 @@ type SessionClientMock struct {
 			// Key is the key argument value.
 			Key string
 			// Input is the input argument value.
-			Input any
+			Input string
 		}
 	}
 	lockDelSessionData        sync.RWMutex
@@ -253,7 +253,7 @@ func (mock *SessionClientMock) GetNamedSessionDataCalls() []struct {
 }
 
 // GetSessionData calls GetSessionDataFunc.
-func (mock *SessionClientMock) GetSessionData(c *gin.Context, key string) ([]byte, error) {
+func (mock *SessionClientMock) GetSessionData(c *gin.Context, key string) (string, error) {
 	if mock.GetSessionDataFunc == nil {
 		panic("SessionClientMock.GetSessionDataFunc: method is nil but SessionClient.GetSessionData was just called")
 	}
@@ -289,7 +289,7 @@ func (mock *SessionClientMock) GetSessionDataCalls() []struct {
 }
 
 // PullSessionData calls PullSessionDataFunc.
-func (mock *SessionClientMock) PullSessionData(c *gin.Context, key string) ([]byte, error) {
+func (mock *SessionClientMock) PullSessionData(c *gin.Context, key string) (string, error) {
 	if mock.PullSessionDataFunc == nil {
 		panic("SessionClientMock.PullSessionDataFunc: method is nil but SessionClient.PullSessionData was just called")
 	}
@@ -365,14 +365,14 @@ func (mock *SessionClientMock) SetNamedSessionDataCalls() []struct {
 }
 
 // SetSessionData calls SetSessionDataFunc.
-func (mock *SessionClientMock) SetSessionData(c *gin.Context, key string, input any) error {
+func (mock *SessionClientMock) SetSessionData(c *gin.Context, key string, input string) error {
 	if mock.SetSessionDataFunc == nil {
 		panic("SessionClientMock.SetSessionDataFunc: method is nil but SessionClient.SetSessionData was just called")
 	}
 	callInfo := struct {
 		C     *gin.Context
 		Key   string
-		Input any
+		Input string
 	}{
 		C:     c,
 		Key:   key,
@@ -391,12 +391,12 @@ func (mock *SessionClientMock) SetSessionData(c *gin.Context, key string, input 
 func (mock *SessionClientMock) SetSessionDataCalls() []struct {
 	C     *gin.Context
 	Key   string
-	Input any
+	Input string
 } {
 	var calls []struct {
 		C     *gin.Context
 		Key   string
-		Input any
+		Input string
 	}
 	mock.lockSetSessionData.RLock()
 	calls = mock.calls.SetSessionData

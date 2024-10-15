@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/redis"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/valkey"
 )
 
 type Creator func(c *gin.Context) *Session
@@ -18,11 +18,11 @@ type SessionManager interface {
 }
 
 type DefaultSessionManager struct {
-	cli     redis.RedisClient
+	cli     valkey.ClientIF
 	expires int
 }
 
-func NewSessionManager(cli redis.RedisClient, expires int) *DefaultSessionManager {
+func NewSessionManager(cli valkey.ClientIF, expires int) *DefaultSessionManager {
 	return &DefaultSessionManager{
 		cli:     cli,
 		expires: expires,
@@ -47,15 +47,15 @@ func (m *DefaultSessionManager) NewSession(c *gin.Context) SessionClient {
 
 type Session struct {
 	SessionID    string
-	SessionStore redis.RedisClient
+	SessionStore valkey.ClientIF
 }
 
 //go:generate go run github.com/matryer/moq -out session_mock.go . SessionClient
 type SessionClient interface {
-	GetSessionData(c *gin.Context, key string) ([]byte, error)
-	SetSessionData(c *gin.Context, key string, input any) error
+	GetSessionData(c *gin.Context, key string) (string, error)
+	SetSessionData(c *gin.Context, key string, input string) error
 	DelSessionData(c *gin.Context, key string) error
-	PullSessionData(c *gin.Context, key string) ([]byte, error)
+	PullSessionData(c *gin.Context, key string) (string, error)
 	GetNamedSessionData(c *gin.Context, key string, t any) error
 	SetNamedSessionData(c *gin.Context, key string, v any) error
 	FlushNamedSessionData(c *gin.Context, key string, t any) error
@@ -67,19 +67,18 @@ func GenerateSessionID() string {
 }
 
 // セッションデータを取得する関数
-func (s *Session) GetSessionData(c *gin.Context, key string) ([]byte, error) {
+func (s *Session) GetSessionData(c *gin.Context, key string) (string, error) {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
-	b, err := s.SessionStore.GetOrNil(c, fullKey)
+	str, err := s.SessionStore.Get(c, fullKey)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return "", errors.WithStack(err)
 	}
-	return b, nil
+	return str, nil
 }
 
-// セッションデータをRedisに書き込む関数
-func (s *Session) SetSessionData(c *gin.Context, key string, input any) error {
+func (s *Session) SetSessionData(c *gin.Context, key string, input string) error {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
-	// Redisにセッションデータを書き込み
+	// セッションデータを書き込み
 	return s.SessionStore.Set(c, fullKey, input, 0)
 }
 
@@ -89,28 +88,28 @@ func (s *Session) DelSessionData(c *gin.Context, key string) error {
 }
 
 // Get and flush session
-func (s *Session) PullSessionData(c *gin.Context, key string) ([]byte, error) {
+func (s *Session) PullSessionData(c *gin.Context, key string) (string, error) {
 	v, err := s.GetSessionData(c, key)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if err := s.DelSessionData(c, key); err != nil {
-		return nil, err
+		return "", err
 	}
 
 	return v, nil
 }
 
 func (s *Session) GetNamedSessionData(c *gin.Context, key string, t any) error {
-	b, err := s.GetSessionData(c, key)
+	str, err := s.GetSessionData(c, key)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if len(b) == 0 {
+	if len(str) == 0 {
 		return nil
 	}
-	if err = json.Unmarshal(b, &t); err != nil {
+	if err = json.Unmarshal([]byte(str), &t); err != nil {
 		return errors.WithStack(err)
 	}
 	return nil
@@ -121,7 +120,7 @@ func (s *Session) SetNamedSessionData(c *gin.Context, key string, v any) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	return s.SetSessionData(c, key, d)
+	return s.SetSessionData(c, key, string(d))
 }
 
 func (s *Session) FlushNamedSessionData(c *gin.Context, key string, t any) error {

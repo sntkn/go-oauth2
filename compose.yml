@@ -17,7 +17,7 @@ services:
       - ./oauth2:/src
     depends_on:
       - database
-      - session
+      - kvs
   api:
     build:
       context: ./api
@@ -35,7 +35,6 @@ services:
       - ./api:/src
     depends_on:
       - database
-      - session
   database:
     image: postgres:latest
     container_name: database
@@ -48,12 +47,12 @@ services:
       POSTGRES_PASSWORD: admin
     ports:
       - 5432:5432
-  session:
-    image: redis:latest
+  kvs:
+    image: valkey/valkey:latest
     ports:
       - 6379:6379
     volumes:
-      - redisdata:/data
+      - kvsdata:/data
 volumes:
   pgdata:
-  redisdata:
+  kvsdata:
