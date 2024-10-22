@@ -13,6 +13,8 @@ services:
       DBPassword: pass
       DBName: auth
       GIN_MODE: debug
+    env_file:
+      - ./oauth2/.env.keys
     volumes:
       - ./oauth2:/src
     depends_on:

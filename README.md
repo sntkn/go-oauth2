@@ -46,6 +46,21 @@ mise run test
 mise run fmt
 ```
 
+## dotenvx
+
+```bash
+
+# Create a ED25519 SSH KEY
+ssh-keygen -t ed25519 -f my_ed25519_key
+
+# Add Private and Public Key
+echo -e "PRIVATE_KEY='$(cat my_ed25519_key | tr \\n \\ | sed -e 's/\\/\\\\n/g')'" >> .env.development
+echo -e "PUBLIC_KEY='$(cat my_ed25519_key.pub | tr \\n \\ | sed -e 's/\\/\\\\n/g')'" >> .env.development
+
+# Encryption
+dotenvx encrypt -f .env.development
+```
+
 ## Reference
 
 - <https://qiita.com/TakahikoKawasaki/items/e508a14ed960347cff11>
