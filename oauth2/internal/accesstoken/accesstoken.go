@@ -1,14 +1,14 @@
 package accesstoken
 
 import (
+	"crypto/ed25519"
+	"encoding/base64"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
-
-var secretKey = []byte("test")
 
 type TokenParams struct {
 	UserID    uuid.UUID
@@ -25,7 +25,7 @@ type CustomClaims struct {
 	jwt.StandardClaims
 }
 
-func Generate(p TokenParams) (string, error) {
+func Generate(p TokenParams, privateKeyBase64 string) (string, error) {
 	// JWTのペイロード（クレーム）を設定
 	claims := jwt.MapClaims{
 		"user_id":   p.UserID.String(),
@@ -36,10 +36,17 @@ func Generate(p TokenParams) (string, error) {
 	}
 
 	// JWTトークンを作成
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(&jwt.SigningMethodEd25519{}, claims)
 
-	// シークレットキーを使ってトークンを署名
-	accessToken, err := token.SignedString(secretKey)
+	privateKeyBytes, err := base64.StdEncoding.DecodeString(privateKeyBase64)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	privateKey := ed25519.PrivateKey(privateKeyBytes)
+
+	// プライベートキーを使ってトークンを署名
+	accessToken, err := token.SignedString(privateKey)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -47,11 +54,11 @@ func Generate(p TokenParams) (string, error) {
 	return accessToken, nil
 }
 
-func Parse(tokenStr string) (*CustomClaims, error) {
+func Parse(tokenStr string, publicKey string) (*CustomClaims, error) {
 	// JWTトークンをパース
 	token, err := jwt.ParseWithClaims(tokenStr, &CustomClaims{}, func(*jwt.Token) (any, error) {
 		// シークレットキーまたは公開鍵を返すことが必要です
-		return secretKey, nil
+		return publicKey, nil
 	})
 
 	if err != nil {

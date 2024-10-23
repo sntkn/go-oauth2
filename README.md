@@ -51,11 +51,10 @@ mise run fmt
 ```bash
 
 # Create a ED25519 SSH KEY
-ssh-keygen -t ed25519 -f my_ed25519_key
+cd oauth2
+go run lib/generate_key.go
 
-# Add Private and Public Key
-echo -e "PRIVATE_KEY='$(cat my_ed25519_key | tr \\n \\ | sed -e 's/\\/\\\\n/g')'" >> .env.development
-echo -e "PUBLIC_KEY='$(cat my_ed25519_key.pub | tr \\n \\ | sed -e 's/\\/\\\\n/g')'" >> .env.development
+touch .env.development
 
 # Encryption
 dotenvx encrypt -f .env.development
