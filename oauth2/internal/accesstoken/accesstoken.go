@@ -3,6 +3,7 @@ package accesstoken
 import (
 	"crypto/ed25519"
 	"encoding/base64"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -54,20 +55,26 @@ func Generate(p TokenParams, privateKeyBase64 string) (string, error) {
 	return accessToken, nil
 }
 
-func Parse(tokenStr string, publicKey string) (*CustomClaims, error) {
-	// JWTトークンをパース
-	token, err := jwt.ParseWithClaims(tokenStr, &CustomClaims{}, func(*jwt.Token) (any, error) {
-		// シークレットキーまたは公開鍵を返すことが必要です
-		return publicKey, nil
+func Parse(tokenStr string, publicKeyBase64 string) (*CustomClaims, error) {
+	publicKeyBytes, err := base64.StdEncoding.DecodeString(publicKeyBase64)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	// 公開鍵を使ってJWTをパース
+	parsedToken, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodEd25519); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return ed25519.PublicKey(publicKeyBytes), nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	// カスタムクレームを取得
-	claims, ok := token.Claims.(*CustomClaims)
-	if !ok || !token.Valid {
+	claims, ok := parsedToken.Claims.(*CustomClaims)
+	if !ok || !parsedToken.Valid {
 		err := errors.New("Invalid token")
 		return nil, errors.WithStack(err)
 	}
