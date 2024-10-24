@@ -83,6 +83,11 @@ ENTRYPOINT [ "/bin/server" ]
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS development
 WORKDIR /src
 
+# Install dotenvx
+RUN apt-get update && apt-get install -y curl
+RUN curl -sfS https://dotenvx.sh/install.sh | sh
+COPY ../.env.development .env.development
+
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,source=go.sum,target=go.sum \
     --mount=type=bind,source=go.mod,target=go.mod \
@@ -93,7 +98,7 @@ RUN go install github.com/air-verse/air@latest
 # Placing it here allows the previous steps to be cached across architectures.
 ARG TARGETARCH
 
-CMD ["air"]
+CMD ["dotenvx", "run", "--env-file=.env.development", "--", "air"]
 
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS test
 WORKDIR /src

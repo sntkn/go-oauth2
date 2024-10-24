@@ -26,6 +26,8 @@ jobs:
       packages: write
     with:
       target: oauth2
+    secrets:
+      DOTENV_PRIVATE_KEY_CI: ${{ secrets.DOTENV_PRIVATE_KEY_CI }}
   build-and-push:
     needs: [lint, test]
     if: ${{ github.actor != 'dependabot[bot]' }}

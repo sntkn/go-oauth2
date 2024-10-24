@@ -1,9 +1,6 @@
 package config
 
 import (
-	"log"
-	"os"
-
 	"github.com/caarlos0/env"
 )
 
@@ -17,8 +14,8 @@ type Config struct {
 	AuthTokenExpiresMin        int    `env:"AuthTokenExpiresMin" envDefault:"60"`        // 分を単位として指定
 	AuthRefreshTokenExpiresDay int    `env:"AuthRefreshTokenExpiresDay" envDefault:"30"` // 時間を単位として指定
 	SessionExpires             int    `env:"SessionExpires" envDefault:"3600"`
-	OpenSSLPrivateKeyPath      string `env:"OpenSSLPrivateKeyPath"` // ファイルパスを指定
-	OpenSSLPrivateKey          string // 実際の秘密鍵の内容を保持
+	PrivateKey                 string `env:"PRIVATE_KEY"`
+	PublicKey                  string `env:"PUBLIC_KEY"`
 }
 
 func GetEnv() (*Config, error) {
@@ -27,14 +24,5 @@ func GetEnv() (*Config, error) {
 		return cfg, err
 	}
 
-	// OpenSSLPrivateKeyPathで指定されたファイルから秘密鍵を読み込む
-	if cfg.OpenSSLPrivateKeyPath != "" {
-		keyBytes, err := os.ReadFile(cfg.OpenSSLPrivateKeyPath)
-		if err != nil {
-			log.Fatalf("Failed to read private key file: %v", err)
-			return cfg, err
-		}
-		cfg.OpenSSLPrivateKey = string(keyBytes)
-	}
 	return cfg, nil
 }
