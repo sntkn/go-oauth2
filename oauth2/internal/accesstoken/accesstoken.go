@@ -11,14 +11,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
-type CustomClaims struct {
-	UserID    string `json:"user_id"`
-	ClientID  string `json:"client_id"`
-	Scope     string
-	ExpiresAt time.Time
-	jwt.StandardClaims
-}
-
 type Generator interface {
 	Generate(p *TokenParams, privateKeyBase64 string) (string, error)
 }
@@ -67,6 +59,14 @@ func (t *Token) Generate(p *TokenParams, privateKeyBase64 string) (string, error
 	}
 
 	return accessToken, nil
+}
+
+type CustomClaims struct {
+	UserID    string `json:"user_id"`
+	ClientID  string `json:"client_id"`
+	Scope     string
+	ExpiresAt time.Time
+	jwt.StandardClaims
 }
 
 func (t *Token) Parse(tokenStr string, publicKeyBase64 string) (*CustomClaims, error) {
