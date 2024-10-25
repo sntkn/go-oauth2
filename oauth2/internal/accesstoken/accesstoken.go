@@ -11,13 +11,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
-type TokenParams struct {
-	UserID    uuid.UUID
-	ClientID  uuid.UUID
-	Scope     string
-	ExpiresAt time.Time
-}
-
 type CustomClaims struct {
 	UserID    string `json:"user_id"`
 	ClientID  string `json:"client_id"`
@@ -26,7 +19,28 @@ type CustomClaims struct {
 	jwt.StandardClaims
 }
 
-func Generate(p TokenParams, privateKeyBase64 string) (string, error) {
+type Generator interface {
+	Generate(p *TokenParams, privateKeyBase64 string) (string, error)
+}
+
+type Parser interface {
+	Parse(tokenStr string, publicKeyBase64 string) (*CustomClaims, error)
+}
+
+func NewTokenService() *Token {
+	return &Token{}
+}
+
+type Token struct{}
+
+type TokenParams struct {
+	UserID    uuid.UUID
+	ClientID  uuid.UUID
+	Scope     string
+	ExpiresAt time.Time
+}
+
+func (t *Token) Generate(p *TokenParams, privateKeyBase64 string) (string, error) {
 	// JWTのペイロード（クレーム）を設定
 	claims := jwt.MapClaims{
 		"user_id":   p.UserID.String(),
@@ -55,7 +69,7 @@ func Generate(p TokenParams, privateKeyBase64 string) (string, error) {
 	return accessToken, nil
 }
 
-func Parse(tokenStr string, publicKeyBase64 string) (*CustomClaims, error) {
+func (t *Token) Parse(tokenStr string, publicKeyBase64 string) (*CustomClaims, error) {
 	publicKeyBytes, err := base64.StdEncoding.DecodeString(publicKeyBase64)
 	if err != nil {
 		return nil, errors.WithStack(err)
