@@ -60,6 +60,12 @@ touch .env.development
 dotenvx encrypt -f .env.development
 ```
 
+## Others
+
+- mise
+- valkey
+- Ed25991 (JWT signature algorithm)
+
 ## Reference
 
 - <https://qiita.com/TakahikoKawasaki/items/e508a14ed960347cff11>
