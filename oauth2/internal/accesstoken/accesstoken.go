@@ -11,6 +11,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
+//go:generate go run github.com/matryer/moq -out token_gerenrator_mock.go . Generator Parser
 type Generator interface {
 	Generate(p *TokenParams, privateKeyBase64 string) (string, error)
 }

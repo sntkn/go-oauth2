@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
@@ -40,9 +41,16 @@ func TestCreateTokenByCode_Invoke(t *testing.T) {
 				return nil
 			},
 		}
+		tokenGen := &accesstoken.GeneratorMock{
+			GenerateFunc: func(p *accesstoken.TokenParams, privateKeyBase64 string) (string, error) {
+				return "dummy-token", nil
+			},
+		}
+
 		u := &CreateTokenByCode{
-			db:  mockRepo,
-			cfg: &config.Config{},
+			db:       mockRepo,
+			cfg:      &config.Config{},
+			tokenGen: tokenGen,
 		}
 
 		authCode := "valid_auth_code"

@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,18 +26,23 @@ func TestGetUser(t *testing.T) {
 
 		r := gin.Default()
 
-		token, err := accesstoken.Generate(accesstoken.TokenParams{
-			UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			ClientID:  uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			Scope:     "read",
-			ExpiresAt: time.Now().Add(1 * time.Hour),
-		})
-		require.NoError(t, err)
-
 		handler := &GetUserHandler{
 			uc: &GetUserUsecaseMock{
 				InvokeFunc: func(userID uuid.UUID) (repository.User, error) {
 					return repository.User{}, nil
+				},
+			},
+			cfg: &config.Config{
+				PublicKey: "dummy-key",
+			},
+			tokenParser: &accesstoken.ParserMock{
+				ParseFunc: func(tokenStr string, publicKeyBase64 string) (*accesstoken.CustomClaims, error) {
+					return &accesstoken.CustomClaims{
+						UserID:    "00000000-0000-0000-0000-000000000000",
+						ClientID:  "00000000-0000-0000-0000-000000000000",
+						Scope:     "read",
+						ExpiresAt: time.Now().Add(1 * time.Hour),
+					}, nil
 				},
 			},
 		}
@@ -44,7 +50,7 @@ func TestGetUser(t *testing.T) {
 
 		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/me", http.NoBody)
 		require.NoError(t, err)
-		req.Header.Add("Authorization", token)
+		req.Header.Add("Authorization", "Bearer dummy-token")
 		req.Header.Set("Content-Type", "application/json")
 
 		w := httptest.NewRecorder()
@@ -84,18 +90,23 @@ func TestGetUser(t *testing.T) {
 
 		r := gin.Default()
 
-		token, err := accesstoken.Generate(accesstoken.TokenParams{
-			UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			ClientID:  uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			Scope:     "read",
-			ExpiresAt: time.Now().Add(1 * time.Hour),
-		})
-		require.NoError(t, err)
-
 		handler := &GetUserHandler{
 			uc: &GetUserUsecaseMock{
 				InvokeFunc: func(userID uuid.UUID) (repository.User, error) {
 					return repository.User{}, errors.NewUsecaseError(http.StatusBadRequest, "bad request")
+				},
+			},
+			cfg: &config.Config{
+				PublicKey: "dummy-key",
+			},
+			tokenParser: &accesstoken.ParserMock{
+				ParseFunc: func(tokenStr string, publicKeyBase64 string) (*accesstoken.CustomClaims, error) {
+					return &accesstoken.CustomClaims{
+						UserID:    "00000000-0000-0000-0000-000000000000",
+						ClientID:  "00000000-0000-0000-0000-000000000000",
+						Scope:     "read",
+						ExpiresAt: time.Now().Add(1 * time.Hour),
+					}, nil
 				},
 			},
 		}
@@ -103,7 +114,7 @@ func TestGetUser(t *testing.T) {
 
 		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/me", http.NoBody)
 		require.NoError(t, err)
-		req.Header.Add("Authorization", token)
+		req.Header.Add("Authorization", "dummy-token")
 		req.Header.Set("Content-Type", "application/json")
 
 		w := httptest.NewRecorder()
@@ -118,18 +129,23 @@ func TestGetUser(t *testing.T) {
 
 		r := gin.Default()
 
-		token, err := accesstoken.Generate(accesstoken.TokenParams{
-			UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			ClientID:  uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			Scope:     "read",
-			ExpiresAt: time.Now().Add(1 * time.Hour),
-		})
-		require.NoError(t, err)
-
 		handler := &GetUserHandler{
 			uc: &GetUserUsecaseMock{
 				InvokeFunc: func(userID uuid.UUID) (repository.User, error) {
 					return repository.User{}, errors.New("internal server error")
+				},
+			},
+			cfg: &config.Config{
+				PublicKey: "dummy-key",
+			},
+			tokenParser: &accesstoken.ParserMock{
+				ParseFunc: func(tokenStr string, publicKeyBase64 string) (*accesstoken.CustomClaims, error) {
+					return &accesstoken.CustomClaims{
+						UserID:    "00000000-0000-0000-0000-000000000000",
+						ClientID:  "00000000-0000-0000-0000-000000000000",
+						Scope:     "read",
+						ExpiresAt: time.Now().Add(1 * time.Hour),
+					}, nil
 				},
 			},
 		}
@@ -137,7 +153,7 @@ func TestGetUser(t *testing.T) {
 
 		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/me", http.NoBody)
 		require.NoError(t, err)
-		req.Header.Add("Authorization", token)
+		req.Header.Add("Authorization", "dumm-token")
 		req.Header.Set("Content-Type", "application/json")
 
 		w := httptest.NewRecorder()

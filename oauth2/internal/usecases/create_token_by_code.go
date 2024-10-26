@@ -14,14 +14,16 @@ import (
 )
 
 type CreateTokenByCode struct {
-	cfg *config.Config
-	db  repository.OAuth2Repository
+	cfg      *config.Config
+	db       repository.OAuth2Repository
+	tokenGen accesstoken.Generator
 }
 
-func NewCreateTokenByCode(cfg *config.Config, db repository.OAuth2Repository) *CreateTokenByCode {
+func NewCreateTokenByCode(cfg *config.Config, db repository.OAuth2Repository, tokenGen accesstoken.Generator) *CreateTokenByCode {
 	return &CreateTokenByCode{
-		cfg: cfg,
-		db:  db,
+		cfg:      cfg,
+		db:       db,
+		tokenGen: tokenGen,
 	}
 }
 
@@ -54,7 +56,7 @@ func (u *CreateTokenByCode) Invoke(authCode string) (*entity.AuthTokens, error) 
 		Scope:     code.Scope,
 		ExpiresAt: expiration,
 	}
-	accessToken, err := accesstoken.Generate(t)
+	accessToken, err := u.tokenGen.Generate(&t, u.cfg.PrivateKey)
 	if err != nil {
 		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}

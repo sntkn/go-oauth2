@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
@@ -40,8 +41,8 @@ type CreateTokenHandler struct {
 
 func NewCreateTokenHandler(repo repository.OAuth2Repository, cfg *config.Config) *CreateTokenHandler {
 	return &CreateTokenHandler{
-		tokenUC:        usecases.NewCreateTokenByCode(cfg, repo),
-		refreshTokenUC: usecases.NewCreateTokenByRefreshToken(cfg, repo),
+		tokenUC:        usecases.NewCreateTokenByCode(cfg, repo, accesstoken.NewTokenService()),
+		refreshTokenUC: usecases.NewCreateTokenByRefreshToken(cfg, repo, accesstoken.NewTokenService()),
 	}
 }
 
