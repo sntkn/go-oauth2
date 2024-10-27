@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
@@ -76,7 +77,7 @@ func main() {
 
 	r.POST("/token", auth.NewCreateTokenHandler(db, cfg).CreateToken)
 	r.DELETE("/token", auth.NewDeleteTokenHandler(db).DeleteToken)
-	r.GET("/me", user.NewGetUserHandler(db).GetUser)
+	r.GET("/me", user.NewGetUserHandler(db, cfg, accesstoken.NewTokenService()).GetUser)
 	r.GET("/signup", user.NewSignupHandler(cfg, valkeyCli).Signup)
 	r.POST("/signup", user.NewCreateUserHandler(db, cfg, valkeyCli).CreateUser)
 	r.GET("/signup-finished", user.NewSignupFinishedHandler(cfg, valkeyCli).SignupFinished)

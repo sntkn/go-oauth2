@@ -46,6 +46,26 @@ mise run test
 mise run fmt
 ```
 
+## dotenvx
+
+```bash
+
+# Create a ED25519 SSH KEY
+cd oauth2
+go run lib/generate_key.go
+
+touch .env.development
+
+# Encryption
+dotenvx encrypt -f .env.development
+```
+
+## Others
+
+- mise
+- valkey
+- Ed25991 (JWT signature algorithm)
+
 ## Reference
 
 - <https://qiita.com/TakahikoKawasaki/items/e508a14ed960347cff11>

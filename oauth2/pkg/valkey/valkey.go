@@ -37,8 +37,7 @@ func NewClient(ctx context.Context, o Options) (*Client, error) {
 }
 
 func (c *Client) Set(ctx context.Context, key string, value string, expiration int64) error {
-	err := c.cli.Do(ctx, c.cli.B().Set().Key(key).Value(value).Nx().Build()).Error()
-	if err != nil {
+	if err := c.cli.Do(ctx, c.cli.B().Set().Key(key).Value(value).Build()).Error(); err != nil {
 		return err
 	}
 	return c.cli.Do(ctx, c.cli.B().Expire().Key(key).Seconds(expiration).Build()).Error()

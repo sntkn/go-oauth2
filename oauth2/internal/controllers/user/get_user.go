@@ -9,6 +9,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecases"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
@@ -17,15 +18,19 @@ type GetUserUsecase interface {
 	Invoke(userID uuid.UUID) (repository.User, error)
 }
 
-func NewGetUserHandler(repo repository.OAuth2Repository) *GetUserHandler {
+func NewGetUserHandler(repo repository.OAuth2Repository, cfg *config.Config, tokenParser accesstoken.Parser) *GetUserHandler {
 	uc := usecases.NewGetUser(repo)
 	return &GetUserHandler{
-		uc: uc,
+		uc:          uc,
+		cfg:         cfg,
+		tokenParser: tokenParser,
 	}
 }
 
 type GetUserHandler struct {
-	uc GetUserUsecase
+	uc          GetUserUsecase
+	cfg         *config.Config
+	tokenParser accesstoken.Parser
 }
 
 func (h *GetUserHandler) GetUser(c *gin.Context) {
@@ -43,7 +48,7 @@ func (h *GetUserHandler) GetUser(c *gin.Context) {
 	// "Bearer " のプレフィックスを取り除いてトークンを抽出
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
-	claims, err := accesstoken.Parse(tokenStr)
+	claims, err := h.tokenParser.Parse(tokenStr, h.cfg.PublicKey)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return

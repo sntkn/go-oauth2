@@ -14,14 +14,16 @@ import (
 )
 
 type CreateTokenByRefreshToken struct {
-	cfg *config.Config
-	db  repository.OAuth2Repository
+	cfg      *config.Config
+	db       repository.OAuth2Repository
+	tokenGen accesstoken.Generator
 }
 
-func NewCreateTokenByRefreshToken(cfg *config.Config, db repository.OAuth2Repository) *CreateTokenByRefreshToken {
+func NewCreateTokenByRefreshToken(cfg *config.Config, db repository.OAuth2Repository, tokenGen accesstoken.Generator) *CreateTokenByRefreshToken {
 	return &CreateTokenByRefreshToken{
-		cfg: cfg,
-		db:  db,
+		cfg:      cfg,
+		db:       db,
+		tokenGen: tokenGen,
 	}
 }
 
@@ -53,13 +55,13 @@ func (u *CreateTokenByRefreshToken) Invoke(refreshToken string) (*entity.AuthTok
 	}
 	expiration := time.Now().Add(time.Duration(u.cfg.AuthTokenExpiresMin) * time.Minute)
 
-	t := accesstoken.TokenParams{
+	t := &accesstoken.TokenParams{
 		UserID:    tkn.UserID,
 		ClientID:  tkn.ClientID,
 		Scope:     tkn.Scope,
 		ExpiresAt: expiration,
 	}
-	accessToken, err := accesstoken.Generate(t)
+	accessToken, err := u.tokenGen.Generate(t, u.cfg.PrivateKey)
 
 	if err != nil {
 		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())

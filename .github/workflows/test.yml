@@ -6,6 +6,9 @@ on:
       target:
         required: true
         type: string
+    secrets:
+      DOTENV_PRIVATE_KEY_CI:
+        required: true
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -32,6 +35,8 @@ jobs:
         run: docker compose logs database
 
       - name: Test
+        env:
+          DOTENV_PRIVATE_KEY_CI: ${{ secrets.DOTENV_PRIVATE_KEY_CI }}
         run: |
           cd ${{ inputs.target }}
           go test -v ./...
