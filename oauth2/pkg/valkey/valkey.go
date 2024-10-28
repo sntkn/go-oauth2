@@ -27,7 +27,7 @@ func NewClient(ctx context.Context, o Options) (*Client, error) {
 		InitAddress: o.Addr,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	//	defer client.Close()
 
@@ -38,9 +38,12 @@ func NewClient(ctx context.Context, o Options) (*Client, error) {
 
 func (c *Client) Set(ctx context.Context, key string, value string, expiration int64) error {
 	if err := c.cli.Do(ctx, c.cli.B().Set().Key(key).Value(value).Build()).Error(); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
-	return c.cli.Do(ctx, c.cli.B().Expire().Key(key).Seconds(expiration).Build()).Error()
+	if err := c.cli.Do(ctx, c.cli.B().Expire().Key(key).Seconds(expiration).Build()).Error(); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (c *Client) Get(ctx context.Context, key string) (string, error) {
@@ -49,11 +52,14 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 		if errors.Is(err, valkey.Nil) {
 			return "", nil
 		}
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	return str, nil
 }
 
 func (c *Client) Del(ctx context.Context, key string) error {
-	return c.cli.Do(ctx, c.cli.B().Del().Key(key).Build()).Error()
+	if err := c.cli.Do(ctx, c.cli.B().Del().Key(key).Build()).Error(); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }

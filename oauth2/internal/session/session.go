@@ -79,7 +79,10 @@ func (s *Session) GetSessionData(c *gin.Context, key string) (string, error) {
 func (s *Session) SetSessionData(c *gin.Context, key string, input string) error {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
 	// セッションデータを書き込み
-	return s.SessionStore.Set(c, fullKey, input, 0)
+	if err := s.SessionStore.Set(c, fullKey, input, 3600); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (s *Session) DelSessionData(c *gin.Context, key string) error {
