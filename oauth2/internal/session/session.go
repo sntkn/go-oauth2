@@ -68,18 +68,19 @@ func GenerateSessionID() string {
 
 // セッションデータを取得する関数
 func (s *Session) GetSessionData(c *gin.Context, key string) (string, error) {
-	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
-	return s.SessionStore.Get(c, fullKey)
+	return s.SessionStore.Get(c, s.fullKey(key))
 }
 
 func (s *Session) SetSessionData(c *gin.Context, key string, input string) error {
-	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
-	return s.SessionStore.Set(c, fullKey, input, 3600)
+	return s.SessionStore.Set(c, s.fullKey(key), input, 3600)
 }
 
 func (s *Session) DelSessionData(c *gin.Context, key string) error {
-	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
-	return s.SessionStore.Del(c, fullKey)
+	return s.SessionStore.Del(c, s.fullKey(key))
+}
+
+func (s *Session) fullKey(key string) string {
+	return fmt.Sprintf("%s:%s", s.SessionID, key)
 }
 
 // Get and flush session
