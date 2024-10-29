@@ -69,20 +69,12 @@ func GenerateSessionID() string {
 // セッションデータを取得する関数
 func (s *Session) GetSessionData(c *gin.Context, key string) (string, error) {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
-	str, err := s.SessionStore.Get(c, fullKey)
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
-	return str, nil
+	return s.SessionStore.Get(c, fullKey)
 }
 
 func (s *Session) SetSessionData(c *gin.Context, key string, input string) error {
 	fullKey := fmt.Sprintf("%s:%s", s.SessionID, key)
-	// セッションデータを書き込み
-	if err := s.SessionStore.Set(c, fullKey, input, 3600); err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return s.SessionStore.Set(c, fullKey, input, 3600)
 }
 
 func (s *Session) DelSessionData(c *gin.Context, key string) error {
@@ -107,7 +99,7 @@ func (s *Session) PullSessionData(c *gin.Context, key string) (string, error) {
 func (s *Session) GetNamedSessionData(c *gin.Context, key string, t any) error {
 	str, err := s.GetSessionData(c, key)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	if len(str) == 0 {
 		return nil
