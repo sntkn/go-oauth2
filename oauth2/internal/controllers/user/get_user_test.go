@@ -32,20 +32,16 @@ func TestGetUser(t *testing.T) {
 					return repository.User{}, nil
 				},
 			},
-			cfg: &config.Config{
-				PublicKey: "dummy-key",
-			},
-			tokenParser: &accesstoken.ParserMock{
-				ParseFunc: func(tokenStr string, publicKeyBase64 string) (*accesstoken.CustomClaims, error) {
-					return &accesstoken.CustomClaims{
-						UserID:    "00000000-0000-0000-0000-000000000000",
-						ClientID:  "00000000-0000-0000-0000-000000000000",
-						Scope:     "read",
-						ExpiresAt: time.Now().Add(1 * time.Hour),
-					}, nil
-				},
-			},
+			cfg: &config.Config{},
 		}
+		r.Use(func(c *gin.Context) {
+			c.Set("claims", &accesstoken.CustomClaims{
+				UserID:    "00000000-0000-0000-0000-000000000000",
+				ClientID:  "00000000-0000-0000-0000-000000000000",
+				Scope:     "read",
+				ExpiresAt: time.Now().Add(1 * time.Hour),
+			})
+		})
 		r.GET("/me", handler.GetUser)
 
 		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/me", http.NoBody)
@@ -60,7 +56,7 @@ func TestGetUser(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
-	t.Run("bad request get user", func(t *testing.T) {
+	t.Run("claims not exists", func(t *testing.T) {
 		t.Parallel()
 
 		r := gin.Default()
@@ -82,7 +78,36 @@ func TestGetUser(t *testing.T) {
 
 		r.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("invalid claim type", func(t *testing.T) {
+		t.Parallel()
+
+		r := gin.Default()
+
+		handler := &GetUserHandler{
+			uc: &GetUserUsecaseMock{
+				InvokeFunc: func(userID uuid.UUID) (repository.User, error) {
+					return repository.User{}, nil
+				},
+			},
+		}
+		r.Use(func(c *gin.Context) {
+			c.Set("claims", "invalid type")
+		})
+
+		r.GET("/me", handler.GetUser)
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/me", http.NoBody)
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 
 	t.Run("usecase error get user", func(t *testing.T) {
@@ -96,20 +121,16 @@ func TestGetUser(t *testing.T) {
 					return repository.User{}, errors.NewUsecaseError(http.StatusBadRequest, "bad request")
 				},
 			},
-			cfg: &config.Config{
-				PublicKey: "dummy-key",
-			},
-			tokenParser: &accesstoken.ParserMock{
-				ParseFunc: func(tokenStr string, publicKeyBase64 string) (*accesstoken.CustomClaims, error) {
-					return &accesstoken.CustomClaims{
-						UserID:    "00000000-0000-0000-0000-000000000000",
-						ClientID:  "00000000-0000-0000-0000-000000000000",
-						Scope:     "read",
-						ExpiresAt: time.Now().Add(1 * time.Hour),
-					}, nil
-				},
-			},
+			cfg: &config.Config{},
 		}
+		r.Use(func(c *gin.Context) {
+			c.Set("claims", &accesstoken.CustomClaims{
+				UserID:    "00000000-0000-0000-0000-000000000000",
+				ClientID:  "00000000-0000-0000-0000-000000000000",
+				Scope:     "read",
+				ExpiresAt: time.Now().Add(1 * time.Hour),
+			})
+		})
 		r.GET("/me", handler.GetUser)
 
 		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/me", http.NoBody)
@@ -135,20 +156,16 @@ func TestGetUser(t *testing.T) {
 					return repository.User{}, errors.New("internal server error")
 				},
 			},
-			cfg: &config.Config{
-				PublicKey: "dummy-key",
-			},
-			tokenParser: &accesstoken.ParserMock{
-				ParseFunc: func(tokenStr string, publicKeyBase64 string) (*accesstoken.CustomClaims, error) {
-					return &accesstoken.CustomClaims{
-						UserID:    "00000000-0000-0000-0000-000000000000",
-						ClientID:  "00000000-0000-0000-0000-000000000000",
-						Scope:     "read",
-						ExpiresAt: time.Now().Add(1 * time.Hour),
-					}, nil
-				},
-			},
+			cfg: &config.Config{},
 		}
+		r.Use(func(c *gin.Context) {
+			c.Set("claims", &accesstoken.CustomClaims{
+				UserID:    "00000000-0000-0000-0000-000000000000",
+				ClientID:  "00000000-0000-0000-0000-000000000000",
+				Scope:     "read",
+				ExpiresAt: time.Now().Add(1 * time.Hour),
+			})
+		})
 		r.GET("/me", handler.GetUser)
 
 		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/me", http.NoBody)

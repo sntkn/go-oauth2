@@ -2,7 +2,6 @@ package auth
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
@@ -27,17 +26,17 @@ func NewDeleteTokenHandler(repo repository.OAuth2Repository) *DeleteTokenHandler
 }
 
 func (h *DeleteTokenHandler) DeleteToken(c *gin.Context) {
-	// "Authorization" ヘッダーを取得
-	authHeader := c.GetHeader("Authorization")
-
-	// "Authorization" ヘッダーが存在しない場合や、Bearer トークンでない場合はエラーを返す
-	if authHeader == "" {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, "Missing or empty Authorization header")
+	token, exists := c.Get("accessToken")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "accessToken not found"})
 		return
 	}
 
-	// "Bearer " のプレフィックスを取り除いてトークンを抽出
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	tokenStr, ok := token.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid accessToken type"})
+		return
+	}
 
 	if err := h.uc.Invoke(tokenStr); err != nil {
 		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
