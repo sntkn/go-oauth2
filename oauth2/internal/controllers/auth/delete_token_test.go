@@ -28,11 +28,16 @@ func TestDeleteToken(t *testing.T) {
 				},
 			},
 		}
+
+		r.Use(func(c *gin.Context) {
+			c.Set("accessToken", "dummy-token")
+		})
+
 		r.DELETE("/token", handler.DeleteToken)
 
 		req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/token", http.NoBody)
 		require.NoError(t, err)
-		req.Header.Add("Authorization", "AccessToken")
+		//		req.Header.Add("Authorization", "AccessToken")
 		req.Header.Set("Content-Type", "application/json")
 
 		w := httptest.NewRecorder()
@@ -42,7 +47,7 @@ func TestDeleteToken(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
-	t.Run("bad request delete token", func(t *testing.T) {
+	t.Run("accessToken not exists", func(t *testing.T) {
 		t.Parallel()
 
 		r := gin.Default()
@@ -64,10 +69,10 @@ func TestDeleteToken(t *testing.T) {
 
 		r.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 
-	t.Run("usecase error delete token", func(t *testing.T) {
+	t.Run("invalid accessToken type", func(t *testing.T) {
 		t.Parallel()
 
 		r := gin.Default()
@@ -79,18 +84,22 @@ func TestDeleteToken(t *testing.T) {
 				},
 			},
 		}
+
+		r.Use(func(c *gin.Context) {
+			c.Set("accessToken", 123)
+		})
+
 		r.DELETE("/token", handler.DeleteToken)
 
 		req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/token", http.NoBody)
 		require.NoError(t, err)
-		req.Header.Add("Authorization", "AccessToken")
 		req.Header.Set("Content-Type", "application/json")
 
 		w := httptest.NewRecorder()
 
 		r.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 
 	t.Run("internal server error delete token", func(t *testing.T) {
@@ -105,6 +114,11 @@ func TestDeleteToken(t *testing.T) {
 				},
 			},
 		}
+
+		r.Use(func(c *gin.Context) {
+			c.Set("accessToken", "dummy-token")
+		})
+
 		r.DELETE("/token", handler.DeleteToken)
 
 		req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/token", http.NoBody)

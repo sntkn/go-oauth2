@@ -2,7 +2,6 @@ package user
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -18,47 +17,38 @@ type GetUserUsecase interface {
 	Invoke(userID uuid.UUID) (repository.User, error)
 }
 
-func NewGetUserHandler(repo repository.OAuth2Repository, cfg *config.Config, tokenParser accesstoken.Parser) *GetUserHandler {
+func NewGetUserHandler(repo repository.OAuth2Repository, cfg *config.Config) *GetUserHandler {
 	uc := usecases.NewGetUser(repo)
 	return &GetUserHandler{
-		uc:          uc,
-		cfg:         cfg,
-		tokenParser: tokenParser,
+		uc:  uc,
+		cfg: cfg,
 	}
 }
 
 type GetUserHandler struct {
-	uc          GetUserUsecase
-	cfg         *config.Config
-	tokenParser accesstoken.Parser
+	uc  GetUserUsecase
+	cfg *config.Config
 }
 
 func (h *GetUserHandler) GetUser(c *gin.Context) {
 	var user repository.User
 
-	// "Authorization" ヘッダーを取得
-	authHeader := c.GetHeader("Authorization")
-
-	// "Authorization" ヘッダーが存在しない場合や、Bearer トークンでない場合はエラーを返す
-	if authHeader == "" {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, "Missing or empty Authorization header")
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "claims not found"})
 		return
 	}
 
-	// "Bearer " のプレフィックスを取り除いてトークンを抽出
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-
-	claims, err := h.tokenParser.Parse(tokenStr, h.cfg.PublicKey)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+	customClaims, ok := claims.(*accesstoken.CustomClaims)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid claims type"})
 		return
 	}
 
-	userID, err := uuid.Parse(claims.UserID)
+	userID, err := uuid.Parse(customClaims.UserID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
-
 	}
 
 	user, err = h.uc.Invoke(userID)
