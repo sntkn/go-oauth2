@@ -10,6 +10,8 @@ jobs:
     uses: ./.github/workflows/test.yml
     with:
       target: api
+    secrets:
+      DOTENV_PRIVATE_KEY_CI: ${{ secrets.DOTENV_PRIVATE_KEY_CI }}
     permissions:
       contents: read
       packages: write
@@ -18,6 +20,8 @@ jobs:
     uses: ./.github/workflows/test.yml
     with:
       target: oauth2
+    secrets:
+      DOTENV_PRIVATE_KEY_CI: ${{ secrets.DOTENV_PRIVATE_KEY_CI }}
     permissions:
       contents: read
       packages: write
