@@ -23,6 +23,8 @@ jobs:
       target: api
   test:
     uses: ./.github/workflows/test.yml
+    secrets:
+      DOTENV_PRIVATE_KEY_CI: ${{ secrets.DOTENV_PRIVATE_KEY_CI }}
     permissions:
       contents: read
       packages: write
