@@ -10,6 +10,7 @@
 # Create a stage for building the application.
 ARG GO_VERSION=1.23.0
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS build
+ENV GOTOOLCHAIN=auto
 WORKDIR /src
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
@@ -81,6 +82,7 @@ EXPOSE 3000
 ENTRYPOINT [ "/bin/server" ]
 
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS development
+ENV GOTOOLCHAIN=auto
 WORKDIR /src
 
 # Install dotenvx
@@ -101,6 +103,7 @@ ARG TARGETARCH
 CMD ["dotenvx", "run", "--env-file=.env.development", "--", "air"]
 
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS test
+ENV GOTOOLCHAIN=auto
 WORKDIR /src
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \

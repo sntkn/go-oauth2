@@ -13,17 +13,14 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        go-version: ["1.23.2"]
     env:
       DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/go-oauth2-${{ inputs.target }}
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Go ${{ matrix.go-version }}
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: stable
           check-latest: true
           cache: true
           cache-dependency-path: ${{ inputs.target }}/go.sum

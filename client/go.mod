@@ -2,6 +2,8 @@ module github.com/sntkn/go-oauth2/client
 
 go 1.23.0
 
+toolchain go1.23.3
+
 require github.com/gin-gonic/gin v1.10.0
 
 require (
