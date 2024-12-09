@@ -14,12 +14,12 @@
     "ioredis": "^5.4.1",
     "next": "^15.0.4",
     "next-app-session": "^1.0.7",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@types/react": "^18",
+    "@types/react": "^19",
     "@types/react-dom": "^18",
     "autoprefixer": "^10",
     "eslint": "^9",
