@@ -19,7 +19,7 @@ require (
 	github.com/matryer/moq v0.5.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
-	github.com/valkey-io/valkey-go v1.0.51
+	github.com/valkey-io/valkey-go v1.0.52
 	golang.org/x/crypto v0.31.0
 )
 
