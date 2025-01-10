@@ -1,18 +1,11 @@
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 )
 
-type SigninHandler struct {
+type HandlerOption struct {
+	Session session.SessionManager
+	DB      *sqlx.DB
 }
-
-func (h *SigninHandler) Signin(c *gin.Context) {}
-
-// func (h *OAuthHandler) Authorize(ctx echo.Context) error {
-// 	// 認可リクエストを処理
-// }
-//
-// func (h *OAuthHandler) Token(ctx echo.Context) error {
-// 	// トークンリクエストを処理
-// }

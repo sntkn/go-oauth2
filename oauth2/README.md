@@ -2,11 +2,14 @@
 
 ## Endpoint
 
-- GET /authorize -> display authorization information
-- POST /authorization -> return authorization code
-- POST /token -> return token information
+- GET /oauth2/authorize -> authorization endpoit
+- POST /oauth2/authorization -> return authorization code
+- POST /oauth2/token -> return token information
 - GET /me -> return user information
-- DELETE /token -> revoke token
+- DELETE /oauth2/token -> revoke token
+
+- GET|POST /client/signin
+- GET|POST /client/signup
 
 ## Table structure
 
