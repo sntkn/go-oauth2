@@ -11,14 +11,16 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
+
+	repo "github.com/sntkn/go-oauth2/oauth2/infrastructure/repository"
+	"github.com/sntkn/go-oauth2/oauth2/interface/handler"
+	"github.com/sntkn/go-oauth2/oauth2/interface/presenter/bindings"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
 	"github.com/sntkn/go-oauth2/oauth2/internal/middleware"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/validation"
+	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/valkey"
@@ -59,16 +61,29 @@ func main() {
 	}
 	defer db.Close()
 
+	sdb, err := repo.NewDB(cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
+	if err != nil {
+		logger.Error("Database Error", "message:", err)
+		return
+	}
+	defer sdb.Close()
+
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		if err := v.RegisterValidation("required_with_field_value", validation.RequiredWithFieldValue); err != nil {
-			logger.Error("register validation error")
-		}
+	if err := bindings.Setup(); err != nil {
+		logger.Error("register validation error", "message:", err)
+		return
 	}
 
 	r.Use(ErrorLoggerMiddleware(logger))
+
+	opt := handler.HandlerOption{
+		DB:      sdb,
+		Session: session.NewSessionManager(valkeyCli, cfg.SessionExpires),
+	}
+
+	r.GET("/oauth2/authorize", handler.NewAuthorizeHandler(opt).Authorize)
 
 	r.GET("/signin", auth.NewSigninHandler(cfg, valkeyCli).Signin)
 	r.GET("/authorize", auth.NewAuthorizeHandler(db, cfg, valkeyCli).Authorize)

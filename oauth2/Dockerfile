@@ -113,4 +113,4 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 COPY . /src
 
-CMD ["go", "run", "main.go"]
+CMD ["go", "run", "cmd/app/main.go"]
