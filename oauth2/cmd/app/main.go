@@ -83,7 +83,9 @@ func main() {
 		Session: session.NewSessionManager(valkeyCli, cfg.SessionExpires),
 	}
 
-	r.GET("/oauth2/authorize", handler.NewAuthorizeHandler(opt).Authorize)
+	ah := handler.NewAuthenticationHandler(opt)
+	r.GET("/client/sign-entry", ah.Entry)
+	r.GET("/client/signin", ah.Signin)
 
 	r.GET("/signin", auth.NewSigninHandler(cfg, valkeyCli).Signin)
 	r.GET("/authorize", auth.NewAuthorizeHandler(db, cfg, valkeyCli).Authorize)
