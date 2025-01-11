@@ -27,33 +27,6 @@ type AuthenticationHandler struct {
 	session session.SessionManager
 }
 
-func (h *AuthenticationHandler) Signin(c *gin.Context) {
-	sess := h.session.NewSession(c)
-	mess, err := flashmessage.Flash(c, sess)
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-	var input EntrySignInput
-	var form entity.SessionSigninForm
-
-	if err := sess.GetNamedSessionData(c, "auth", &input); err != nil {
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
-	}
-
-	if input.ClientID == "" {
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": "invalid client_id"})
-		return
-	}
-
-	if err := sess.FlushNamedSessionData(c, "signin_form", &form); err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
-	c.HTML(http.StatusOK, "signin.html", gin.H{"f": form, "mess": mess})
-}
-
 type EntrySignInput struct {
 	ResponseType string `form:"response_type" binding:"required"`
 	ClientID     string `form:"client_id" binding:"required,uuid"`
@@ -102,4 +75,31 @@ func (h *AuthenticationHandler) Entry(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusFound, "/signin")
+}
+
+func (h *AuthenticationHandler) Signin(c *gin.Context) {
+	sess := h.session.NewSession(c)
+	mess, err := flashmessage.Flash(c, sess)
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
+	var input EntrySignInput
+	var form entity.SessionSigninForm
+
+	if err := sess.GetNamedSessionData(c, "auth", &input); err != nil {
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	if input.ClientID == "" {
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": "invalid client_id"})
+		return
+	}
+
+	if err := sess.FlushNamedSessionData(c, "signin_form", &form); err != nil {
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
+	c.HTML(http.StatusOK, "signin.html", gin.H{"f": form, "mess": mess})
 }
