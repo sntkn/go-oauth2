@@ -27,7 +27,7 @@ type AuthenticationHandler struct {
 	session session.SessionManager
 }
 
-type EntrySignInput struct {
+type EntrySign struct {
 	ResponseType string `form:"response_type" binding:"required"`
 	ClientID     string `form:"client_id" binding:"required,uuid"`
 	Scope        string `form:"scope" binding:"required"`
@@ -38,27 +38,27 @@ type EntrySignInput struct {
 func (h *AuthenticationHandler) Entry(c *gin.Context) {
 	sess := h.session.NewSession(c)
 
-	var input EntrySignInput
+	var sign EntrySign
 
-	if err := c.ShouldBind(&input); err != nil {
+	if err := c.ShouldBindQuery(&sign); err != nil {
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	clientID, err := uuid.Parse(input.ClientID)
+	clientID, err := uuid.Parse(sign.ClientID)
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	_, err = h.uc.AuthenticateClient(clientID, input.RedirectURI)
+	_, err = h.uc.AuthenticateClient(clientID, sign.RedirectURI)
 	if err != nil {
 		handleError(c, sess, err)
 		return
 	}
 
 	// セッションデータを書き込む
-	if err := sess.SetNamedSessionData(c, "auth", &input); err != nil {
+	if err := sess.SetNamedSessionData(c, "sign", &sign); err != nil {
 		c.Error(err)
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
@@ -74,15 +74,15 @@ func (h *AuthenticationHandler) Signin(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
-	var input EntrySignInput
+	var sign EntrySign
 	var form entity.SessionSigninForm
 
-	if err := sess.GetNamedSessionData(c, "auth", &input); err != nil {
+	if err := sess.GetNamedSessionData(c, "sign", &sign); err != nil {
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	if input.ClientID == "" {
+	if sign.ClientID == "" {
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": "invalid client_id"})
 		return
 	}
@@ -94,11 +94,6 @@ func (h *AuthenticationHandler) Signin(c *gin.Context) {
 	c.HTML(http.StatusOK, "signin.html", gin.H{"f": form, "mess": mess})
 }
 
-type SigninForm struct {
-	Email string `form:"email"`
-	Error string
-}
-
 type PostSigninInput struct {
 	Email    string `form:"email" binding:"required,email"`
 	Password string `form:"password" binding:"required"`
@@ -107,14 +102,7 @@ type PostSigninInput struct {
 func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 	sess := h.session.NewSession(c)
 	var input PostSigninInput
-
-	if err := sess.SetNamedSessionData(c, "signin_form", SigninForm{
-		Email: input.Email,
-	}); err != nil {
-		c.Error(errors.WithStack(err))
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		return
-	}
+	var sign EntrySign
 
 	if err := c.ShouldBind(&input); err != nil {
 		if flashErr := flashmessage.AddMessage(c, sess, "error", err.Error()); flashErr != nil {
@@ -125,9 +113,8 @@ func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 		return
 	}
 
-	var d PostSigninInput
-	if err := sess.GetNamedSessionData(c, "auth", &d); err != nil {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+	if err := sess.GetNamedSessionData(c, "sign", &sign); err != nil {
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
@@ -135,10 +122,36 @@ func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 
 	if err != nil {
 		handleError(c, sess, err)
+		// サインインフォームをセッションに保存
+		if err := sess.SetNamedSessionData(c, "signin_form", SigninForm{
+			Email: input.Email,
+		}); err != nil {
+			c.Error(errors.WithStack(err))
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+			return
+		}
 		return
 	}
 
-	if err := sess.DelSessionData(c, "auth"); err != nil {
+	// signセッションを削除
+	if err := sess.DelSessionData(c, "sign"); err != nil {
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	// サインインフォームセッションを削除
+	if err := sess.DelSessionData(c, "signin_form"); err != nil {
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	// ログイン状態をセッションに保存
+	if err := sess.SetNamedSessionData(c, "login", AuthedUser{
+		Email:       input.Email,
+		ClientID:    sign.ClientID,
+		RedirectURI: sign.RedirectURI,
+	}); err != nil {
+		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
