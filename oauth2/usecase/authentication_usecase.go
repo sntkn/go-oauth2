@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain/authentication"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func NewAuthenticationUsecase(repo authentication.IAuthenticationRepository) IAuthenticationUsecase {
@@ -25,41 +24,45 @@ type AuthenticationUsecase struct {
 }
 
 func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (*authentication.Client, error) {
-	client, err := uc.repo.FindClientByClientID(clientID)
+	cli, err := uc.repo.FindClientByClientID(clientID)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
+	client := authentication.NewClient(cli.ID, cli.Name, cli.RedirectURIs, cli.CreatedAt, cli.UpdatedAt)
+
 	// クライアントがない場合はエラー
-	if client.ID != clientID {
+	if client.IsNotFound() {
 		return nil, errors.NewUsecaseError(http.StatusBadRequest, "client not found")
 	}
 
 	// リダイレクトURIが一致しない場合はエラー
-	if client.RedirectURIs != redirectURI {
+	if !client.IsRedirectURIMatch(redirectURI) {
 		return nil, errors.NewUsecaseError(http.StatusBadRequest, "redirect uri does not match")
 	}
 
-	return authentication.NewClient(client.ID, client.Name, client.RedirectURIs, client.CreatedAt, client.UpdatedAt), nil
+	return client, nil
 }
 
 func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*authentication.User, error) {
 	// validate user credentials
-	user, err := uc.repo.FindUserByEmail(email)
+	u, err := uc.repo.FindUserByEmail(email)
 
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
+	user := authentication.NewUser(u.ID, u.Name, u.Email, u.Password, u.CreatedAt, u.UpdatedAt)
+
 	// ユーザーが存在しない場合はエラー
-	if user.ID == uuid.Nil {
-		return nil, errors.NewUsecaseErrorWithRedirectURI(http.StatusFound, "user not found", "client/signin")
+	if user.IsNotFound() {
+		return nil, errors.NewUsecaseErrorWithRedirectURI(http.StatusFound, "user or password not match", "client/signin")
 	}
 
 	// パスワードを比較して認証
-	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return nil, errors.NewUsecaseErrorWithRedirectURI(http.StatusFound, err.Error(), "client/signin")
+	if !user.IsPasswordMatch(password) {
+		return nil, errors.NewUsecaseErrorWithRedirectURI(http.StatusFound, "user or password not match", "client/signin")
 	}
 
-	return authentication.NewUser(user.ID, user.Name, user.Email, user.CreatedAt, user.UpdatedAt), nil
+	return user, nil
 }

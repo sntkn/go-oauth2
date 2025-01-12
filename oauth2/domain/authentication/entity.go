@@ -4,21 +4,32 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
 	ID        uuid.UUID
 	Name      string
 	Email     string
+	Password  string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-func NewUser(id uuid.UUID, name, email string, createdAt, updatedAt time.Time) *User {
+func (u *User) IsNotFound() bool {
+	return u.ID == uuid.Nil
+}
+
+func (u *User) IsPasswordMatch(password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)) == nil
+}
+
+func NewUser(id uuid.UUID, name, email, password string, createdAt, updatedAt time.Time) *User {
 	return &User{
 		ID:        id,
 		Name:      name,
 		Email:     email,
+		Password:  password,
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
 	}
@@ -30,6 +41,15 @@ type Client struct {
 	RedirectURIs string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+}
+
+func (c *Client) IsNotFound() bool {
+	return c.ID == uuid.Nil
+}
+
+func (c *Client) IsRedirectURIMatch(redirectURI string) bool {
+	// TODO: 複数のリダイレクトURIを持つ場合の対応
+	return c.RedirectURIs == redirectURI
 }
 
 func NewClient(id uuid.UUID, name, redirectURIs string, createdAt, updatedAt time.Time) *Client {
