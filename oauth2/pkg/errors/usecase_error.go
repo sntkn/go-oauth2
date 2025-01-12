@@ -3,8 +3,9 @@ package errors
 import "fmt"
 
 type UsecaseError struct {
-	Code    int
-	Message string
+	Code        int
+	Message     string
+	RedirectURI string
 }
 
 func (e *UsecaseError) Error() string {
@@ -15,5 +16,13 @@ func NewUsecaseError(code int, message string) *UsecaseError {
 	return &UsecaseError{
 		Code:    code,
 		Message: message,
+	}
+}
+
+func NewUsecaseErrorWithRedirectURI(code int, message, redirectURI string) *UsecaseError {
+	return &UsecaseError{
+		Code:        code,
+		Message:     message,
+		RedirectURI: redirectURI,
 	}
 }

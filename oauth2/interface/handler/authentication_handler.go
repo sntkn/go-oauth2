@@ -53,17 +53,7 @@ func (h *AuthenticationHandler) Entry(c *gin.Context) {
 
 	_, err = h.uc.AuthenticateClient(clientID, input.RedirectURI)
 	if err != nil {
-		if usecaseErr, ok := err.(*errors.UsecaseError); ok {
-			switch usecaseErr.Code {
-			case http.StatusBadRequest:
-				c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-			case http.StatusInternalServerError:
-				c.Error(errors.WithStack(err)) // TODO: trigger usecase
-				c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
-			}
-		} else {
-			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-		}
+		handleError(c, sess, err)
 		return
 	}
 
@@ -102,4 +92,76 @@ func (h *AuthenticationHandler) Signin(c *gin.Context) {
 		return
 	}
 	c.HTML(http.StatusOK, "signin.html", gin.H{"f": form, "mess": mess})
+}
+
+type SigninForm struct {
+	Email string `form:"email"`
+	Error string
+}
+
+type PostSigninInput struct {
+	Email    string `form:"email" binding:"required,email"`
+	Password string `form:"password" binding:"required"`
+}
+
+func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
+	sess := h.session.NewSession(c)
+	var input PostSigninInput
+
+	if err := sess.SetNamedSessionData(c, "signin_form", SigninForm{
+		Email: input.Email,
+	}); err != nil {
+		c.Error(errors.WithStack(err))
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := c.ShouldBind(&input); err != nil {
+		if flashErr := flashmessage.AddMessage(c, sess, "error", err.Error()); flashErr != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": flashErr.Error()})
+			return
+		}
+		c.Redirect(http.StatusFound, "/signin")
+		return
+	}
+
+	var d PostSigninInput
+	if err := sess.GetNamedSessionData(c, "auth", &d); err != nil {
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err := h.uc.AuthenticateUser(input.Email, input.Password)
+
+	if err != nil {
+		handleError(c, sess, err)
+		return
+	}
+
+	if err := sess.DelSessionData(c, "auth"); err != nil {
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/oauth2/consent")
+}
+
+func handleError(c *gin.Context, sess session.SessionClient, err error) {
+	if usecaseErr, ok := err.(*errors.UsecaseError); ok {
+		if flashErr := flashmessage.AddMessage(c, sess, "error", usecaseErr.Error()); flashErr != nil {
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": flashErr.Error()})
+			return
+		}
+		switch usecaseErr.Code {
+		case http.StatusFound:
+			c.Redirect(http.StatusFound, usecaseErr.RedirectURI)
+		case http.StatusBadRequest:
+			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		case http.StatusInternalServerError:
+			c.Error(errors.WithStack(err)) // TODO: trigger usecase
+			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
+		}
+	} else {
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
+	}
 }

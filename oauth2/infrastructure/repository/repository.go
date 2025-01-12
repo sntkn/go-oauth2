@@ -47,5 +47,15 @@ func (r *Repository) FindClientByClientID(clientID uuid.UUID) (*model.Client, er
 }
 
 func (r Repository) FindUserByEmail(email string) (*model.User, error) {
-	return nil, nil
+	q := "SELECT id, email, password FROM users WHERE email = $1"
+	var user model.User
+
+	err := r.db.Get(&user, q, email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &model.User{}, errors.WithStack(err)
+		}
+		return nil, errors.WithStack(err)
+	}
+	return &user, errors.WithStack(err)
 }

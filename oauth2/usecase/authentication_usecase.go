@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain/authentication"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func NewAuthenticationUsecase(repo authentication.IAuthenticationRepository) IAuthenticationUsecase {
@@ -15,20 +16,12 @@ func NewAuthenticationUsecase(repo authentication.IAuthenticationRepository) IAu
 }
 
 type IAuthenticationUsecase interface {
-	AuthenticateUser(username, password string) (*authentication.User, error)
+	AuthenticateUser(email, password string) (*authentication.User, error)
 	AuthenticateClient(clientID uuid.UUID, redirectURI string) (*authentication.Client, error)
 }
 
 type AuthenticationUsecase struct {
 	repo authentication.IAuthenticationRepository
-}
-
-func (uc *AuthenticationUsecase) AuthenticateUser(username, password string) (*authentication.User, error) {
-	user, err := uc.repo.FindUserByEmail(username)
-	if err != nil {
-		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
-	}
-	return authentication.NewUser(user.ID, user.Email, user.Name, user.CreatedAt, user.UpdatedAt), nil
 }
 
 func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (*authentication.Client, error) {
@@ -48,4 +41,25 @@ func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirect
 	}
 
 	return authentication.NewClient(client.ID, client.Name, client.RedirectURIs, client.CreatedAt, client.UpdatedAt), nil
+}
+
+func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*authentication.User, error) {
+	// validate user credentials
+	user, err := uc.repo.FindUserByEmail(email)
+
+	if err != nil {
+		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+
+	// ユーザーが存在しない場合はエラー
+	if user.ID == uuid.Nil {
+		return nil, errors.NewUsecaseErrorWithRedirectURI(http.StatusFound, "user not found", "client/signin")
+	}
+
+	// パスワードを比較して認証
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		return nil, errors.NewUsecaseErrorWithRedirectURI(http.StatusFound, err.Error(), "client/signin")
+	}
+
+	return authentication.NewUser(user.ID, user.Name, user.Email, user.CreatedAt, user.UpdatedAt), nil
 }
