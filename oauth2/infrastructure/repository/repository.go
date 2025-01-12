@@ -39,7 +39,7 @@ func (r *Repository) FindClientByClientID(clientID uuid.UUID) (*model.Client, er
 	err := r.db.Get(&c, q, &clientID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &model.Client{}, errors.WithStack(err)
+			return &model.Client{}, nil
 		}
 		return nil, errors.WithStack(err)
 	}
@@ -53,7 +53,7 @@ func (r Repository) FindUserByEmail(email string) (*model.User, error) {
 	err := r.db.Get(&user, q, email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &model.User{}, errors.WithStack(err)
+			return &model.User{}, nil
 		}
 		return nil, errors.WithStack(err)
 	}
