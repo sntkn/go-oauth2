@@ -61,22 +61,22 @@ func (r *Repository) FindUserByEmail(email string) (*model.User, error) {
 	return &user, errors.WithStack(err)
 }
 
-func (r *Repository) FindAuthorizationCode(code string) (*model.Code, error) {
+func (r *Repository) FindAuthorizationCode(code string) (*model.AuthorizationCode, error) {
 	q := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL"
 
-	var c model.Code
+	var c model.AuthorizationCode
 
 	err := r.db.Get(&c, q, code)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &model.Code{}, nil
+			return &model.AuthorizationCode{}, nil
 		}
 		return nil, errors.WithStack(err)
 	}
 	return &c, errors.WithStack(err)
 }
 
-func (r *Repository) StoreAuthorizationCode(c *model.Code) error {
+func (r *Repository) StoreAuthorizationCode(c *model.AuthorizationCode) error {
 	c.CreatedAt = time.Now()
 	c.UpdatedAt = time.Now()
 	q := `

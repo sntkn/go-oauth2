@@ -1,8 +1,12 @@
 package authorization
 
-import "github.com/sntkn/go-oauth2/oauth2/infrastructure/model"
+import (
+	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/oauth2/infrastructure/model"
+)
 
 type IAuthorizationRepository interface {
-	FindAuthorizationCode(code string) (*model.Code, error)
-	StoreAuthorizationCode(code *model.Code) error
+	FindClientByClientID(clientID uuid.UUID) (*model.Client, error)
+	FindAuthorizationCode(code string) (*model.AuthorizationCode, error)
+	StoreAuthorizationCode(code *model.AuthorizationCode) error
 }

@@ -81,6 +81,7 @@ func main() {
 	opt := handler.HandlerOption{
 		DB:      sdb,
 		Session: session.NewSessionManager(valkeyCli, cfg.SessionExpires),
+		Config:  cfg,
 	}
 
 	ah := handler.NewAuthenticationHandler(opt)

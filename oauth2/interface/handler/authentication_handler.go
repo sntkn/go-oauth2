@@ -9,6 +9,7 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/internal/entity"
 	"github.com/sntkn/go-oauth2/oauth2/internal/flashmessage"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/usecase"
 )
@@ -19,12 +20,14 @@ func NewAuthenticationHandler(opt HandlerOption) *AuthenticationHandler {
 	return &AuthenticationHandler{
 		uc:      uc,
 		session: opt.Session,
+		config:  opt.Config,
 	}
 }
 
 type AuthenticationHandler struct {
 	uc      usecase.IAuthenticationUsecase
 	session session.SessionManager
+	config  *config.Config
 }
 
 type EntrySign struct {
@@ -118,7 +121,7 @@ func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 		return
 	}
 
-	_, err := h.uc.AuthenticateUser(input.Email, input.Password)
+	user, err := h.uc.AuthenticateUser(input.Email, input.Password)
 
 	if err != nil {
 		handleError(c, sess, err)
@@ -148,8 +151,11 @@ func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 	// ログイン状態をセッションに保存
 	if err := sess.SetNamedSessionData(c, "login", AuthedUser{
 		Email:       input.Email,
+		UserID:      user.ID.String(),
 		ClientID:    sign.ClientID,
 		RedirectURI: sign.RedirectURI,
+		Scope:       sign.Scope,
+		Expires:     h.config.AuthCodeExpires,
 	}); err != nil {
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})

@@ -23,7 +23,7 @@ type Client struct {
 	UpdatedAt    time.Time `db:"updated_at"`
 }
 
-type Code struct {
+type AuthorizationCode struct {
 	Code        string    `db:"code"`
 	ClientID    uuid.UUID `db:"client_id"`
 	UserID      uuid.UUID `db:"user_id"`
