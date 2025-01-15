@@ -80,10 +80,10 @@ func (r *Repository) StoreAuthorizationCode(c *model.AuthorizationCode) error {
 	c.CreatedAt = time.Now()
 	c.UpdatedAt = time.Now()
 	q := `
-		INSERT INTO oauth2_refresh_tokens
-			(refresh_token, access_token, expires_at, created_at, updated_at)
-		VALUES
-			(:refresh_token, :access_token, :expires_at, :created_at, :updated_at)
+			INSERT INTO oauth2_codes
+				(code, client_id, user_id, scope, redirect_uri, expires_at, created_at, updated_at)
+			VALUES
+				(:code, :client_id, :user_id, :scope, :redirect_uri, :expires_at, :created_at, :updated_at)
 	`
 
 	_, err := r.db.NamedExec(q, c)

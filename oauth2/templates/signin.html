@@ -31,7 +31,7 @@
           <p style="color:red">{{ . }}</p>
         {{ end }}
 
-        <form method="post" action="./authorization">
+        <form method="post" action="/client/signin">
           <div class="control">
             <label for="email" class="control-label">Email</label>
             <input type="text" name="email" value="{{.f.Email}}" placeholder="Enter your email address" id="email" autocomplete="off">

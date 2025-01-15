@@ -87,6 +87,11 @@ func main() {
 	ah := handler.NewAuthenticationHandler(opt)
 	r.GET("/client/sign-entry", ah.Entry)
 	r.GET("/client/signin", ah.Signin)
+	r.POST("/client/signin", ah.PostSignin)
+
+	arh := handler.NewAuthorizationHandler(opt)
+	r.GET("/oauth2/consent", arh.Consent)
+	r.POST("/oauth2/consent", arh.PostConsent)
 
 	r.GET("/signin", auth.NewSigninHandler(cfg, valkeyCli).Signin)
 	r.GET("/authorize", auth.NewAuthorizeHandler(db, cfg, valkeyCli).Authorize)

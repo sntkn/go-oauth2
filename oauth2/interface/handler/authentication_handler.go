@@ -67,7 +67,7 @@ func (h *AuthenticationHandler) Entry(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusFound, "/signin")
+	c.Redirect(http.StatusFound, "/client/signin")
 }
 
 func (h *AuthenticationHandler) Signin(c *gin.Context) {
