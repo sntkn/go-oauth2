@@ -89,16 +89,15 @@ func (h *AuthorizationHandler) PostConsent(c *gin.Context) {
 		return
 	}
 
-	p := usecase.GenerateAuthorizationCodeParams{
+	// 同意画面のビジネスロジックを書く
+	code, err := h.uc.GenerateAuthorizationCode(usecase.GenerateAuthorizationCodeParams{
 		UserID:      authUser.UserID,
 		ClientID:    authUser.ClientID,
 		Scope:       authUser.Scope,
 		RedirectURI: authUser.RedirectURI,
 		Expires:     authUser.Expires,
-	}
+	})
 
-	// 同意画面のビジネスロジックを書く
-	code, err := h.uc.GenerateAuthorizationCode(p)
 	if err != nil {
 		handleError(c, sess, err)
 		return

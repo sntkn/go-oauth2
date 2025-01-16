@@ -164,23 +164,3 @@ func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 
 	c.Redirect(http.StatusFound, "/oauth2/consent")
 }
-
-func handleError(c *gin.Context, sess session.SessionClient, err error) {
-	if usecaseErr, ok := err.(*errors.UsecaseError); ok {
-		if flashErr := flashmessage.AddMessage(c, sess, "error", usecaseErr.Error()); flashErr != nil {
-			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": flashErr.Error()})
-			return
-		}
-		switch usecaseErr.Code {
-		case http.StatusFound:
-			c.Redirect(http.StatusFound, usecaseErr.RedirectURI)
-		case http.StatusBadRequest:
-			c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		case http.StatusInternalServerError:
-			c.Error(errors.WithStack(err)) // TODO: trigger usecase
-			c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": usecaseErr.Error()})
-		}
-	} else {
-		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
-	}
-}
