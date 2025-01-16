@@ -8,7 +8,6 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/domain/authorization"
 	"github.com/sntkn/go-oauth2/oauth2/infrastructure/model"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
-	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
 type IAuthorizationUsecase interface {
@@ -51,12 +50,7 @@ type GenerateAuthorizationCodeParams struct {
 }
 
 func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizationCodeParams) (*authorization.AuthorizationCode, error) {
-	// ここに同意のビジネスロジックを書く
-
-	// クライアント情報を取得
-	expired := time.Now().Add(time.Duration(p.Expires) * time.Second)
-	randomStringLen := 32
-	randomString, err := str.GenerateRandomString(randomStringLen)
+	randomString, err := authorization.GenerateCode()
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -76,7 +70,7 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 		UserID:      userID,
 		Scope:       p.Scope,
 		RedirectURI: p.RedirectURI,
-		ExpiresAt:   expired,
+		ExpiresAt:   time.Now().Add(time.Duration(p.Expires) * time.Second),
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}

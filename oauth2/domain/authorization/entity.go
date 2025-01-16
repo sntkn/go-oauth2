@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -90,4 +91,46 @@ type AuthorizationCode struct {
 
 func (a *AuthorizationCode) GenerateRedirectURIWithCode() string {
 	return fmt.Sprintf("%s?code=%s", a.RedirectURI, a.Code)
+}
+
+func GenerateCode() (string, error) {
+	randomStringLen := 32
+	return str.GenerateRandomString(randomStringLen)
+}
+
+func NewTokenWithRefreshToken(
+	accessToken string,
+	clientID uuid.UUID,
+	userID uuid.UUID,
+	scope string,
+	tokenExpiresAt time.Time,
+	refreshToken string,
+	refreshExpiresAt time.Time) *Token {
+
+	return &Token{
+		AccessToken: accessToken,
+		ClientID:    clientID,
+		UserID:      userID,
+		Scope:       scope,
+		Expiry:      tokenExpiresAt.Unix(),
+		RefreshToken: RefreshToken{
+			RefreshToken: refreshToken,
+			Expiry:       refreshExpiresAt.Unix(),
+		},
+	}
+}
+
+type Token struct {
+	AccessToken  string
+	ClientID     uuid.UUID
+	UserID       uuid.UUID
+	Scope        string
+	RefreshToken RefreshToken
+	Expiry       int64
+}
+
+type RefreshToken struct {
+	RefreshToken string
+	AccessToken  string
+	Expiry       int64
 }
