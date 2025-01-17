@@ -11,8 +11,10 @@ import (
 )
 
 type IAuthorizationUsecase interface {
-	Consent(clientID uuid.UUID) (*authorization.Client, error)
+	Consent(uuid.UUID) (*authorization.Client, error)
 	GenerateAuthorizationCode(GenerateAuthorizationCodeParams) (*authorization.AuthorizationCode, error)
+	GenerateTokenByCode(string) (*authorization.Token, error)
+	GenerateTokenByRefreshToken(string) (*authorization.Token, error)
 	// GenerateAuthorizationCode(user *model.User, client *model.Client, scopes []string) (*model.AuthorizationCode, error)
 	// ValidateAuthorizationCode(code string, clientID string) (*model.AuthorizationCode, error)
 }
@@ -92,4 +94,12 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 	)
 
 	return client, nil
+}
+
+func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*authorization.Token, error) {
+	return nil, nil
+}
+
+func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (*authorization.Token, error) {
+	return nil, nil
 }
