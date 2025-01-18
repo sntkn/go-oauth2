@@ -44,7 +44,7 @@ func (r *Repository) FindClientByClientID(clientID uuid.UUID) (*model.Client, er
 		}
 		return nil, errors.WithStack(err)
 	}
-	return &c, errors.WithStack(err)
+	return &c, nil
 }
 
 func (r *Repository) FindUserByEmail(email string) (*model.User, error) {
@@ -58,7 +58,7 @@ func (r *Repository) FindUserByEmail(email string) (*model.User, error) {
 		}
 		return nil, errors.WithStack(err)
 	}
-	return &user, errors.WithStack(err)
+	return &user, nil
 }
 
 func (r *Repository) FindAuthorizationCode(code string) (*model.AuthorizationCode, error) {
@@ -73,15 +73,21 @@ func (r *Repository) FindAuthorizationCode(code string) (*model.AuthorizationCod
 		}
 		return nil, errors.WithStack(err)
 	}
-	return &c, errors.WithStack(err)
+	return &c, nil
 }
 
-func (r *Repository) FindValidAuthorizationCode(code string, expiresAt time.Time) (model.AuthorizationCode, error) {
+func (r *Repository) FindValidAuthorizationCode(code string, expiresAt time.Time) (*model.AuthorizationCode, error) {
 	q := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at > $2"
 	var c model.AuthorizationCode
 
 	err := r.db.Get(&c, q, code, expiresAt)
-	return c, errors.WithStack(err)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &model.AuthorizationCode{}, nil
+		}
+		return nil, errors.WithStack(err)
+	}
+	return &c, errors.WithStack(err)
 }
 
 func (r *Repository) StoreAuthorizationCode(c *model.AuthorizationCode) error {
