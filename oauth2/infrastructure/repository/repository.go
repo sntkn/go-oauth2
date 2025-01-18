@@ -76,6 +76,14 @@ func (r *Repository) FindAuthorizationCode(code string) (*model.AuthorizationCod
 	return &c, errors.WithStack(err)
 }
 
+func (r *Repository) FindValidAuthorizationCode(code string, expiresAt time.Time) (model.AuthorizationCode, error) {
+	q := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at > $2"
+	var c model.AuthorizationCode
+
+	err := r.db.Get(&c, q, code, expiresAt)
+	return c, errors.WithStack(err)
+}
+
 func (r *Repository) StoreAuthorizationCode(c *model.AuthorizationCode) error {
 	c.CreatedAt = time.Now()
 	c.UpdatedAt = time.Now()
@@ -87,5 +95,31 @@ func (r *Repository) StoreAuthorizationCode(c *model.AuthorizationCode) error {
 	`
 
 	_, err := r.db.NamedExec(q, c)
+	return errors.WithStack(err)
+}
+
+func (r *Repository) StoreToken(t *model.Token) error {
+	t.CreatedAt = time.Now()
+	t.UpdatedAt = time.Now()
+	q := `
+		INSERT INTO oauth2_tokens (access_token, client_id, user_id, scope, expires_at, created_at, updated_at)
+		VALUES (:access_token, :client_id, :user_id, :scope, :expires_at, :created_at, :updated_at)
+	`
+	_, err := r.db.NamedExec(q, t)
+	return errors.WithStack(err)
+}
+
+func (r *Repository) StoreRefreshToken(t *model.RefreshToken) error {
+	t.CreatedAt = time.Now()
+	t.UpdatedAt = time.Now()
+	q := `INSERT INTO oauth2_refresh_tokens (refresh_token, access_token, expires_at, created_at, updated_at)
+	VALUES (:refresh_token, :access_token, :expires_at, :created_at, :updated_at)`
+	_, err := r.db.NamedExec(q, t)
+	return errors.WithStack(err)
+}
+
+func (r *Repository) RevokeCode(code string) error {
+	updateQuery := "UPDATE oauth2_codes SET revoked_at = $1 WHERE code = $2"
+	_, err := r.db.Exec(updateQuery, time.Now(), code)
 	return errors.WithStack(err)
 }
