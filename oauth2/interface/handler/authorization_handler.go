@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain/authorization"
 	"github.com/sntkn/go-oauth2/oauth2/infrastructure/repository"
+	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
@@ -15,7 +16,8 @@ import (
 
 func NewAuthorizationHandler(opt HandlerOption) *AuthorizationHandler {
 	repo := repository.NewRepository(opt.DB)
-	uc := usecase.NewAuthorizationUsecase(repo)
+	tokenGen := accesstoken.NewTokenService()
+	uc := usecase.NewAuthorizationUsecase(repo, opt.Config, tokenGen)
 	return &AuthorizationHandler{
 		uc:      uc,
 		session: opt.Session,

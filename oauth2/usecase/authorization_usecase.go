@@ -1,13 +1,17 @@
 package usecase
 
 import (
+	"database/sql"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain/authorization"
 	"github.com/sntkn/go-oauth2/oauth2/infrastructure/model"
+	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
 type IAuthorizationUsecase interface {
@@ -19,14 +23,18 @@ type IAuthorizationUsecase interface {
 	// ValidateAuthorizationCode(code string, clientID string) (*model.AuthorizationCode, error)
 }
 
-func NewAuthorizationUsecase(repo authorization.IAuthorizationRepository) IAuthorizationUsecase {
+func NewAuthorizationUsecase(repo authorization.IAuthorizationRepository, config *config.Config, tokenGen accesstoken.Generator) IAuthorizationUsecase {
 	return &AuthorizationUsecase{
-		repo: repo,
+		repo:     repo,
+		config:   config,
+		tokenGen: tokenGen,
 	}
 }
 
 type AuthorizationUsecase struct {
-	repo authorization.IAuthorizationRepository
+	repo     authorization.IAuthorizationRepository
+	config   *config.Config
+	tokenGen accesstoken.Generator
 }
 
 func (uc *AuthorizationUsecase) Consent(clientID uuid.UUID) (*authorization.Client, error) {
@@ -97,7 +105,76 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 }
 
 func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*authorization.Token, error) {
-	return nil, nil
+	var atokn *authorization.Token
+	const (
+		randomStringLen = 32
+		day             = 24 * time.Hour
+	)
+
+	c, err := uc.repo.FindValidAuthorizationCode(code, time.Now())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// TODO: redirect to autorize with parameters
+			return atokn, errors.NewUsecaseError(http.StatusForbidden, err.Error())
+		}
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+
+	currentTime := time.Now()
+	if currentTime.After(c.ExpiresAt) {
+		return atokn, errors.NewUsecaseError(http.StatusForbidden, "code has expired")
+	}
+
+	// create token and refresh token
+	expiration := time.Now().Add(time.Duration(uc.config.AuthTokenExpiresMin) * time.Minute)
+	t := accesstoken.TokenParams{
+		UserID:    c.UserID,
+		ClientID:  c.ClientID,
+		Scope:     c.Scope,
+		ExpiresAt: expiration,
+	}
+	accessToken, err := uc.tokenGen.Generate(&t, uc.config.PrivateKey)
+	if err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+	}
+
+	if err = uc.repo.StoreToken(&model.Token{
+		AccessToken: accessToken,
+		ClientID:    c.ClientID,
+		UserID:      c.UserID,
+		Scope:       c.Scope,
+		ExpiresAt:   expiration,
+	}); err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+	}
+
+	randomString, err := str.GenerateRandomString(randomStringLen)
+	if err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+	}
+	refreshExpiration := time.Now().Add(time.Duration(uc.config.AuthRefreshTokenExpiresDay) * day)
+	if err = uc.repo.StoreRefreshToken(&model.RefreshToken{
+		RefreshToken: randomString,
+		AccessToken:  accessToken,
+		ExpiresAt:    refreshExpiration,
+	}); err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+	}
+
+	// revoke code
+	if err = uc.repo.RevokeCode(code); err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+	}
+
+	atokn = &authorization.Token{
+		AccessToken: accessToken,
+		RefreshToken: authorization.RefreshToken{
+			RefreshToken: randomString,
+		},
+		Expiry: expiration.Unix(),
+	}
+
+	return atokn, nil
 }
 
 func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (*authorization.Token, error) {
