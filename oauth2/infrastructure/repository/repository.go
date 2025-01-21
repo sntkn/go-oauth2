@@ -129,3 +129,31 @@ func (r *Repository) RevokeCode(code string) error {
 	_, err := r.db.Exec(updateQuery, time.Now(), code)
 	return errors.WithStack(err)
 }
+
+func (r *Repository) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (*model.RefreshToken, error) {
+	q := "SELECT access_token FROM oauth2_refresh_tokens WHERE refresh_token = $1 AND expires_at > $2"
+	var rtkn model.RefreshToken
+
+	err := r.db.Get(&rtkn, q, refreshToken, expiresAt)
+	return &rtkn, errors.WithStack(err)
+}
+
+func (r *Repository) FindToken(accessToken string) (*model.Token, error) {
+	q := "SELECT user_id, client_id, scope FROM oauth2_tokens WHERE access_token = $1"
+	var tkn model.Token
+
+	err := r.db.Get(&tkn, q, accessToken)
+	return &tkn, errors.WithStack(err)
+}
+
+func (r *Repository) RevokeToken(accessToken string) error {
+	updateQuery := "UPDATE oauth2_tokens SET revoked_at = $1 WHERE access_token = $2"
+	_, err := r.db.Exec(updateQuery, time.Now(), accessToken)
+	return errors.WithStack(err)
+}
+
+func (r *Repository) RevokeRefreshToken(refreshToken string) error {
+	updateQuery := "UPDATE oauth2_refresh_tokens SET revoked_at = $1 WHERE refresh_token = $2"
+	_, err := r.db.Exec(updateQuery, time.Now(), refreshToken)
+	return errors.WithStack(err)
+}

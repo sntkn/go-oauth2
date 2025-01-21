@@ -178,5 +178,78 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*authorization
 }
 
 func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (*authorization.Token, error) {
-	return nil, nil
+	var atokn *authorization.Token
+	const (
+		randomStringLen = 32
+		day             = 24 * time.Hour
+	)
+
+	rt, err := uc.repo.FindValidRefreshToken(refreshToken, time.Now())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return atokn, errors.NewUsecaseError(http.StatusForbidden, err.Error())
+		}
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+	// find access token
+
+	tkn, err := uc.repo.FindToken(rt.AccessToken)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return atokn, errors.NewUsecaseError(http.StatusForbidden, err.Error())
+		}
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+	expiration := time.Now().Add(time.Duration(uc.config.AuthTokenExpiresMin) * time.Minute)
+
+	t := &accesstoken.TokenParams{
+		UserID:    tkn.UserID,
+		ClientID:  tkn.ClientID,
+		Scope:     tkn.Scope,
+		ExpiresAt: expiration,
+	}
+	accessToken, err := uc.tokenGen.Generate(t, uc.config.PrivateKey)
+
+	if err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+
+	if err = uc.repo.StoreToken(&model.Token{
+		AccessToken: accessToken,
+		ClientID:    tkn.ClientID,
+		UserID:      tkn.UserID,
+		Scope:       tkn.Scope,
+		ExpiresAt:   expiration,
+	}); err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+
+	randomString, err := str.GenerateRandomString(randomStringLen)
+	if err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+	refreshExpiration := time.Now().Add(time.Duration(uc.config.AuthRefreshTokenExpiresDay) * day)
+
+	if err = uc.repo.StoreRefreshToken(&model.RefreshToken{
+		RefreshToken: randomString,
+		AccessToken:  accessToken,
+		ExpiresAt:    refreshExpiration,
+	}); err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+
+	if err = uc.repo.RevokeToken(tkn.AccessToken); err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+	if err = uc.repo.RevokeRefreshToken(rt.RefreshToken); err != nil {
+		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+
+	return &authorization.Token{
+		AccessToken: accessToken,
+		RefreshToken: authorization.RefreshToken{
+			RefreshToken: randomString,
+		},
+		Expiry: expiration.Unix(),
+	}, nil
 }

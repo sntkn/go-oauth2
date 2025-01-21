@@ -15,4 +15,8 @@ type IAuthorizationRepository interface {
 	StoreToken(*model.Token) error
 	StoreRefreshToken(t *model.RefreshToken) error
 	RevokeCode(code string) error
+	FindValidRefreshToken(refreshToken string, expiresAt time.Time) (*model.RefreshToken, error)
+	FindToken(accessToken string) (*model.Token, error)
+	RevokeToken(accessToken string) error
+	RevokeRefreshToken(refreshToken string) error
 }
