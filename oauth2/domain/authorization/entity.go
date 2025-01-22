@@ -112,10 +112,10 @@ func NewTokenWithRefreshToken(
 		ClientID:    clientID,
 		UserID:      userID,
 		Scope:       scope,
-		Expiry:      tokenExpiresAt.Unix(),
+		ExpiresAt:   tokenExpiresAt,
 		RefreshToken: RefreshToken{
 			RefreshToken: refreshToken,
-			Expiry:       refreshExpiresAt.Unix(),
+			ExpiresAt:    refreshExpiresAt,
 		},
 	}
 }
@@ -126,11 +126,15 @@ type Token struct {
 	UserID       uuid.UUID
 	Scope        string
 	RefreshToken RefreshToken
-	Expiry       int64
+	ExpiresAt    time.Time
+}
+
+func (t *Token) Expiry() int64 {
+	return t.ExpiresAt.Unix()
 }
 
 type RefreshToken struct {
 	RefreshToken string
 	AccessToken  string
-	Expiry       int64
+	ExpiresAt    time.Time
 }

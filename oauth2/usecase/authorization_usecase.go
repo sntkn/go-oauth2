@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain/authorization"
-	"github.com/sntkn/go-oauth2/oauth2/infrastructure/model"
 	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
@@ -74,7 +73,7 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	code := &model.AuthorizationCode{
+	code := &authorization.AuthorizationCode{
 		Code:        randomString,
 		ClientID:    clientID,
 		UserID:      userID,
@@ -138,7 +137,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*authorization
 		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
-	if err = uc.repo.StoreToken(&model.Token{
+	if err = uc.repo.StoreToken(&authorization.Token{
 		AccessToken: accessToken,
 		ClientID:    c.ClientID,
 		UserID:      c.UserID,
@@ -153,7 +152,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*authorization
 		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 	refreshExpiration := time.Now().Add(time.Duration(uc.config.AuthRefreshTokenExpiresDay) * day)
-	if err = uc.repo.StoreRefreshToken(&model.RefreshToken{
+	if err = uc.repo.StoreRefreshToken(&authorization.RefreshToken{
 		RefreshToken: randomString,
 		AccessToken:  accessToken,
 		ExpiresAt:    refreshExpiration,
@@ -171,7 +170,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*authorization
 		RefreshToken: authorization.RefreshToken{
 			RefreshToken: randomString,
 		},
-		Expiry: expiration.Unix(),
+		ExpiresAt: expiration,
 	}
 
 	return atokn, nil
@@ -214,7 +213,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 		return atokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	if err = uc.repo.StoreToken(&model.Token{
+	if err = uc.repo.StoreToken(&authorization.Token{
 		AccessToken: accessToken,
 		ClientID:    tkn.ClientID,
 		UserID:      tkn.UserID,
@@ -230,7 +229,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 	}
 	refreshExpiration := time.Now().Add(time.Duration(uc.config.AuthRefreshTokenExpiresDay) * day)
 
-	if err = uc.repo.StoreRefreshToken(&model.RefreshToken{
+	if err = uc.repo.StoreRefreshToken(&authorization.RefreshToken{
 		RefreshToken: randomString,
 		AccessToken:  accessToken,
 		ExpiresAt:    refreshExpiration,
@@ -250,6 +249,6 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 		RefreshToken: authorization.RefreshToken{
 			RefreshToken: randomString,
 		},
-		Expiry: expiration.Unix(),
+		ExpiresAt: expiration,
 	}, nil
 }

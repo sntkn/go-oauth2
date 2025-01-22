@@ -15,7 +15,7 @@ import (
 )
 
 func NewAuthenticationHandler(opt HandlerOption) *AuthenticationHandler {
-	repo := repository.NewRepository(opt.DB)
+	repo := repository.NewAuthenticationRepository(opt.DB)
 	uc := usecase.NewAuthenticationUsecase(repo)
 	return &AuthenticationHandler{
 		uc:      uc,

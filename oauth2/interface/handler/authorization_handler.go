@@ -15,7 +15,7 @@ import (
 )
 
 func NewAuthorizationHandler(opt HandlerOption) *AuthorizationHandler {
-	repo := repository.NewRepository(opt.DB)
+	repo := repository.NewAuthorizationRepository(opt.DB)
 	tokenGen := accesstoken.NewTokenService()
 	uc := usecase.NewAuthorizationUsecase(repo, opt.Config, tokenGen)
 	return &AuthorizationHandler{
@@ -156,6 +156,6 @@ func (h *AuthorizationHandler) Token(c *gin.Context) {
 	c.JSON(http.StatusOK, TokenResponse{
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken.RefreshToken,
-		Expiry:       token.Expiry,
+		Expiry:       token.Expiry(),
 	})
 }
