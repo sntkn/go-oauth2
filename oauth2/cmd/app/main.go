@@ -12,11 +12,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	repo "github.com/sntkn/go-oauth2/oauth2/infrastructure/repository"
-	"github.com/sntkn/go-oauth2/oauth2/interface/handler"
-	"github.com/sntkn/go-oauth2/oauth2/interface/presenter/bindings"
-	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/session"
+	"github.com/sntkn/go-oauth2/oauth2/infrastructure/repository"
+	"github.com/sntkn/go-oauth2/oauth2/internal/common/session"
+	"github.com/sntkn/go-oauth2/oauth2/internal/interface/handler"
+	"github.com/sntkn/go-oauth2/oauth2/internal/interface/presenter/bindings"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/valkey"
@@ -44,25 +43,12 @@ func main() {
 		return
 	}
 
-	db, err := repository.NewClient(repository.Conn{
-		Host:     cfg.DBHost,
-		Port:     uint16(cfg.DBPort),
-		User:     cfg.DBUser,
-		Password: cfg.DBPassword,
-		DBName:   cfg.DBName,
-	})
+	db, err := repository.NewDB(cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
 	if err != nil {
 		logger.Error("Database Error", "message:", err)
 		return
 	}
 	defer db.Close()
-
-	sdb, err := repo.NewDB(cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
-	if err != nil {
-		logger.Error("Database Error", "message:", err)
-		return
-	}
-	defer sdb.Close()
 
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
@@ -75,7 +61,7 @@ func main() {
 	r.Use(ErrorLoggerMiddleware(logger))
 
 	opt := handler.HandlerOption{
-		DB:      sdb,
+		DB:      db,
 		Session: session.NewSessionManager(valkeyCli, cfg.SessionExpires),
 		Config:  cfg,
 	}
@@ -135,27 +121,4 @@ func ErrorLoggerMiddleware(logger *slog.Logger) gin.HandlerFunc {
 		}
 
 	}
-}
-
-func ping() (bool, error) {
-	cfg, err := config.GetEnv()
-	if err != nil {
-		slog.Error("Config Load Error", "message:", err)
-		return false, err
-	}
-
-	db, err := repository.NewClient(repository.Conn{
-		Host:     cfg.DBHost,
-		Port:     uint16(cfg.DBPort),
-		User:     cfg.DBUser,
-		Password: cfg.DBPassword,
-		DBName:   cfg.DBName,
-	})
-	if err != nil {
-		slog.Error("Database Error", "message:", err)
-		return false, err
-	}
-	defer db.Close()
-
-	return true, nil
 }

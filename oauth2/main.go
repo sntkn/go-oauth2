@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
+	"github.com/sntkn/go-oauth2/oauth2/internal/common/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
 	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
 	"github.com/sntkn/go-oauth2/oauth2/internal/middleware"
