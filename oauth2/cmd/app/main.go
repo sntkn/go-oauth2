@@ -15,10 +15,6 @@ import (
 	repo "github.com/sntkn/go-oauth2/oauth2/infrastructure/repository"
 	"github.com/sntkn/go-oauth2/oauth2/interface/handler"
 	"github.com/sntkn/go-oauth2/oauth2/interface/presenter/bindings"
-	"github.com/sntkn/go-oauth2/oauth2/internal/accesstoken"
-	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/auth"
-	"github.com/sntkn/go-oauth2/oauth2/internal/controllers/user"
-	"github.com/sntkn/go-oauth2/oauth2/internal/middleware"
 	"github.com/sntkn/go-oauth2/oauth2/internal/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/session"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
@@ -92,20 +88,7 @@ func main() {
 	arh := handler.NewAuthorizationHandler(opt)
 	r.GET("/oauth2/consent", arh.Consent)
 	r.POST("/oauth2/consent", arh.PostConsent)
-
-	r.GET("/signin", auth.NewSigninHandler(cfg, valkeyCli).Signin)
-	r.GET("/authorize", auth.NewAuthorizeHandler(db, cfg, valkeyCli).Authorize)
-	r.POST("/authorization", auth.NewAuthorizationHandler(db, cfg, valkeyCli).Authorization)
-
-	r.POST("/token", auth.NewCreateTokenHandler(db, cfg).CreateToken)
-
-	r.GET("/signup", user.NewSignupHandler(cfg, valkeyCli).Signup)
-	r.POST("/signup", user.NewCreateUserHandler(db, cfg, valkeyCli).CreateUser)
-	r.GET("/signup-finished", user.NewSignupFinishedHandler(cfg, valkeyCli).SignupFinished)
-
-	g := r.Group("", middleware.AuthMiddleware(cfg, accesstoken.NewTokenService()))
-	g.GET("/me", user.NewGetUserHandler(db, cfg).GetUser)
-	g.DELETE("/token", auth.NewDeleteTokenHandler(db).DeleteToken)
+	r.POST("/oauth2/token", arh.Token)
 
 	// サーバーの設定
 	srv := &http.Server{
