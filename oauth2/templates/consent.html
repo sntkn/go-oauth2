@@ -20,7 +20,7 @@
         </p>
       <![endif]-->
       <div>
-        <h2>Signin</h2>
+        <h2>Consent</h2>
         {{ range .mess.Success }}
           <p style="color:green">{{ . }}</p>
         {{ end }}
@@ -31,17 +31,14 @@
           <p style="color:red">{{ . }}</p>
         {{ end }}
 
-        <form method="post" action="/client/signin">
+        <div>
+          {{ .cli.Name }} の認証を許可しますか？
+        </div>
+
+        <form method="post" action="/oauth2/consent">
           <div class="control">
-            <label for="email" class="control-label">Email</label>
-            <input type="text" name="email" value="{{.f.Email}}" placeholder="Enter your email address" id="email" autocomplete="off">
-          </div>
-          <div class="control">
-            <label for="password" class="control-label">Password</label>
-            <input type="password" name="password" value="" placeholder="Enter your password" id="password" autocomplete="off">
-          </div>
-          <div class="control">
-            <input type="submit" name="Login" id="login" value="Login">
+            <input type="hidden" name="agree" value="1">
+            <input type="submit" name="btn" id="btn" value="Agree">
           </div>
         </form>
       </div>

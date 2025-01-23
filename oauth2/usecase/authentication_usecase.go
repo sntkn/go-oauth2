@@ -1,0 +1,68 @@
+package usecase
+
+import (
+	"net/http"
+
+	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/oauth2/domain/authentication"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
+)
+
+func NewAuthenticationUsecase(repo authentication.IAuthenticationRepository) IAuthenticationUsecase {
+	return &AuthenticationUsecase{
+		repo: repo,
+	}
+}
+
+type IAuthenticationUsecase interface {
+	AuthenticateUser(email, password string) (*authentication.User, error)
+	AuthenticateClient(clientID uuid.UUID, redirectURI string) (*authentication.Client, error)
+}
+
+type AuthenticationUsecase struct {
+	repo authentication.IAuthenticationRepository
+}
+
+func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (*authentication.Client, error) {
+	cli, err := uc.repo.FindClientByClientID(clientID)
+	if err != nil {
+		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+
+	client := authentication.NewClient(cli.ID, cli.Name, cli.RedirectURIs, cli.CreatedAt, cli.UpdatedAt)
+
+	// クライアントがない場合はエラー
+	if client.IsNotFound() {
+		return nil, errors.NewUsecaseError(http.StatusBadRequest, "client not found")
+	}
+
+	// リダイレクトURIが一致しない場合はエラー
+	if !client.IsRedirectURIMatch(redirectURI) {
+		return nil, errors.NewUsecaseError(http.StatusBadRequest, "redirect uri does not match")
+	}
+
+	return client, nil
+}
+
+func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*authentication.User, error) {
+	// validate user credentials
+	u, err := uc.repo.FindUserByEmail(email)
+
+	if err != nil {
+		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+
+	user := authentication.NewUser(u.ID, u.Name, u.Email, u.Password, u.CreatedAt, u.UpdatedAt)
+
+	// ユーザーが存在しない場合はエラー
+	if user.IsNotFound() {
+		return nil, errors.NewUsecaseErrorWithRedirectURI(http.StatusFound, "user or password not match", "client/signin")
+	}
+
+	// パスワードを比較して認証
+	if !user.IsPasswordMatch(password) {
+		return nil, errors.NewUsecaseErrorWithRedirectURI(http.StatusFound, "user or password not match", "client/signin")
+	}
+
+	return user, nil
+}
