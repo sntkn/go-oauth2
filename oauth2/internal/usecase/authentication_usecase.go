@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/oauth2/domain/authentication"
 	"github.com/sntkn/go-oauth2/oauth2/domain/client"
 	"github.com/sntkn/go-oauth2/oauth2/domain/user"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
@@ -18,8 +17,8 @@ func NewAuthenticationUsecase(userRepo user.UserRepository, clientRepo client.Cl
 }
 
 type IAuthenticationUsecase interface {
-	AuthenticateUser(email, password string) (*authentication.User, error)
-	AuthenticateClient(clientID uuid.UUID, redirectURI string) (*authentication.Client, error)
+	AuthenticateUser(email, password string) (*user.User, error)
+	AuthenticateClient(clientID uuid.UUID, redirectURI string) (*client.Client, error)
 }
 
 type AuthenticationUsecase struct {
@@ -27,13 +26,13 @@ type AuthenticationUsecase struct {
 	clientRepo client.ClientRepository
 }
 
-func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (*authentication.Client, error) {
+func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (*client.Client, error) {
 	cli, err := uc.clientRepo.FindClientByClientID(clientID)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	client := authentication.NewClient(cli.ID, cli.Name, cli.RedirectURIs, cli.CreatedAt, cli.UpdatedAt)
+	client := client.NewClient(cli.ID, cli.Name, cli.RedirectURIs, cli.CreatedAt, cli.UpdatedAt)
 
 	// クライアントがない場合はエラー
 	if client.IsNotFound() {
@@ -48,7 +47,7 @@ func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirect
 	return client, nil
 }
 
-func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*authentication.User, error) {
+func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*user.User, error) {
 	// validate user credentials
 	u, err := uc.userRepo.FindUserByEmail(email)
 
@@ -56,7 +55,7 @@ func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*auth
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	user := authentication.NewUser(u.ID, u.Name, u.Email, u.Password, u.CreatedAt, u.UpdatedAt)
+	user := user.NewUser(u.ID, u.Name, u.Email, u.Password, u.CreatedAt, u.UpdatedAt)
 
 	// ユーザーが存在しない場合はエラー
 	if user.IsNotFound() {

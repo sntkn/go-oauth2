@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type IAuthorizationRepository interface {
+type RefreshTokenRepository interface {
 	StoreRefreshToken(t *RefreshToken) error
 	FindValidRefreshToken(refreshToken string, expiresAt time.Time) (*RefreshToken, error)
 	RevokeRefreshToken(refreshToken string) error

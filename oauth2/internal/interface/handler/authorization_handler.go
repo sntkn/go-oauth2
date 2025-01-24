@@ -5,7 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/oauth2/domain/authorization"
+	"github.com/sntkn/go-oauth2/oauth2/domain/refresh_token"
+	"github.com/sntkn/go-oauth2/oauth2/domain/token"
 	"github.com/sntkn/go-oauth2/oauth2/infrastructure/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/common/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/common/session"
@@ -15,9 +16,12 @@ import (
 )
 
 func NewAuthorizationHandler(opt HandlerOption) *AuthorizationHandler {
-	repo := repository.NewAuthorizationRepository(opt.DB)
+	clientRepo := repository.NewClientRepository(opt.DB)
+	codeRepo := repository.NewAuthorizationCodeRepository(opt.DB)
+	tokenRepo := repository.NewTokenRepository(opt.DB)
+	refreshTokenRepo := repository.NewRefreshTokenRepository(opt.DB)
 	tokenGen := accesstoken.NewTokenService()
-	uc := usecase.NewAuthorizationUsecase(repo, opt.Config, tokenGen)
+	uc := usecase.NewAuthorizationUsecase(clientRepo, codeRepo, tokenRepo, refreshTokenRepo, opt.Config, tokenGen)
 	return &AuthorizationHandler{
 		uc:      uc,
 		session: opt.Session,
@@ -124,7 +128,8 @@ type TokenResponse struct {
 
 func (h *AuthorizationHandler) Token(c *gin.Context) {
 	var input TokenRequest
-	var token *authorization.Token
+	var atoken *token.Token
+	var rtoken *refresh_token.RefreshToken
 	var err error
 
 	if err := c.BindJSON(&input); err != nil {
@@ -135,9 +140,9 @@ func (h *AuthorizationHandler) Token(c *gin.Context) {
 
 	switch input.GrantType {
 	case "authorization_code":
-		token, err = h.uc.GenerateTokenByCode(input.Code)
+		atoken, rtoken, err = h.uc.GenerateTokenByCode(input.Code)
 	case "refresh_token":
-		token, err = h.uc.GenerateTokenByRefreshToken(input.RefreshToken)
+		atoken, rtoken, err = h.uc.GenerateTokenByRefreshToken(input.RefreshToken)
 	default:
 		// ここには到達しない
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid grant type")})
@@ -154,8 +159,8 @@ func (h *AuthorizationHandler) Token(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, TokenResponse{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken.RefreshToken,
-		Expiry:       token.Expiry(),
+		AccessToken:  atoken.AccessToken,
+		RefreshToken: rtoken.RefreshToken,
+		Expiry:       atoken.Expiry(),
 	})
 }
