@@ -1,4 +1,4 @@
-package authorization_code
+package domain
 
 import (
 	"fmt"
@@ -7,6 +7,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
+
+type AuthorizationCodeRepository interface {
+	FindAuthorizationCode(string) (*AuthorizationCode, error)
+	StoreAuthorizationCode(*AuthorizationCode) error
+	FindValidAuthorizationCode(string, time.Time) (*AuthorizationCode, error)
+	RevokeCode(code string) error
+}
 
 func NewAuthorizationCode(code string, clientID, userID uuid.UUID, scope, redirectURI string, expiresAt, createdAt, UpdatedAt time.Time) *AuthorizationCode {
 	return &AuthorizationCode{

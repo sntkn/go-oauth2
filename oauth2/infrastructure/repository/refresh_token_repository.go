@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/sntkn/go-oauth2/oauth2/domain/refresh_token"
+	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"github.com/sntkn/go-oauth2/oauth2/infrastructure/model"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
@@ -20,7 +20,7 @@ type RefreshTokenRepository struct {
 	db *sqlx.DB
 }
 
-func (r *RefreshTokenRepository) StoreRefreshToken(t *refresh_token.RefreshToken) error {
+func (r *RefreshTokenRepository) StoreRefreshToken(t *domain.RefreshToken) error {
 	rtoken := &model.RefreshToken{
 		RefreshToken: t.RefreshToken,
 		AccessToken:  t.AccessToken,
@@ -28,31 +28,31 @@ func (r *RefreshTokenRepository) StoreRefreshToken(t *refresh_token.RefreshToken
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
-	q := `INSERT INTO oauth2_refresh_tokens (refresh_token, access_token, expires_at, created_at, updated_at)
-	VALUES (:refresh_token, :access_token, :expires_at, :created_at, :updated_at)`
+	q := `INSERT INTO oauth2_refresh_tokens (domain, access_token, expires_at, created_at, updated_at)
+	VALUES (:domain, :access_token, :expires_at, :created_at, :updated_at)`
 	_, err := r.db.NamedExec(q, rtoken)
 	return errors.WithStack(err)
 }
 
-func (r *RefreshTokenRepository) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (*refresh_token.RefreshToken, error) {
-	q := "SELECT access_token FROM oauth2_refresh_tokens WHERE refresh_token = $1 AND expires_at > $2"
+func (r *RefreshTokenRepository) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (*domain.RefreshToken, error) {
+	q := "SELECT access_token FROM oauth2_refresh_tokens WHERE domain = $1 AND expires_at > $2"
 	var rtkn model.RefreshToken
 
 	err := r.db.Get(&rtkn, q, refreshToken, expiresAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &refresh_token.RefreshToken{}, nil
+			return &domain.RefreshToken{}, nil
 		}
 		return nil, errors.WithStack(err)
 	}
 
-	return &refresh_token.RefreshToken{
+	return &domain.RefreshToken{
 		AccessToken: rtkn.AccessToken,
 	}, nil
 }
 
 func (r *RefreshTokenRepository) RevokeRefreshToken(refreshToken string) error {
-	updateQuery := "UPDATE oauth2_refresh_tokens SET revoked_at = $1 WHERE refresh_token = $2"
+	updateQuery := "UPDATE oauth2_refresh_tokens SET revoked_at = $1 WHERE domain = $2"
 	_, err := r.db.Exec(updateQuery, time.Now(), refreshToken)
 	return errors.WithStack(err)
 }

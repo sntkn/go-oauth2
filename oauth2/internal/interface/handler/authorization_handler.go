@@ -5,8 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/oauth2/domain/refresh_token"
-	"github.com/sntkn/go-oauth2/oauth2/domain/token"
+	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"github.com/sntkn/go-oauth2/oauth2/infrastructure/repository"
 	"github.com/sntkn/go-oauth2/oauth2/internal/common/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/common/session"
@@ -128,8 +127,8 @@ type TokenResponse struct {
 
 func (h *AuthorizationHandler) Token(c *gin.Context) {
 	var input TokenRequest
-	var atoken *token.Token
-	var rtoken *refresh_token.RefreshToken
+	var atoken *domain.Token
+	var rtoken *domain.RefreshToken
 	var err error
 
 	if err := c.BindJSON(&input); err != nil {

@@ -1,4 +1,4 @@
-package user
+package domain
 
 import (
 	"time"
@@ -6,6 +6,10 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type UserRepository interface {
+	FindUserByEmail(email string) (*User, error)
+}
 
 type User struct {
 	ID        uuid.UUID

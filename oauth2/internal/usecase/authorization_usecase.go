@@ -6,10 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/oauth2/domain/authorization_code"
-	"github.com/sntkn/go-oauth2/oauth2/domain/client"
-	"github.com/sntkn/go-oauth2/oauth2/domain/refresh_token"
-	"github.com/sntkn/go-oauth2/oauth2/domain/token"
+	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"github.com/sntkn/go-oauth2/oauth2/internal/common/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
@@ -17,19 +14,19 @@ import (
 )
 
 type IAuthorizationUsecase interface {
-	Consent(uuid.UUID) (*client.Client, error)
-	GenerateAuthorizationCode(GenerateAuthorizationCodeParams) (*authorization_code.AuthorizationCode, error)
-	GenerateTokenByCode(string) (*token.Token, *refresh_token.RefreshToken, error)
-	GenerateTokenByRefreshToken(string) (*token.Token, *refresh_token.RefreshToken, error)
+	Consent(uuid.UUID) (*domain.Client, error)
+	GenerateAuthorizationCode(GenerateAuthorizationCodeParams) (*domain.AuthorizationCode, error)
+	GenerateTokenByCode(string) (*domain.Token, *domain.RefreshToken, error)
+	GenerateTokenByRefreshToken(string) (*domain.Token, *domain.RefreshToken, error)
 	// GenerateAuthorizationCode(user *model.User, client *model.Client, scopes []string) (*model.AuthorizationCode, error)
 	// ValidateAuthorizationCode(code string, clientID string) (*model.AuthorizationCode, error)
 }
 
 func NewAuthorizationUsecase(
-	clientRepo client.ClientRepository,
-	codeRepo authorization_code.AuthorizationCodeRepository,
-	tokenRepo token.TokenRepository,
-	refreshTokenRepo refresh_token.RefreshTokenRepository,
+	clientRepo domain.ClientRepository,
+	codeRepo domain.AuthorizationCodeRepository,
+	tokenRepo domain.TokenRepository,
+	refreshTokenRepo domain.RefreshTokenRepository,
 
 	config *config.Config, tokenGen accesstoken.Generator) IAuthorizationUsecase {
 	return &AuthorizationUsecase{
@@ -43,21 +40,21 @@ func NewAuthorizationUsecase(
 }
 
 type AuthorizationUsecase struct {
-	clientRepo       client.ClientRepository
-	codeRepo         authorization_code.AuthorizationCodeRepository
-	tokenRepo        token.TokenRepository
-	refreshTokenRepo refresh_token.RefreshTokenRepository
+	clientRepo       domain.ClientRepository
+	codeRepo         domain.AuthorizationCodeRepository
+	tokenRepo        domain.TokenRepository
+	refreshTokenRepo domain.RefreshTokenRepository
 	config           *config.Config
 	tokenGen         accesstoken.Generator
 }
 
-func (uc *AuthorizationUsecase) Consent(clientID uuid.UUID) (*client.Client, error) {
+func (uc *AuthorizationUsecase) Consent(clientID uuid.UUID) (*domain.Client, error) {
 	cli, err := uc.clientRepo.FindClientByClientID(clientID)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	client := client.NewClient(cli.ID, cli.Name, cli.RedirectURIs, cli.CreatedAt, cli.UpdatedAt)
+	client := domain.NewClient(cli.ID, cli.Name, cli.RedirectURIs, cli.CreatedAt, cli.UpdatedAt)
 	if client.IsNotFound() {
 		return nil, errors.NewUsecaseError(http.StatusBadRequest, "client not found")
 	}
@@ -73,8 +70,8 @@ type GenerateAuthorizationCodeParams struct {
 	Expires     int
 }
 
-func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizationCodeParams) (*authorization_code.AuthorizationCode, error) {
-	randomString, err := authorization_code.GenerateCode()
+func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizationCodeParams) (*domain.AuthorizationCode, error) {
+	randomString, err := domain.GenerateCode()
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -88,7 +85,7 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	code := &authorization_code.AuthorizationCode{
+	code := &domain.AuthorizationCode{
 		Code:        randomString,
 		ClientID:    clientID,
 		UserID:      userID,
@@ -104,7 +101,7 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	client := authorization_code.NewAuthorizationCode(
+	client := domain.NewAuthorizationCode(
 		code.Code,
 		code.ClientID,
 		code.UserID,
@@ -118,9 +115,9 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 	return client, nil
 }
 
-func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*token.Token, *refresh_token.RefreshToken, error) {
-	var atokn *token.Token
-	var rtokn *refresh_token.RefreshToken
+func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*domain.Token, *domain.RefreshToken, error) {
+	var atokn *domain.Token
+	var rtokn *domain.RefreshToken
 	const (
 		randomStringLen = 32
 		day             = 24 * time.Hour
@@ -153,7 +150,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*token.Token, 
 		return atokn, rtokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
-	if err = uc.tokenRepo.StoreToken(&token.Token{
+	if err = uc.tokenRepo.StoreToken(&domain.Token{
 		AccessToken: accessToken,
 		ClientID:    c.ClientID,
 		UserID:      c.UserID,
@@ -168,7 +165,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*token.Token, 
 		return atokn, rtokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 	refreshExpiration := time.Now().Add(time.Duration(uc.config.AuthRefreshTokenExpiresDay) * day)
-	if err = uc.refreshTokenRepo.StoreRefreshToken(&refresh_token.RefreshToken{
+	if err = uc.refreshTokenRepo.StoreRefreshToken(&domain.RefreshToken{
 		RefreshToken: randomString,
 		AccessToken:  accessToken,
 		ExpiresAt:    refreshExpiration,
@@ -181,12 +178,12 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*token.Token, 
 		return atokn, rtokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
-	atokn = &token.Token{
+	atokn = &domain.Token{
 		AccessToken: accessToken,
 		ExpiresAt:   expiration,
 	}
 
-	rtokn = &refresh_token.RefreshToken{
+	rtokn = &domain.RefreshToken{
 		RefreshToken: randomString,
 		ExpiresAt:    refreshExpiration,
 	}
@@ -194,9 +191,9 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*token.Token, 
 	return atokn, rtokn, nil
 }
 
-func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (*token.Token, *refresh_token.RefreshToken, error) {
-	var atokn *token.Token
-	var rtokn *refresh_token.RefreshToken
+func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (*domain.Token, *domain.RefreshToken, error) {
+	var atokn *domain.Token
+	var rtokn *domain.RefreshToken
 	const (
 		randomStringLen = 32
 		day             = 24 * time.Hour
@@ -232,7 +229,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 		return atokn, rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	if err = uc.tokenRepo.StoreToken(&token.Token{
+	if err = uc.tokenRepo.StoreToken(&domain.Token{
 		AccessToken: accessToken,
 		ClientID:    tkn.ClientID,
 		UserID:      tkn.UserID,
@@ -248,7 +245,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 	}
 	refreshExpiration := time.Now().Add(time.Duration(uc.config.AuthRefreshTokenExpiresDay) * day)
 
-	if err = uc.refreshTokenRepo.StoreRefreshToken(&refresh_token.RefreshToken{
+	if err = uc.refreshTokenRepo.StoreRefreshToken(&domain.RefreshToken{
 		RefreshToken: randomString,
 		AccessToken:  accessToken,
 		ExpiresAt:    refreshExpiration,
@@ -263,11 +260,11 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 		return atokn, rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	atokn = &token.Token{
+	atokn = &domain.Token{
 		AccessToken: accessToken,
 		ExpiresAt:   expiration,
 	}
-	rtokn = &refresh_token.RefreshToken{
+	rtokn = &domain.RefreshToken{
 		RefreshToken: randomString,
 		ExpiresAt:    refreshExpiration,
 	}

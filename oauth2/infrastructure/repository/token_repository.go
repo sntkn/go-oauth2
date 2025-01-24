@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/sntkn/go-oauth2/oauth2/domain/token"
+	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"github.com/sntkn/go-oauth2/oauth2/infrastructure/model"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
@@ -20,7 +20,7 @@ type TokenRepository struct {
 	db *sqlx.DB
 }
 
-func (r *TokenRepository) StoreToken(accessToken *token.Token) error {
+func (r *TokenRepository) StoreToken(accessToken *domain.Token) error {
 	m := &model.Token{
 		AccessToken: accessToken.AccessToken,
 		ClientID:    accessToken.ClientID,
@@ -38,18 +38,18 @@ func (r *TokenRepository) StoreToken(accessToken *token.Token) error {
 	return errors.WithStack(err)
 }
 
-func (r *TokenRepository) FindToken(accessToken string) (*token.Token, error) {
+func (r *TokenRepository) FindToken(accessToken string) (*domain.Token, error) {
 	q := "SELECT user_id, client_id, scope FROM oauth2_tokens WHERE access_token = $1"
 	var tkn model.Token
 
 	err := r.db.Get(&tkn, q, accessToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &token.Token{}, nil
+			return &domain.Token{}, nil
 		}
 		return nil, errors.WithStack(err)
 	}
-	return &token.Token{
+	return &domain.Token{
 		UserID:   tkn.UserID,
 		ClientID: tkn.ClientID,
 		Scope:    tkn.Scope,

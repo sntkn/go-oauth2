@@ -4,12 +4,11 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/sntkn/go-oauth2/oauth2/domain/client"
-	"github.com/sntkn/go-oauth2/oauth2/domain/user"
+	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
-func NewAuthenticationUsecase(userRepo user.UserRepository, clientRepo client.ClientRepository) IAuthenticationUsecase {
+func NewAuthenticationUsecase(userRepo domain.UserRepository, clientRepo domain.ClientRepository) IAuthenticationUsecase {
 	return &AuthenticationUsecase{
 		userRepo:   userRepo,
 		clientRepo: clientRepo,
@@ -17,22 +16,22 @@ func NewAuthenticationUsecase(userRepo user.UserRepository, clientRepo client.Cl
 }
 
 type IAuthenticationUsecase interface {
-	AuthenticateUser(email, password string) (*user.User, error)
-	AuthenticateClient(clientID uuid.UUID, redirectURI string) (*client.Client, error)
+	AuthenticateUser(email, password string) (*domain.User, error)
+	AuthenticateClient(clientID uuid.UUID, redirectURI string) (*domain.Client, error)
 }
 
 type AuthenticationUsecase struct {
-	userRepo   user.UserRepository
-	clientRepo client.ClientRepository
+	userRepo   domain.UserRepository
+	clientRepo domain.ClientRepository
 }
 
-func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (*client.Client, error) {
+func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (*domain.Client, error) {
 	cli, err := uc.clientRepo.FindClientByClientID(clientID)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	client := client.NewClient(cli.ID, cli.Name, cli.RedirectURIs, cli.CreatedAt, cli.UpdatedAt)
+	client := domain.NewClient(cli.ID, cli.Name, cli.RedirectURIs, cli.CreatedAt, cli.UpdatedAt)
 
 	// クライアントがない場合はエラー
 	if client.IsNotFound() {
@@ -47,7 +46,7 @@ func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirect
 	return client, nil
 }
 
-func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*user.User, error) {
+func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*domain.User, error) {
 	// validate user credentials
 	u, err := uc.userRepo.FindUserByEmail(email)
 
@@ -55,7 +54,7 @@ func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*user
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	user := user.NewUser(u.ID, u.Name, u.Email, u.Password, u.CreatedAt, u.UpdatedAt)
+	user := domain.NewUser(u.ID, u.Name, u.Email, u.Password, u.CreatedAt, u.UpdatedAt)
 
 	// ユーザーが存在しない場合はエラー
 	if user.IsNotFound() {

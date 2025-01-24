@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/sntkn/go-oauth2/oauth2/domain/authorization_code"
+	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"github.com/sntkn/go-oauth2/oauth2/infrastructure/model"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
@@ -20,7 +20,7 @@ type AuthorizationCodeRepository struct {
 	db *sqlx.DB
 }
 
-func (r *AuthorizationCodeRepository) FindAuthorizationCode(code string) (*authorization_code.AuthorizationCode, error) {
+func (r *AuthorizationCodeRepository) FindAuthorizationCode(code string) (*domain.AuthorizationCode, error) {
 	q := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL"
 
 	var c model.AuthorizationCode
@@ -28,11 +28,11 @@ func (r *AuthorizationCodeRepository) FindAuthorizationCode(code string) (*autho
 	err := r.db.Get(&c, q, code)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &authorization_code.AuthorizationCode{}, nil
+			return &domain.AuthorizationCode{}, nil
 		}
 		return nil, errors.WithStack(err)
 	}
-	return &authorization_code.AuthorizationCode{
+	return &domain.AuthorizationCode{
 		UserID:    c.UserID,
 		ClientID:  c.ClientID,
 		Scope:     c.Scope,
@@ -40,18 +40,18 @@ func (r *AuthorizationCodeRepository) FindAuthorizationCode(code string) (*autho
 	}, nil
 }
 
-func (r *AuthorizationCodeRepository) FindValidAuthorizationCode(code string, expiresAt time.Time) (*authorization_code.AuthorizationCode, error) {
+func (r *AuthorizationCodeRepository) FindValidAuthorizationCode(code string, expiresAt time.Time) (*domain.AuthorizationCode, error) {
 	q := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at > $2"
 	var c model.AuthorizationCode
 
 	err := r.db.Get(&c, q, code, expiresAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &authorization_code.AuthorizationCode{}, nil
+			return &domain.AuthorizationCode{}, nil
 		}
 		return nil, errors.WithStack(err)
 	}
-	return &authorization_code.AuthorizationCode{
+	return &domain.AuthorizationCode{
 		UserID:    c.UserID,
 		ClientID:  c.ClientID,
 		Scope:     c.Scope,
@@ -59,7 +59,7 @@ func (r *AuthorizationCodeRepository) FindValidAuthorizationCode(code string, ex
 	}, nil
 }
 
-func (r *AuthorizationCodeRepository) StoreAuthorizationCode(c *authorization_code.AuthorizationCode) error {
+func (r *AuthorizationCodeRepository) StoreAuthorizationCode(c *domain.AuthorizationCode) error {
 	c.CreatedAt = time.Now()
 	c.UpdatedAt = time.Now()
 	q := `

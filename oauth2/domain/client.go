@@ -1,10 +1,14 @@
-package client
+package domain
 
 import (
 	"time"
 
 	"github.com/google/uuid"
 )
+
+type ClientRepository interface {
+	FindClientByClientID(clientID uuid.UUID) (*Client, error)
+}
 
 type Client struct {
 	ID           uuid.UUID
