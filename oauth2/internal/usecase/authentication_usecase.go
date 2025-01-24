@@ -5,12 +5,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain/authentication"
+	"github.com/sntkn/go-oauth2/oauth2/domain/client"
+	"github.com/sntkn/go-oauth2/oauth2/domain/user"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
-func NewAuthenticationUsecase(repo authentication.IAuthenticationRepository) IAuthenticationUsecase {
+func NewAuthenticationUsecase(userRepo user.UserRepository, clientRepo client.ClientRepository) IAuthenticationUsecase {
 	return &AuthenticationUsecase{
-		repo: repo,
+		userRepo:   userRepo,
+		clientRepo: clientRepo,
 	}
 }
 
@@ -20,11 +23,12 @@ type IAuthenticationUsecase interface {
 }
 
 type AuthenticationUsecase struct {
-	repo authentication.IAuthenticationRepository
+	userRepo   user.UserRepository
+	clientRepo client.ClientRepository
 }
 
 func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (*authentication.Client, error) {
-	cli, err := uc.repo.FindClientByClientID(clientID)
+	cli, err := uc.clientRepo.FindClientByClientID(clientID)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -46,7 +50,7 @@ func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirect
 
 func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*authentication.User, error) {
 	// validate user credentials
-	u, err := uc.repo.FindUserByEmail(email)
+	u, err := uc.userRepo.FindUserByEmail(email)
 
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
