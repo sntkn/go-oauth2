@@ -33,6 +33,7 @@ func NewAuthorizationCode(p AuthorizationCodeParams) *authorizationCode {
 }
 
 type AuthorizationCode interface {
+	IsNotFound() bool
 	GetCode() string
 	GetClientID() uuid.UUID
 	GetUserID() uuid.UUID
@@ -59,6 +60,10 @@ type authorizationCode struct {
 	ExpiresAt   time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+func (a *authorizationCode) IsNotFound() bool {
+	return a.Code == ""
 }
 
 func (a *authorizationCode) GetCode() string {

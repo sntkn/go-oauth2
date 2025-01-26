@@ -17,6 +17,7 @@ func NewRefreshToken(p RefreshTokenParams) RefreshToken {
 }
 
 type RefreshToken interface {
+	IsNotFound() bool
 	GetRefreshToken() string
 	GetAccessToken() string
 	GetExpiresAt() time.Time
@@ -33,6 +34,10 @@ type refreshToken struct {
 	RefreshToken string
 	AccessToken  string
 	ExpiresAt    time.Time
+}
+
+func (t *refreshToken) IsNotFound() bool {
+	return t.RefreshToken == ""
 }
 
 func (t *refreshToken) GetRefreshToken() string {

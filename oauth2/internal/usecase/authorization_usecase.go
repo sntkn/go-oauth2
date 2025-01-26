@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"database/sql"
 	"net/http"
 	"time"
 
@@ -110,11 +109,11 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 
 	c, err := uc.codeRepo.FindValidAuthorizationCode(code, time.Now())
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// TODO: redirect to autorize with parameters
-			return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, err.Error())
-		}
 		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+
+	if c.IsNotFound() {
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, "code not found")
 	}
 
 	currentTime := time.Now()
@@ -179,20 +178,21 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 
 	rt, err := uc.refreshTokenRepo.FindValidRefreshToken(refreshToken, time.Now())
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, err.Error())
-		}
 		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
-	// find access token
+
+	if rt.IsNotFound() {
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, "refresh token not found")
+	}
 
 	tkn, err := uc.tokenRepo.FindToken(rt.GetAccessToken())
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, err.Error())
-		}
 		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
+	if tkn.IsNotFound() {
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, "token not found")
+	}
+
 	expiration := time.Now().Add(time.Duration(uc.config.AuthTokenExpiresMin) * time.Minute)
 
 	t := &accesstoken.TokenParams{

@@ -25,6 +25,7 @@ func NewToken(p TokenParams) Token {
 }
 
 type Token interface {
+	IsNotFound() bool
 	GetAccessToken() string
 	GetClientID() uuid.UUID
 	GetUserID() uuid.UUID
@@ -45,6 +46,10 @@ type token struct {
 	UserID      uuid.UUID
 	Scope       string
 	ExpiresAt   time.Time
+}
+
+func (t *token) IsNotFound() bool {
+	return t.AccessToken == ""
 }
 
 func (t *token) GetAccessToken() string {
