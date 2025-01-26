@@ -3,6 +3,7 @@ package domain
 import (
 	"crypto/ed25519"
 	"encoding/base64"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -156,4 +157,39 @@ func (t *token) Generate(privateKeyBase64 string) (string, error) {
 	}
 
 	return accessToken, nil
+}
+
+type CustomClaims struct {
+	UserID    string `json:"user_id"`
+	ClientID  string `json:"client_id"`
+	Scope     string
+	ExpiresAt time.Time
+	jwt.StandardClaims
+}
+
+func (t *token) Parse(tokenStr string, publicKeyBase64 string) (*CustomClaims, error) {
+	publicKeyBytes, err := base64.StdEncoding.DecodeString(publicKeyBase64)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	// 公開鍵を使ってJWTをパース
+	parsedToken, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodEd25519); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return ed25519.PublicKey(publicKeyBytes), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := parsedToken.Claims.(*CustomClaims)
+	if !ok || !parsedToken.Valid {
+		err := errors.New("Invalid token")
+		return nil, errors.WithStack(err)
+	}
+
+	return claims, nil
 }
