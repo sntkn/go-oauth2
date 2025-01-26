@@ -14,8 +14,8 @@ import (
 )
 
 type IAuthorizationUsecase interface {
-	Consent(uuid.UUID) (*domain.Client, error)
-	GenerateAuthorizationCode(GenerateAuthorizationCodeParams) (*domain.AuthorizationCode, error)
+	Consent(uuid.UUID) (domain.Client, error)
+	GenerateAuthorizationCode(GenerateAuthorizationCodeParams) (domain.AuthorizationCode, error)
 	GenerateTokenByCode(string) (*domain.Token, *domain.RefreshToken, error)
 	GenerateTokenByRefreshToken(string) (*domain.Token, *domain.RefreshToken, error)
 	// GenerateAuthorizationCode(user *model.User, client *model.Client, scopes []string) (*model.AuthorizationCode, error)
@@ -48,13 +48,12 @@ type AuthorizationUsecase struct {
 	tokenGen         accesstoken.Generator
 }
 
-func (uc *AuthorizationUsecase) Consent(clientID uuid.UUID) (*domain.Client, error) {
-	cli, err := uc.clientRepo.FindClientByClientID(clientID)
+func (uc *AuthorizationUsecase) Consent(clientID uuid.UUID) (domain.Client, error) {
+	client, err := uc.clientRepo.FindClientByClientID(clientID)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	client := domain.NewClient(cli.ID, cli.Name, cli.RedirectURIs, cli.CreatedAt, cli.UpdatedAt)
 	if client.IsNotFound() {
 		return nil, errors.NewUsecaseError(http.StatusBadRequest, "client not found")
 	}
@@ -70,7 +69,7 @@ type GenerateAuthorizationCodeParams struct {
 	Expires     int
 }
 
-func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizationCodeParams) (*domain.AuthorizationCode, error) {
+func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizationCodeParams) (domain.AuthorizationCode, error) {
 	randomString, err := domain.GenerateCode()
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
@@ -85,7 +84,7 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	code := &domain.AuthorizationCode{
+	code := domain.NewAuthorizationCode(domain.AuthorizationCodeParams{
 		Code:        randomString,
 		ClientID:    clientID,
 		UserID:      userID,
@@ -94,25 +93,13 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 		ExpiresAt:   time.Now().Add(time.Duration(p.Expires) * time.Second),
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-	}
+	})
 
-	err = uc.codeRepo.StoreAuthorizationCode(code)
-	if err != nil {
+	if err := uc.codeRepo.StoreAuthorizationCode(code); err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	client := domain.NewAuthorizationCode(
-		code.Code,
-		code.ClientID,
-		code.UserID,
-		code.Scope,
-		code.RedirectURI,
-		code.ExpiresAt,
-		code.CreatedAt,
-		code.UpdatedAt,
-	)
-
-	return client, nil
+	return code, nil
 }
 
 func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*domain.Token, *domain.RefreshToken, error) {
@@ -133,16 +120,16 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*domain.Token,
 	}
 
 	currentTime := time.Now()
-	if currentTime.After(c.ExpiresAt) {
+	if currentTime.After(c.GetExpiresAt()) {
 		return atokn, rtokn, errors.NewUsecaseError(http.StatusForbidden, "code has expired")
 	}
 
 	// create token and refresh token
 	expiration := time.Now().Add(time.Duration(uc.config.AuthTokenExpiresMin) * time.Minute)
 	t := accesstoken.TokenParams{
-		UserID:    c.UserID,
-		ClientID:  c.ClientID,
-		Scope:     c.Scope,
+		UserID:    c.GetUserID(),
+		ClientID:  c.GetClientID(),
+		Scope:     c.GetScope(),
 		ExpiresAt: expiration,
 	}
 	accessToken, err := uc.tokenGen.Generate(&t, uc.config.PrivateKey)
@@ -152,9 +139,9 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (*domain.Token,
 
 	if err = uc.tokenRepo.StoreToken(&domain.Token{
 		AccessToken: accessToken,
-		ClientID:    c.ClientID,
-		UserID:      c.UserID,
-		Scope:       c.Scope,
+		ClientID:    c.GetClientID(),
+		UserID:      c.GetUserID(),
+		Scope:       c.GetScope(),
 		ExpiresAt:   expiration,
 	}); err != nil {
 		return atokn, rtokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
