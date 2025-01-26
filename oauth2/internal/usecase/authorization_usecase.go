@@ -16,8 +16,8 @@ import (
 type IAuthorizationUsecase interface {
 	Consent(uuid.UUID) (domain.Client, error)
 	GenerateAuthorizationCode(GenerateAuthorizationCodeParams) (domain.AuthorizationCode, error)
-	GenerateTokenByCode(string) (domain.Token, *domain.RefreshToken, error)
-	GenerateTokenByRefreshToken(string) (domain.Token, *domain.RefreshToken, error)
+	GenerateTokenByCode(string) (domain.Token, domain.RefreshToken, error)
+	GenerateTokenByRefreshToken(string) (domain.Token, domain.RefreshToken, error)
 	// GenerateAuthorizationCode(user *model.User, client *model.Client, scopes []string) (*model.AuthorizationCode, error)
 	// ValidateAuthorizationCode(code string, clientID string) (*model.AuthorizationCode, error)
 }
@@ -102,8 +102,7 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 	return code, nil
 }
 
-func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, *domain.RefreshToken, error) {
-	var rtokn *domain.RefreshToken
+func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, domain.RefreshToken, error) {
 	const (
 		randomStringLen = 32
 		day             = 24 * time.Hour
@@ -113,14 +112,14 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// TODO: redirect to autorize with parameters
-			return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusForbidden, err.Error())
+			return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, err.Error())
 		}
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
 	currentTime := time.Now()
 	if currentTime.After(c.GetExpiresAt()) {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusForbidden, "code has expired")
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, "code has expired")
 	}
 
 	// create token and refresh token
@@ -133,7 +132,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 	}
 	accessToken, err := uc.tokenGen.Generate(&t, uc.config.PrivateKey)
 	if err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
 	atoken := domain.NewToken(domain.TokenParams{
@@ -145,37 +144,34 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 	})
 
 	if err = uc.tokenRepo.StoreToken(atoken); err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
 	randomString, err := str.GenerateRandomString(randomStringLen)
 	if err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 	refreshExpiration := time.Now().Add(time.Duration(uc.config.AuthRefreshTokenExpiresDay) * day)
-	if err = uc.refreshTokenRepo.StoreRefreshToken(&domain.RefreshToken{
+
+	rtoken := domain.NewRefreshToken(domain.RefreshTokenParams{
 		RefreshToken: randomString,
 		AccessToken:  accessToken,
 		ExpiresAt:    refreshExpiration,
-	}); err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+	})
+
+	if err = uc.refreshTokenRepo.StoreRefreshToken(rtoken); err != nil {
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
 	// revoke code
 	if err = uc.codeRepo.RevokeCode(code); err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, "code has expired")
 	}
 
-	rtokn = &domain.RefreshToken{
-		RefreshToken: randomString,
-		ExpiresAt:    refreshExpiration,
-	}
-
-	return atoken, rtokn, nil
+	return atoken, rtoken, nil
 }
 
-func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (domain.Token, *domain.RefreshToken, error) {
-	var rtokn *domain.RefreshToken
+func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (domain.Token, domain.RefreshToken, error) {
 	const (
 		randomStringLen = 32
 		day             = 24 * time.Hour
@@ -184,18 +180,18 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 	rt, err := uc.refreshTokenRepo.FindValidRefreshToken(refreshToken, time.Now())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusForbidden, err.Error())
+			return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, err.Error())
 		}
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 	// find access token
 
-	tkn, err := uc.tokenRepo.FindToken(rt.AccessToken)
+	tkn, err := uc.tokenRepo.FindToken(rt.GetAccessToken())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusForbidden, err.Error())
+			return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, err.Error())
 		}
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 	expiration := time.Now().Add(time.Duration(uc.config.AuthTokenExpiresMin) * time.Minute)
 
@@ -207,7 +203,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 	}
 	accessToken, err := uc.tokenGen.Generate(t, uc.config.PrivateKey)
 	if err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
 	atoken := domain.NewToken(domain.TokenParams{
@@ -219,34 +215,31 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 	})
 
 	if err = uc.tokenRepo.StoreToken(atoken); err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
 	randomString, err := str.GenerateRandomString(randomStringLen)
 	if err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 	refreshExpiration := time.Now().Add(time.Duration(uc.config.AuthRefreshTokenExpiresDay) * day)
 
-	if err = uc.refreshTokenRepo.StoreRefreshToken(&domain.RefreshToken{
+	rtoken := domain.NewRefreshToken(domain.RefreshTokenParams{
 		RefreshToken: randomString,
 		AccessToken:  accessToken,
 		ExpiresAt:    refreshExpiration,
-	}); err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	})
+
+	if err = uc.refreshTokenRepo.StoreRefreshToken(rtoken); err != nil {
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
 	if err = uc.tokenRepo.RevokeToken(tkn.GetAccessToken()); err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
-	if err = uc.refreshTokenRepo.RevokeRefreshToken(rt.RefreshToken); err != nil {
-		return domain.NewToken(domain.TokenParams{}), rtokn, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
-	}
-
-	rtokn = &domain.RefreshToken{
-		RefreshToken: randomString,
-		ExpiresAt:    refreshExpiration,
+	if err = uc.refreshTokenRepo.RevokeRefreshToken(rt.GetRefreshToken()); err != nil {
+		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	return atoken, rtokn, nil
+	return atoken, rtoken, nil
 }
