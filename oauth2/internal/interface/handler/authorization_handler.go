@@ -127,7 +127,7 @@ type TokenResponse struct {
 
 func (h *AuthorizationHandler) Token(c *gin.Context) {
 	var input TokenRequest
-	var atoken *domain.Token
+	var atoken domain.Token
 	var rtoken *domain.RefreshToken
 	var err error
 
@@ -158,7 +158,7 @@ func (h *AuthorizationHandler) Token(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, TokenResponse{
-		AccessToken:  atoken.AccessToken,
+		AccessToken:  atoken.GetAccessToken(),
 		RefreshToken: rtoken.RefreshToken,
 		Expiry:       atoken.Expiry(),
 	})
