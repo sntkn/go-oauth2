@@ -1,9 +1,13 @@
 package domain
 
 import (
+	"crypto/ed25519"
+	"encoding/base64"
 	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 type TokenParams struct {
@@ -24,6 +28,34 @@ func NewToken(p TokenParams) Token {
 	}
 }
 
+type StoreNewTokenParams struct {
+	ClientID         uuid.UUID
+	UserID           uuid.UUID
+	Scope            string
+	PrivateKeyBase64 string
+	AdditionalMin    int
+	Repo             TokenRepository
+}
+
+func StoreNewToken(p StoreNewTokenParams) (Token, error) {
+	atoken := NewToken(TokenParams{
+		ClientID: p.ClientID,
+		UserID:   p.UserID,
+		Scope:    p.Scope,
+	})
+
+	if err := atoken.SetNewAccessToken(p.PrivateKeyBase64); err != nil {
+		return nil, err
+	}
+	atoken.SetNewExpiry(p.AdditionalMin)
+
+	if err := p.Repo.StoreToken(atoken); err != nil {
+		return nil, err
+	}
+
+	return atoken, nil
+}
+
 type Token interface {
 	IsNotFound() bool
 	GetAccessToken() string
@@ -31,7 +63,9 @@ type Token interface {
 	GetUserID() uuid.UUID
 	GetScope() string
 	GetExpiresAt() time.Time
+	SetNewAccessToken(privateKeyBase64 string) error
 	Expiry() int64
+	SetNewExpiry(additionalMin int)
 }
 
 type TokenRepository interface {
@@ -72,10 +106,54 @@ func (t *token) GetExpiresAt() time.Time {
 	return t.ExpiresAt
 }
 
+func (t *token) SetNewAccessToken(privateKeyBase64 string) error {
+	newtoken, err := t.Generate(privateKeyBase64)
+	if err != nil {
+		return err
+	}
+
+	t.AccessToken = newtoken
+
+	return nil
+}
+
 func (t *token) SetExpiresAt(tim time.Time) {
 	t.ExpiresAt = tim
 }
 
 func (t *token) Expiry() int64 {
 	return t.ExpiresAt.Unix()
+}
+
+func (t *token) SetNewExpiry(additionalMin int) {
+	t.ExpiresAt = time.Now().Add(time.Duration(additionalMin) * time.Minute)
+}
+
+func (t *token) Generate(privateKeyBase64 string) (string, error) {
+	// JWTのペイロード（クレーム）を設定
+	claims := jwt.MapClaims{
+		"user_id":   t.UserID.String(),
+		"client_id": t.ClientID.String(),
+		"scope":     t.Scope,
+		"exp":       t.ExpiresAt.Unix(),
+		"iat":       time.Now().Unix(),
+	}
+
+	// JWTトークンを作成
+	token := jwt.NewWithClaims(&jwt.SigningMethodEd25519{}, claims)
+
+	privateKeyBytes, err := base64.StdEncoding.DecodeString(privateKeyBase64)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	privateKey := ed25519.PrivateKey(privateKeyBytes)
+
+	// プライベートキーを使ってトークンを署名
+	accessToken, err := token.SignedString(privateKey)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	return accessToken, nil
 }
