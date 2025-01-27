@@ -156,7 +156,7 @@ func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 	// ログイン状態をセッションに保存
 	if err := sess.SetNamedSessionData(c, "login", AuthedUser{
 		Email:       input.Email,
-		UserID:      user.ID.String(),
+		UserID:      user.GetID().String(),
 		ClientID:    sign.ClientID,
 		RedirectURI: sign.RedirectURI,
 		Scope:       sign.Scope,

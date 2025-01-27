@@ -20,13 +20,13 @@ type TokenRepository struct {
 	db *sqlx.DB
 }
 
-func (r *TokenRepository) StoreToken(accessToken *domain.Token) error {
+func (r *TokenRepository) StoreToken(accessToken domain.Token) error {
 	m := &model.Token{
-		AccessToken: accessToken.AccessToken,
-		ClientID:    accessToken.ClientID,
-		UserID:      accessToken.UserID,
-		Scope:       accessToken.Scope,
-		ExpiresAt:   accessToken.ExpiresAt,
+		AccessToken: accessToken.GetAccessToken(),
+		ClientID:    accessToken.GetClientID(),
+		UserID:      accessToken.GetUserID(),
+		Scope:       accessToken.GetScope(),
+		ExpiresAt:   accessToken.GetExpiresAt(),
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -38,22 +38,22 @@ func (r *TokenRepository) StoreToken(accessToken *domain.Token) error {
 	return errors.WithStack(err)
 }
 
-func (r *TokenRepository) FindToken(accessToken string) (*domain.Token, error) {
+func (r *TokenRepository) FindToken(accessToken string) (domain.Token, error) {
 	q := "SELECT user_id, client_id, scope FROM oauth2_tokens WHERE access_token = $1"
 	var tkn model.Token
 
 	err := r.db.Get(&tkn, q, accessToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &domain.Token{}, nil
+			return domain.NewToken(domain.TokenParams{}), nil
 		}
 		return nil, errors.WithStack(err)
 	}
-	return &domain.Token{
+	return domain.NewToken(domain.TokenParams{
 		UserID:   tkn.UserID,
 		ClientID: tkn.ClientID,
 		Scope:    tkn.Scope,
-	}, nil
+	}), nil
 }
 
 func (r *TokenRepository) RevokeToken(accessToken string) error {

@@ -16,8 +16,8 @@ func NewAuthenticationUsecase(userRepo domain.UserRepository, clientRepo domain.
 }
 
 type IAuthenticationUsecase interface {
-	AuthenticateUser(email, password string) (*domain.User, error)
-	AuthenticateClient(clientID uuid.UUID, redirectURI string) (*domain.Client, error)
+	AuthenticateUser(email, password string) (domain.User, error)
+	AuthenticateClient(clientID uuid.UUID, redirectURI string) (domain.Client, error)
 }
 
 type AuthenticationUsecase struct {
@@ -25,13 +25,11 @@ type AuthenticationUsecase struct {
 	clientRepo domain.ClientRepository
 }
 
-func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (*domain.Client, error) {
-	cli, err := uc.clientRepo.FindClientByClientID(clientID)
+func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (domain.Client, error) {
+	client, err := uc.clientRepo.FindClientByClientID(clientID)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
-
-	client := domain.NewClient(cli.ID, cli.Name, cli.RedirectURIs, cli.CreatedAt, cli.UpdatedAt)
 
 	// クライアントがない場合はエラー
 	if client.IsNotFound() {
@@ -46,15 +44,13 @@ func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirect
 	return client, nil
 }
 
-func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (*domain.User, error) {
+func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (domain.User, error) {
 	// validate user credentials
-	u, err := uc.userRepo.FindUserByEmail(email)
+	user, err := uc.userRepo.FindUserByEmail(email)
 
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
-
-	user := domain.NewUser(u.ID, u.Name, u.Email, u.Password, u.CreatedAt, u.UpdatedAt)
 
 	// ユーザーが存在しない場合はエラー
 	if user.IsNotFound() {

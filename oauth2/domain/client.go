@@ -6,11 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type ClientRepository interface {
-	FindClientByClientID(clientID uuid.UUID) (*Client, error)
-}
-
-type Client struct {
+type ClientParams struct {
 	ID           uuid.UUID
 	Name         string
 	RedirectURIs string
@@ -18,21 +14,38 @@ type Client struct {
 	UpdatedAt    time.Time
 }
 
-func (c *Client) IsNotFound() bool {
+func NewClient(p ClientParams) Client {
+	return &client{
+		ID:           p.ID,
+		Name:         p.Name,
+		RedirectURIs: p.RedirectURIs,
+		CreatedAt:    p.CreatedAt,
+		UpdatedAt:    p.UpdatedAt,
+	}
+}
+
+type Client interface {
+	IsNotFound() bool
+	IsRedirectURIMatch(redirectURI string) bool
+}
+
+type ClientRepository interface {
+	FindClientByClientID(clientID uuid.UUID) (Client, error)
+}
+
+type client struct {
+	ID           uuid.UUID
+	Name         string
+	RedirectURIs string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+func (c *client) IsNotFound() bool {
 	return c.ID == uuid.Nil
 }
 
-func (c *Client) IsRedirectURIMatch(redirectURI string) bool {
+func (c *client) IsRedirectURIMatch(redirectURI string) bool {
 	// TODO: 複数のリダイレクトURIを持つ場合の対応
 	return c.RedirectURIs == redirectURI
-}
-
-func NewClient(id uuid.UUID, name, redirectURIs string, createdAt, updatedAt time.Time) *Client {
-	return &Client{
-		ID:           id,
-		Name:         name,
-		RedirectURIs: redirectURIs,
-		CreatedAt:    createdAt,
-		UpdatedAt:    updatedAt,
-	}
 }

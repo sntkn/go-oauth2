@@ -20,11 +20,11 @@ type RefreshTokenRepository struct {
 	db *sqlx.DB
 }
 
-func (r *RefreshTokenRepository) StoreRefreshToken(t *domain.RefreshToken) error {
+func (r *RefreshTokenRepository) StoreRefreshToken(t domain.RefreshToken) error {
 	rtoken := &model.RefreshToken{
-		RefreshToken: t.RefreshToken,
-		AccessToken:  t.AccessToken,
-		ExpiresAt:    t.ExpiresAt,
+		RefreshToken: t.GetRefreshToken(),
+		AccessToken:  t.GetAccessToken(),
+		ExpiresAt:    t.GetExpiresAt(),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -34,21 +34,21 @@ func (r *RefreshTokenRepository) StoreRefreshToken(t *domain.RefreshToken) error
 	return errors.WithStack(err)
 }
 
-func (r *RefreshTokenRepository) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (*domain.RefreshToken, error) {
+func (r *RefreshTokenRepository) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (domain.RefreshToken, error) {
 	q := "SELECT access_token FROM oauth2_refresh_tokens WHERE domain = $1 AND expires_at > $2"
 	var rtkn model.RefreshToken
 
 	err := r.db.Get(&rtkn, q, refreshToken, expiresAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &domain.RefreshToken{}, nil
+			return domain.NewRefreshToken(domain.RefreshTokenParams{}), nil
 		}
 		return nil, errors.WithStack(err)
 	}
 
-	return &domain.RefreshToken{
+	return domain.NewRefreshToken(domain.RefreshTokenParams{
 		AccessToken: rtkn.AccessToken,
-	}, nil
+	}), nil
 }
 
 func (r *RefreshTokenRepository) RevokeRefreshToken(refreshToken string) error {
