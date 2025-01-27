@@ -19,7 +19,7 @@ type AuthorizationCodeParams struct {
 	UpdatedAt   time.Time
 }
 
-func NewAuthorizationCode(p AuthorizationCodeParams) *authorizationCode {
+func NewAuthorizationCode(p AuthorizationCodeParams) AuthorizationCode {
 	return &authorizationCode{
 		Code:        p.Code,
 		ClientID:    p.ClientID,

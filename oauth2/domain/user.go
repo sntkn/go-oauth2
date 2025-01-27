@@ -16,7 +16,7 @@ type UserParams struct {
 	UpdatedAt time.Time
 }
 
-func NewUser(p UserParams) *user {
+func NewUser(p UserParams) User {
 	return &user{
 		ID:        p.ID,
 		Name:      p.Name,
