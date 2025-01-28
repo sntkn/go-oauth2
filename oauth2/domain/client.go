@@ -24,11 +24,13 @@ func NewClient(p ClientParams) Client {
 	}
 }
 
+//go:generate go run github.com/matryer/moq -out client_mock.go . Client
 type Client interface {
 	IsNotFound() bool
 	IsRedirectURIMatch(redirectURI string) bool
 }
 
+//go:generate go run github.com/matryer/moq -out client_repository_mock.go . ClientRepository
 type ClientRepository interface {
 	FindClientByClientID(clientID uuid.UUID) (Client, error)
 }

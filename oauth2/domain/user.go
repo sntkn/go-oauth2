@@ -27,12 +27,14 @@ func NewUser(p UserParams) User {
 	}
 }
 
+//go:generate go run github.com/matryer/moq -out user_mock.go . User
 type User interface {
 	GetID() uuid.UUID
 	IsNotFound() bool
 	IsPasswordMatch(password string) bool
 }
 
+//go:generate go run github.com/matryer/moq -out user_repository_mock.go . UserRepository
 type UserRepository interface {
 	FindUserByEmail(email string) (User, error)
 }

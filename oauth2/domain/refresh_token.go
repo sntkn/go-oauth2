@@ -46,6 +46,7 @@ func StoreNewRefreshToken(p StoreNewRefreshTokenParams) (RefreshToken, error) {
 	return rtoken, nil
 }
 
+//go:generate go run github.com/matryer/moq -out refresh_token_mock.go . RefreshToken
 type RefreshToken interface {
 	IsNotFound() bool
 	GetRefreshToken() string
@@ -56,6 +57,7 @@ type RefreshToken interface {
 	SetNewExpiry(additionalDays int)
 }
 
+//go:generate go run github.com/matryer/moq -out refresh_token_repository_mock.go . RefreshTokenRepository
 type RefreshTokenRepository interface {
 	StoreRefreshToken(t RefreshToken) error
 	FindValidRefreshToken(refreshToken string, expiresAt time.Time) (RefreshToken, error)

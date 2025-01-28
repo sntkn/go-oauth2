@@ -57,6 +57,7 @@ func StoreNewToken(p StoreNewTokenParams) (Token, error) {
 	return atoken, nil
 }
 
+//go:generate go run github.com/matryer/moq -out token_mock.go . Token
 type Token interface {
 	IsNotFound() bool
 	GetAccessToken() string
@@ -69,6 +70,7 @@ type Token interface {
 	SetNewExpiry(additionalMin int)
 }
 
+//go:generate go run github.com/matryer/moq -out token_repository_mock.go . TokenRepository
 type TokenRepository interface {
 	StoreToken(Token) error
 	FindToken(accessToken string) (Token, error)

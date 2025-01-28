@@ -32,6 +32,7 @@ func NewAuthorizationCode(p AuthorizationCodeParams) AuthorizationCode {
 	}
 }
 
+//go:generate go run github.com/matryer/moq -out authorization_code_mock.go . AuthorizationCode
 type AuthorizationCode interface {
 	IsNotFound() bool
 	GetCode() string
@@ -44,6 +45,7 @@ type AuthorizationCode interface {
 	IsExpired(t time.Time) bool
 }
 
+//go:generate go run github.com/matryer/moq -out authorization_code_repository_mock.go . AuthorizationCodeRepository
 type AuthorizationCodeRepository interface {
 	FindAuthorizationCode(string) (AuthorizationCode, error)
 	StoreAuthorizationCode(AuthorizationCode) error
