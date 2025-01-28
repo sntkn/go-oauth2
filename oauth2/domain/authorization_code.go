@@ -41,6 +41,7 @@ type AuthorizationCode interface {
 	GetRedirectURI() string
 	GetExpiresAt() time.Time
 	GenerateRedirectURIWithCode() string
+	IsExpired(t time.Time) bool
 }
 
 type AuthorizationCodeRepository interface {
@@ -92,6 +93,10 @@ func (a *authorizationCode) GetExpiresAt() time.Time {
 
 func (a *authorizationCode) GenerateRedirectURIWithCode() string {
 	return fmt.Sprintf("%s?code=%s", a.RedirectURI, a.Code)
+}
+
+func (a *authorizationCode) IsExpired(t time.Time) bool {
+	return t.After(a.ExpiresAt)
 }
 
 func GenerateCode() (string, error) {

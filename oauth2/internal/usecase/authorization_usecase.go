@@ -110,8 +110,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, "code not found")
 	}
 
-	currentTime := time.Now()
-	if currentTime.After(c.GetExpiresAt()) {
+	if c.IsExpired(time.Now()) {
 		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusForbidden, "code has expired")
 	}
 
@@ -137,7 +136,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 	}
 
 	// revoke code
-	if err = uc.codeRepo.RevokeCode(code); err != nil {
+	if err := uc.codeRepo.RevokeCode(code); err != nil {
 		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -184,11 +183,11 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	if err = uc.tokenRepo.RevokeToken(tkn.GetAccessToken()); err != nil {
+	if err := uc.tokenRepo.RevokeToken(tkn.GetAccessToken()); err != nil {
 		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	if err = uc.refreshTokenRepo.RevokeRefreshToken(rt.GetRefreshToken()); err != nil {
+	if err := uc.refreshTokenRepo.RevokeRefreshToken(rt.GetRefreshToken()); err != nil {
 		return domain.NewToken(domain.TokenParams{}), domain.NewRefreshToken(domain.RefreshTokenParams{}), errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
