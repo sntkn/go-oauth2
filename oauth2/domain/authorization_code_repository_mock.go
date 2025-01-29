@@ -27,7 +27,7 @@ var _ AuthorizationCodeRepository = &AuthorizationCodeRepositoryMock{}
 //			RevokeCodeFunc: func(code string) error {
 //				panic("mock out the RevokeCode method")
 //			},
-//			StoreAuthorizationCodeFunc: func(authorizationCode AuthorizationCode) error {
+//			StoreAuthorizationCodeFunc: func(storeAuthorizationCodeParams StoreAuthorizationCodeParams) (string, error) {
 //				panic("mock out the StoreAuthorizationCode method")
 //			},
 //		}
@@ -47,7 +47,7 @@ type AuthorizationCodeRepositoryMock struct {
 	RevokeCodeFunc func(code string) error
 
 	// StoreAuthorizationCodeFunc mocks the StoreAuthorizationCode method.
-	StoreAuthorizationCodeFunc func(authorizationCode AuthorizationCode) error
+	StoreAuthorizationCodeFunc func(storeAuthorizationCodeParams StoreAuthorizationCodeParams) (string, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -70,8 +70,8 @@ type AuthorizationCodeRepositoryMock struct {
 		}
 		// StoreAuthorizationCode holds details about calls to the StoreAuthorizationCode method.
 		StoreAuthorizationCode []struct {
-			// AuthorizationCode is the authorizationCode argument value.
-			AuthorizationCode AuthorizationCode
+			// StoreAuthorizationCodeParams is the storeAuthorizationCodeParams argument value.
+			StoreAuthorizationCodeParams StoreAuthorizationCodeParams
 		}
 	}
 	lockFindAuthorizationCode      sync.RWMutex
@@ -181,19 +181,19 @@ func (mock *AuthorizationCodeRepositoryMock) RevokeCodeCalls() []struct {
 }
 
 // StoreAuthorizationCode calls StoreAuthorizationCodeFunc.
-func (mock *AuthorizationCodeRepositoryMock) StoreAuthorizationCode(authorizationCode AuthorizationCode) error {
+func (mock *AuthorizationCodeRepositoryMock) StoreAuthorizationCode(storeAuthorizationCodeParams StoreAuthorizationCodeParams) (string, error) {
 	if mock.StoreAuthorizationCodeFunc == nil {
 		panic("AuthorizationCodeRepositoryMock.StoreAuthorizationCodeFunc: method is nil but AuthorizationCodeRepository.StoreAuthorizationCode was just called")
 	}
 	callInfo := struct {
-		AuthorizationCode AuthorizationCode
+		StoreAuthorizationCodeParams StoreAuthorizationCodeParams
 	}{
-		AuthorizationCode: authorizationCode,
+		StoreAuthorizationCodeParams: storeAuthorizationCodeParams,
 	}
 	mock.lockStoreAuthorizationCode.Lock()
 	mock.calls.StoreAuthorizationCode = append(mock.calls.StoreAuthorizationCode, callInfo)
 	mock.lockStoreAuthorizationCode.Unlock()
-	return mock.StoreAuthorizationCodeFunc(authorizationCode)
+	return mock.StoreAuthorizationCodeFunc(storeAuthorizationCodeParams)
 }
 
 // StoreAuthorizationCodeCalls gets all the calls that were made to StoreAuthorizationCode.
@@ -201,10 +201,10 @@ func (mock *AuthorizationCodeRepositoryMock) StoreAuthorizationCode(authorizatio
 //
 //	len(mockedAuthorizationCodeRepository.StoreAuthorizationCodeCalls())
 func (mock *AuthorizationCodeRepositoryMock) StoreAuthorizationCodeCalls() []struct {
-	AuthorizationCode AuthorizationCode
+	StoreAuthorizationCodeParams StoreAuthorizationCodeParams
 } {
 	var calls []struct {
-		AuthorizationCode AuthorizationCode
+		StoreAuthorizationCodeParams StoreAuthorizationCodeParams
 	}
 	mock.lockStoreAuthorizationCode.RLock()
 	calls = mock.calls.StoreAuthorizationCode

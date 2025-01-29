@@ -70,31 +70,25 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	clientID, err := uuid.Parse(p.ClientID)
-	if err != nil {
-		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
-	}
-	userID, err := uuid.Parse(p.UserID)
-	if err != nil {
-		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
-	}
-
-	code := domain.NewAuthorizationCode(domain.AuthorizationCodeParams{
+	code, err := uc.codeRepo.StoreAuthorizationCode(domain.StoreAuthorizationCodeParams{
 		Code:        randomString,
-		ClientID:    clientID,
-		UserID:      userID,
 		Scope:       p.Scope,
 		RedirectURI: p.RedirectURI,
 		ExpiresAt:   time.Now().Add(time.Duration(p.Expires) * time.Second),
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
 	})
-
-	if err := uc.codeRepo.StoreAuthorizationCode(code); err != nil {
+	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	return code, nil
+	c, err := uc.codeRepo.FindAuthorizationCode(code)
+	if err != nil {
+		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
+	}
+	if c == nil {
+		return nil, errors.NewUsecaseError(http.StatusBadRequest, "code not found")
+	}
+
+	return c, nil
 }
 
 func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, domain.RefreshToken, error) {

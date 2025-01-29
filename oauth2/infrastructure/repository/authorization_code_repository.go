@@ -28,16 +28,16 @@ func (r *AuthorizationCodeRepository) FindAuthorizationCode(code string) (domain
 	err := r.db.Get(&c, q, code)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return domain.NewAuthorizationCode(domain.AuthorizationCodeParams{}), nil
+			return nil, nil
 		}
 		return nil, errors.WithStack(err)
 	}
 	return domain.NewAuthorizationCode(domain.AuthorizationCodeParams{
-		UserID:    c.UserID,
-		ClientID:  c.ClientID,
+		UserID:    c.UserID.String(),
+		ClientID:  c.ClientID.String(),
 		Scope:     c.Scope,
 		ExpiresAt: c.ExpiresAt,
-	}), nil
+	})
 }
 
 func (r *AuthorizationCodeRepository) FindValidAuthorizationCode(code string, expiresAt time.Time) (domain.AuthorizationCode, error) {
@@ -47,26 +47,26 @@ func (r *AuthorizationCodeRepository) FindValidAuthorizationCode(code string, ex
 	err := r.db.Get(&c, q, code, expiresAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return domain.NewAuthorizationCode(domain.AuthorizationCodeParams{}), nil
+			return nil, nil
 		}
 		return nil, errors.WithStack(err)
 	}
 	return domain.NewAuthorizationCode(domain.AuthorizationCodeParams{
-		UserID:    c.UserID,
-		ClientID:  c.ClientID,
+		UserID:    c.UserID.String(),
+		ClientID:  c.ClientID.String(),
 		Scope:     c.Scope,
 		ExpiresAt: c.ExpiresAt,
-	}), nil
+	})
 }
 
-func (r *AuthorizationCodeRepository) StoreAuthorizationCode(c domain.AuthorizationCode) error {
+func (r *AuthorizationCodeRepository) StoreAuthorizationCode(p domain.StoreAuthorizationCodeParams) (string, error) {
 	m := &model.AuthorizationCode{
-		Code:        c.GetCode(),
-		ClientID:    c.GetClientID(),
-		UserID:      c.GetUserID(),
-		Scope:       c.GetScope(),
-		RedirectURI: c.GetRedirectURI(),
-		ExpiresAt:   c.GetExpiresAt(),
+		Code:        p.Code,
+		ClientID:    p.ClientID,
+		UserID:      p.UserID,
+		Scope:       p.Scope,
+		RedirectURI: p.RedirectURI,
+		ExpiresAt:   p.ExpiresAt,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -78,7 +78,12 @@ func (r *AuthorizationCodeRepository) StoreAuthorizationCode(c domain.Authorizat
 	`
 
 	_, err := r.db.NamedExec(q, m)
-	return errors.WithStack(err)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	// returning primary key
+	return p.Code, nil
 }
 
 func (r *AuthorizationCodeRepository) RevokeCode(code string) error {
