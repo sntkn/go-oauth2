@@ -25,27 +25,6 @@ func NewRefreshToken(p RefreshTokenParams) RefreshToken {
 	}
 }
 
-type StoreNewRefreshTokenParams struct {
-	AccessToken   string
-	AdditionalDay int
-	Repo          RefreshTokenRepository
-}
-
-func StoreNewRefreshToken(p StoreNewRefreshTokenParams) (RefreshToken, error) {
-	rtoken := NewRefreshToken(RefreshTokenParams{
-		AccessToken: p.AccessToken,
-	})
-	if err := rtoken.SetNewRefreshToken(); err != nil {
-		return nil, err
-	}
-	rtoken.SetNewExpiry(p.AdditionalDay)
-
-	if err := p.Repo.StoreRefreshToken(rtoken); err != nil {
-		return nil, err
-	}
-	return rtoken, nil
-}
-
 //go:generate go run github.com/matryer/moq -out refresh_token_mock.go . RefreshToken
 type RefreshToken interface {
 	IsNotFound() bool

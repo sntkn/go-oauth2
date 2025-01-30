@@ -105,23 +105,16 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 		return nil, nil, errors.NewUsecaseError(http.StatusForbidden, "code has expired")
 	}
 
-	atoken, err := domain.StoreNewToken(domain.StoreNewTokenParams{
-		ClientID:         c.GetClientID(),
-		UserID:           c.GetUserID(),
-		Scope:            c.GetScope(),
-		PrivateKeyBase64: uc.config.PrivateKey,
-		AdditionalMin:    uc.config.AuthTokenExpiresMin,
-		Repo:             uc.tokenRepo,
-	})
+	atoken, err := uc.storeNewToken(
+		c.GetClientID(),
+		c.GetUserID(),
+		c.GetScope(),
+	)
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	rtoken, err := domain.StoreNewRefreshToken(domain.StoreNewRefreshTokenParams{
-		AccessToken:   atoken.GetAccessToken(),
-		AdditionalDay: uc.config.AuthRefreshTokenExpiresDay,
-		Repo:          uc.refreshTokenRepo,
-	})
+	rtoken, err := uc.storeNewRefreshToken(atoken.GetAccessToken())
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -153,23 +146,16 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 		return nil, nil, errors.NewUsecaseError(http.StatusForbidden, "token not found")
 	}
 
-	atoken, err := domain.StoreNewToken(domain.StoreNewTokenParams{
-		ClientID:         tkn.GetClientID(),
-		UserID:           tkn.GetUserID(),
-		Scope:            tkn.GetScope(),
-		PrivateKeyBase64: uc.config.PrivateKey,
-		AdditionalMin:    uc.config.AuthTokenExpiresMin,
-		Repo:             uc.tokenRepo,
-	})
+	atoken, err := uc.storeNewToken(
+		tkn.GetClientID(),
+		tkn.GetUserID(),
+		tkn.GetScope(),
+	)
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	rtoken, err := domain.StoreNewRefreshToken(domain.StoreNewRefreshTokenParams{
-		AccessToken:   atoken.GetAccessToken(),
-		AdditionalDay: uc.config.AuthRefreshTokenExpiresDay,
-		Repo:          uc.refreshTokenRepo,
-	})
+	rtoken, err := uc.storeNewRefreshToken(atoken.GetAccessToken())
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -183,4 +169,39 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 	}
 
 	return atoken, rtoken, nil
+}
+
+func (uc *AuthorizationUsecase) storeNewToken(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+	atoken := domain.NewToken(domain.TokenParams{
+		ClientID: clientID,
+		UserID:   UserID,
+		Scope:    scope,
+	})
+
+	if err := atoken.SetNewAccessToken(uc.config.PrivateKey); err != nil {
+		return nil, err
+	}
+
+	atoken.SetNewExpiry(uc.config.AuthTokenExpiresMin)
+
+	if err := uc.tokenRepo.StoreToken(atoken); err != nil {
+		return nil, err
+	}
+
+	return atoken, nil
+}
+
+func (uc *AuthorizationUsecase) storeNewRefreshToken(accessToken string) (domain.RefreshToken, error) {
+	rtoken := domain.NewRefreshToken(domain.RefreshTokenParams{
+		AccessToken: accessToken,
+	})
+	if err := rtoken.SetNewRefreshToken(); err != nil {
+		return nil, err
+	}
+	rtoken.SetNewExpiry(uc.config.AuthRefreshTokenExpiresDay)
+
+	if err := uc.refreshTokenRepo.StoreRefreshToken(rtoken); err != nil {
+		return nil, err
+	}
+	return rtoken, nil
 }

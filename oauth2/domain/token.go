@@ -29,34 +29,6 @@ func NewToken(p TokenParams) Token {
 	}
 }
 
-type StoreNewTokenParams struct {
-	ClientID         uuid.UUID
-	UserID           uuid.UUID
-	Scope            string
-	PrivateKeyBase64 string
-	AdditionalMin    int
-	Repo             TokenRepository
-}
-
-func StoreNewToken(p StoreNewTokenParams) (Token, error) {
-	atoken := NewToken(TokenParams{
-		ClientID: p.ClientID,
-		UserID:   p.UserID,
-		Scope:    p.Scope,
-	})
-
-	if err := atoken.SetNewAccessToken(p.PrivateKeyBase64); err != nil {
-		return nil, err
-	}
-	atoken.SetNewExpiry(p.AdditionalMin)
-
-	if err := p.Repo.StoreToken(atoken); err != nil {
-		return nil, err
-	}
-
-	return atoken, nil
-}
-
 //go:generate go run github.com/matryer/moq -out token_mock.go . Token
 type Token interface {
 	IsNotFound() bool
