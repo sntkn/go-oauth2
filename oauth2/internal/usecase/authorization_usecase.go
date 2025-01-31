@@ -97,7 +97,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	if c.IsNotFound() {
+	if c == nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusForbidden, "code not found")
 	}
 
