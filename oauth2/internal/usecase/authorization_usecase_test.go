@@ -58,3 +58,65 @@ func TestConsent_ClientNotFound(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, err.(*errors.UsecaseError).Code)
 	assert.Equal(t, "client not found", err.(*errors.UsecaseError).Message)
 }
+
+func TestGenerateAuthorizationCode_Success(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		FindAuthorizationCodeFunc: func(s string) (domain.AuthorizationCode, error) {
+			return &domain.AuthorizationCodeMock{}, nil
+		},
+		StoreAuthorizationCodeFunc: func(storeAuthorizationCodeParams domain.StoreAuthorizationCodeParams) (string, error) {
+			return "code", nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil, nil, nil)
+	_, err := uc.GenerateAuthorizationCode(GenerateAuthorizationCodeParams{})
+	require.NoError(t, err)
+}
+
+func TestGenerateAuthorizationCode_StoreAuthorizationCodeError(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		StoreAuthorizationCodeFunc: func(storeAuthorizationCodeParams domain.StoreAuthorizationCodeParams) (string, error) {
+			return "", errors.New("StoreAuthorizationCode error")
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil, nil, nil)
+	_, err := uc.GenerateAuthorizationCode(GenerateAuthorizationCodeParams{})
+	require.Error(t, err)
+	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
+	assert.Equal(t, "StoreAuthorizationCode error", err.(*errors.UsecaseError).Message)
+}
+
+func TestGenerateAuthorizationCode_FindAuthorizationCodeError(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		FindAuthorizationCodeFunc: func(s string) (domain.AuthorizationCode, error) {
+			return nil, errors.New("FindAuthorizationCode error")
+		},
+		StoreAuthorizationCodeFunc: func(storeAuthorizationCodeParams domain.StoreAuthorizationCodeParams) (string, error) {
+			return "code", nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil, nil, nil)
+	_, err := uc.GenerateAuthorizationCode(GenerateAuthorizationCodeParams{})
+	require.Error(t, err)
+	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
+	assert.Equal(t, "FindAuthorizationCode error", err.(*errors.UsecaseError).Message)
+}
+
+func TestGenerateAuthorizationCode_FindAuthorizationCodeNil(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		FindAuthorizationCodeFunc: func(s string) (domain.AuthorizationCode, error) {
+			return nil, nil
+		},
+		StoreAuthorizationCodeFunc: func(storeAuthorizationCodeParams domain.StoreAuthorizationCodeParams) (string, error) {
+			return "code", nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil, nil, nil)
+	_, err := uc.GenerateAuthorizationCode(GenerateAuthorizationCodeParams{})
+	require.Error(t, err)
+	assert.Equal(t, http.StatusBadRequest, err.(*errors.UsecaseError).Code)
+}
