@@ -3,9 +3,11 @@ package usecase
 import (
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain"
+	"github.com/sntkn/go-oauth2/oauth2/domain/domainservice"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +24,7 @@ func TestConsent_Success(t *testing.T) {
 		},
 	}
 
-	uc := NewAuthorizationUsecase(mockClientRepo, nil, nil, nil, nil)
+	uc := NewAuthorizationUsecase(mockClientRepo, nil, nil)
 	_, err := uc.Consent(uuid.New())
 	require.NoError(t, err)
 }
@@ -34,7 +36,7 @@ func TestConsent_FindClientError(t *testing.T) {
 		},
 	}
 
-	uc := NewAuthorizationUsecase(mockClientRepo, nil, nil, nil, nil)
+	uc := NewAuthorizationUsecase(mockClientRepo, nil, nil)
 	_, err := uc.Consent(uuid.New())
 	require.Error(t, err)
 	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
@@ -52,7 +54,7 @@ func TestConsent_ClientNotFound(t *testing.T) {
 		},
 	}
 
-	uc := NewAuthorizationUsecase(mockClientRepo, nil, nil, nil, nil)
+	uc := NewAuthorizationUsecase(mockClientRepo, nil, nil)
 	_, err := uc.Consent(uuid.New())
 	require.Error(t, err)
 	assert.Equal(t, http.StatusBadRequest, err.(*errors.UsecaseError).Code)
@@ -69,7 +71,7 @@ func TestGenerateAuthorizationCode_Success(t *testing.T) {
 		},
 	}
 
-	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil, nil, nil)
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil)
 	_, err := uc.GenerateAuthorizationCode(GenerateAuthorizationCodeParams{})
 	require.NoError(t, err)
 }
@@ -81,7 +83,7 @@ func TestGenerateAuthorizationCode_StoreAuthorizationCodeError(t *testing.T) {
 		},
 	}
 
-	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil, nil, nil)
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil)
 	_, err := uc.GenerateAuthorizationCode(GenerateAuthorizationCodeParams{})
 	require.Error(t, err)
 	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
@@ -98,7 +100,7 @@ func TestGenerateAuthorizationCode_FindAuthorizationCodeError(t *testing.T) {
 		},
 	}
 
-	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil, nil, nil)
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil)
 	_, err := uc.GenerateAuthorizationCode(GenerateAuthorizationCodeParams{})
 	require.Error(t, err)
 	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
@@ -115,8 +117,49 @@ func TestGenerateAuthorizationCode_FindAuthorizationCodeNil(t *testing.T) {
 		},
 	}
 
-	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil, nil, nil)
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, nil)
 	_, err := uc.GenerateAuthorizationCode(GenerateAuthorizationCodeParams{})
 	require.Error(t, err)
 	assert.Equal(t, http.StatusBadRequest, err.(*errors.UsecaseError).Code)
+}
+
+func TestGenerateTokenByCode_Success(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		FindValidAuthorizationCodeFunc: func(s string, timeMoqParam time.Time) (domain.AuthorizationCode, error) {
+			return &domain.AuthorizationCodeMock{
+				IsExpiredFunc: func(t time.Time) bool {
+					return false
+				},
+				GetClientIDFunc: func() uuid.UUID {
+					return uuid.New()
+				},
+				GetUserIDFunc: func() uuid.UUID {
+					return uuid.New()
+				},
+				GetScopeFunc: func() string {
+					return "scope"
+				},
+			}, nil
+		},
+		RevokeCodeFunc: func(code string) error {
+			return nil
+		},
+	}
+
+	mockTokenService := &domainservice.TokenServiceMock{
+		StoreNewTokenFunc: func(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+			return &domain.TokenMock{
+				GetAccessTokenFunc: func() string {
+					return "access_token"
+				},
+			}, nil
+		},
+		StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
+			return &domain.RefreshTokenMock{}, nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, mockTokenService)
+	_, _, err := uc.GenerateTokenByCode("code")
+	require.NoError(t, err)
 }
