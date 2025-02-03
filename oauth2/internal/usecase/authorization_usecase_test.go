@@ -125,7 +125,7 @@ func TestGenerateAuthorizationCode_FindAuthorizationCodeNil(t *testing.T) {
 
 func TestGenerateTokenByCode_Success(t *testing.T) {
 	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
-		FindValidAuthorizationCodeFunc: func(s string, timeMoqParam time.Time) (domain.AuthorizationCode, error) {
+		FindAuthorizationCodeFunc: func(s string) (domain.AuthorizationCode, error) {
 			return &domain.AuthorizationCodeMock{
 				IsExpiredFunc: func(t time.Time) bool {
 					return false
@@ -155,11 +155,188 @@ func TestGenerateTokenByCode_Success(t *testing.T) {
 			}, nil
 		},
 		StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
+			return &domain.RefreshTokenMock{
+				GetRefreshTokenFunc: func() string {
+					return "refresh_token"
+				},
+			}, nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, mockTokenService)
+	token, rtoken, err := uc.GenerateTokenByCode("code")
+	require.NoError(t, err)
+	assert.Equal(t, "access_token", token.GetAccessToken())
+	assert.Equal(t, "refresh_token", rtoken.GetRefreshToken())
+}
+
+func TestGenerateTokenByCode_FindValidAuthorizationCodeError(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		FindAuthorizationCodeFunc: func(s string) (domain.AuthorizationCode, error) {
+			return nil, errors.New("FindValidAuthorizationCode error")
+		},
+	}
+
+	mockTokenService := &domainservice.TokenServiceMock{}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, mockTokenService)
+	_, _, err := uc.GenerateTokenByCode("code")
+	require.Error(t, err)
+	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
+	assert.Equal(t, "FindValidAuthorizationCode error", err.(*errors.UsecaseError).Message)
+}
+
+func TestGenerateTokenByCode_CodeIsNil(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		FindAuthorizationCodeFunc: func(s string) (domain.AuthorizationCode, error) {
+			return nil, nil
+		},
+	}
+
+	mockTokenService := &domainservice.TokenServiceMock{}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, mockTokenService)
+	_, _, err := uc.GenerateTokenByCode("code")
+	require.Error(t, err)
+	assert.Equal(t, http.StatusForbidden, err.(*errors.UsecaseError).Code)
+	assert.Equal(t, "code not found", err.(*errors.UsecaseError).Message)
+}
+
+func TestGenerateTokenByCode_CodeIsExpired(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		FindAuthorizationCodeFunc: func(s string) (domain.AuthorizationCode, error) {
+			return &domain.AuthorizationCodeMock{
+				IsExpiredFunc: func(t time.Time) bool {
+					return true
+				},
+			}, nil
+		},
+	}
+
+	mockTokenService := &domainservice.TokenServiceMock{}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, mockTokenService)
+	_, _, err := uc.GenerateTokenByCode("code")
+	require.Error(t, err)
+	assert.Equal(t, http.StatusForbidden, err.(*errors.UsecaseError).Code)
+	assert.Equal(t, "code has expired", err.(*errors.UsecaseError).Message)
+}
+
+func TestGenerateTokenByCode_StoreTokenError(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		FindAuthorizationCodeFunc: func(s string) (domain.AuthorizationCode, error) {
+			return &domain.AuthorizationCodeMock{
+				IsExpiredFunc: func(t time.Time) bool {
+					return false
+				},
+				GetClientIDFunc: func() uuid.UUID {
+					return uuid.New()
+				},
+				GetUserIDFunc: func() uuid.UUID {
+					return uuid.New()
+				},
+				GetScopeFunc: func() string {
+					return "scope"
+				},
+			}, nil
+		},
+		RevokeCodeFunc: func(code string) error {
+			return nil
+		},
+	}
+
+	mockTokenService := &domainservice.TokenServiceMock{
+		StoreNewTokenFunc: func(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+			return nil, errors.New("StoreNewToken error")
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, mockTokenService)
+	_, _, err := uc.GenerateTokenByCode("code")
+	require.Error(t, err)
+	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
+	assert.Equal(t, "StoreNewToken error", err.(*errors.UsecaseError).Message)
+}
+
+func TestGenerateTokenByCode_StoreRefreshTokenError(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		FindAuthorizationCodeFunc: func(s string) (domain.AuthorizationCode, error) {
+			return &domain.AuthorizationCodeMock{
+				IsExpiredFunc: func(t time.Time) bool {
+					return false
+				},
+				GetClientIDFunc: func() uuid.UUID {
+					return uuid.New()
+				},
+				GetUserIDFunc: func() uuid.UUID {
+					return uuid.New()
+				},
+				GetScopeFunc: func() string {
+					return "scope"
+				},
+			}, nil
+		},
+	}
+
+	mockTokenService := &domainservice.TokenServiceMock{
+		StoreNewTokenFunc: func(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+			return &domain.TokenMock{
+				GetAccessTokenFunc: func() string {
+					return "access_token"
+				},
+			}, nil
+		},
+		StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
+			return nil, errors.New("StoreNewRefreshToken error")
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, mockCodeRepo, mockTokenService)
+	_, _, err := uc.GenerateTokenByCode("code")
+	require.Error(t, err)
+	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
+	assert.Equal(t, "StoreNewRefreshToken error", err.(*errors.UsecaseError).Message)
+}
+
+func TestGenerateTokenByCode_RevokeCodeError(t *testing.T) {
+	mockCodeRepo := &domain.AuthorizationCodeRepositoryMock{
+		FindAuthorizationCodeFunc: func(s string) (domain.AuthorizationCode, error) {
+			return &domain.AuthorizationCodeMock{
+				IsExpiredFunc: func(t time.Time) bool {
+					return false
+				},
+				GetClientIDFunc: func() uuid.UUID {
+					return uuid.New()
+				},
+				GetUserIDFunc: func() uuid.UUID {
+					return uuid.New()
+				},
+				GetScopeFunc: func() string {
+					return "scope"
+				},
+			}, nil
+		},
+		RevokeCodeFunc: func(code string) error {
+			return errors.New("RevokeCode error")
+		},
+	}
+
+	mockTokenService := &domainservice.TokenServiceMock{
+		StoreNewTokenFunc: func(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+			return &domain.TokenMock{
+				GetAccessTokenFunc: func() string {
+					return "access_token"
+				},
+			}, nil
+		},
+		StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
 			return &domain.RefreshTokenMock{}, nil
 		},
 	}
 
 	uc := NewAuthorizationUsecase(nil, mockCodeRepo, mockTokenService)
 	_, _, err := uc.GenerateTokenByCode("code")
-	require.NoError(t, err)
+	require.Error(t, err)
+	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
+	assert.Equal(t, "RevokeCode error", err.(*errors.UsecaseError).Message)
 }

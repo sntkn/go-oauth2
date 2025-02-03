@@ -86,7 +86,7 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 }
 
 func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, domain.RefreshToken, error) {
-	c, err := uc.codeRepo.FindValidAuthorizationCode(code, time.Now())
+	c, err := uc.codeRepo.FindAuthorizationCode(code)
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
