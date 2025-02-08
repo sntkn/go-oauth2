@@ -41,7 +41,7 @@ func (r *RefreshTokenRepository) FindRefreshToken(refreshToken string) (domain.R
 	err := r.db.Get(&rtkn, q, refreshToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return domain.NewRefreshToken(domain.RefreshTokenParams{}), nil
+			return nil, nil
 		}
 		return nil, errors.WithStack(err)
 	}

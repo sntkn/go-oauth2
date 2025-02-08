@@ -45,7 +45,7 @@ func (r *TokenRepository) FindToken(accessToken string) (domain.Token, error) {
 	err := r.db.Get(&tkn, q, accessToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return domain.NewToken(domain.TokenParams{}), nil
+			return nil, nil
 		}
 		return nil, errors.WithStack(err)
 	}
