@@ -123,20 +123,24 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 
 func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (domain.Token, domain.RefreshToken, error) {
 
-	rt, err := uc.tokenService.FindValidRefreshToken(refreshToken, time.Now())
+	rt, err := uc.tokenService.FindRefreshToken(refreshToken)
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	if rt.IsNotFound() {
+	if rt == nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusForbidden, "refresh token not found")
+	}
+
+	if rt.IsExpired(time.Now()) {
+		return nil, nil, errors.NewUsecaseError(http.StatusForbidden, "refresh token has expired")
 	}
 
 	tkn, err := uc.tokenService.FindToken(rt.GetAccessToken())
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
-	if tkn.IsNotFound() {
+	if tkn == nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusForbidden, "token not found")
 	}
 

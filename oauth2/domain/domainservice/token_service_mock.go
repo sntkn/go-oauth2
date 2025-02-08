@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"sync"
-	"time"
 )
 
 // Ensure, that TokenServiceMock does implement TokenService.
@@ -20,11 +19,11 @@ var _ TokenService = &TokenServiceMock{}
 //
 //		// make and configure a mocked TokenService
 //		mockedTokenService := &TokenServiceMock{
+//			FindRefreshTokenFunc: func(refreshToken string) (domain.RefreshToken, error) {
+//				panic("mock out the FindRefreshToken method")
+//			},
 //			FindTokenFunc: func(accessToken string) (domain.Token, error) {
 //				panic("mock out the FindToken method")
-//			},
-//			FindValidRefreshTokenFunc: func(refreshToken string, expiresAt time.Time) (domain.RefreshToken, error) {
-//				panic("mock out the FindValidRefreshToken method")
 //			},
 //			RevokeRefreshTokenFunc: func(refreshToken string) error {
 //				panic("mock out the RevokeRefreshToken method")
@@ -45,11 +44,11 @@ var _ TokenService = &TokenServiceMock{}
 //
 //	}
 type TokenServiceMock struct {
+	// FindRefreshTokenFunc mocks the FindRefreshToken method.
+	FindRefreshTokenFunc func(refreshToken string) (domain.RefreshToken, error)
+
 	// FindTokenFunc mocks the FindToken method.
 	FindTokenFunc func(accessToken string) (domain.Token, error)
-
-	// FindValidRefreshTokenFunc mocks the FindValidRefreshToken method.
-	FindValidRefreshTokenFunc func(refreshToken string, expiresAt time.Time) (domain.RefreshToken, error)
 
 	// RevokeRefreshTokenFunc mocks the RevokeRefreshToken method.
 	RevokeRefreshTokenFunc func(refreshToken string) error
@@ -65,17 +64,15 @@ type TokenServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// FindRefreshToken holds details about calls to the FindRefreshToken method.
+		FindRefreshToken []struct {
+			// RefreshToken is the refreshToken argument value.
+			RefreshToken string
+		}
 		// FindToken holds details about calls to the FindToken method.
 		FindToken []struct {
 			// AccessToken is the accessToken argument value.
 			AccessToken string
-		}
-		// FindValidRefreshToken holds details about calls to the FindValidRefreshToken method.
-		FindValidRefreshToken []struct {
-			// RefreshToken is the refreshToken argument value.
-			RefreshToken string
-			// ExpiresAt is the expiresAt argument value.
-			ExpiresAt time.Time
 		}
 		// RevokeRefreshToken holds details about calls to the RevokeRefreshToken method.
 		RevokeRefreshToken []struct {
@@ -102,12 +99,44 @@ type TokenServiceMock struct {
 			Scope string
 		}
 	}
-	lockFindToken             sync.RWMutex
-	lockFindValidRefreshToken sync.RWMutex
-	lockRevokeRefreshToken    sync.RWMutex
-	lockRevokeToken           sync.RWMutex
-	lockStoreNewRefreshToken  sync.RWMutex
-	lockStoreNewToken         sync.RWMutex
+	lockFindRefreshToken     sync.RWMutex
+	lockFindToken            sync.RWMutex
+	lockRevokeRefreshToken   sync.RWMutex
+	lockRevokeToken          sync.RWMutex
+	lockStoreNewRefreshToken sync.RWMutex
+	lockStoreNewToken        sync.RWMutex
+}
+
+// FindRefreshToken calls FindRefreshTokenFunc.
+func (mock *TokenServiceMock) FindRefreshToken(refreshToken string) (domain.RefreshToken, error) {
+	if mock.FindRefreshTokenFunc == nil {
+		panic("TokenServiceMock.FindRefreshTokenFunc: method is nil but TokenService.FindRefreshToken was just called")
+	}
+	callInfo := struct {
+		RefreshToken string
+	}{
+		RefreshToken: refreshToken,
+	}
+	mock.lockFindRefreshToken.Lock()
+	mock.calls.FindRefreshToken = append(mock.calls.FindRefreshToken, callInfo)
+	mock.lockFindRefreshToken.Unlock()
+	return mock.FindRefreshTokenFunc(refreshToken)
+}
+
+// FindRefreshTokenCalls gets all the calls that were made to FindRefreshToken.
+// Check the length with:
+//
+//	len(mockedTokenService.FindRefreshTokenCalls())
+func (mock *TokenServiceMock) FindRefreshTokenCalls() []struct {
+	RefreshToken string
+} {
+	var calls []struct {
+		RefreshToken string
+	}
+	mock.lockFindRefreshToken.RLock()
+	calls = mock.calls.FindRefreshToken
+	mock.lockFindRefreshToken.RUnlock()
+	return calls
 }
 
 // FindToken calls FindTokenFunc.
@@ -139,42 +168,6 @@ func (mock *TokenServiceMock) FindTokenCalls() []struct {
 	mock.lockFindToken.RLock()
 	calls = mock.calls.FindToken
 	mock.lockFindToken.RUnlock()
-	return calls
-}
-
-// FindValidRefreshToken calls FindValidRefreshTokenFunc.
-func (mock *TokenServiceMock) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (domain.RefreshToken, error) {
-	if mock.FindValidRefreshTokenFunc == nil {
-		panic("TokenServiceMock.FindValidRefreshTokenFunc: method is nil but TokenService.FindValidRefreshToken was just called")
-	}
-	callInfo := struct {
-		RefreshToken string
-		ExpiresAt    time.Time
-	}{
-		RefreshToken: refreshToken,
-		ExpiresAt:    expiresAt,
-	}
-	mock.lockFindValidRefreshToken.Lock()
-	mock.calls.FindValidRefreshToken = append(mock.calls.FindValidRefreshToken, callInfo)
-	mock.lockFindValidRefreshToken.Unlock()
-	return mock.FindValidRefreshTokenFunc(refreshToken, expiresAt)
-}
-
-// FindValidRefreshTokenCalls gets all the calls that were made to FindValidRefreshToken.
-// Check the length with:
-//
-//	len(mockedTokenService.FindValidRefreshTokenCalls())
-func (mock *TokenServiceMock) FindValidRefreshTokenCalls() []struct {
-	RefreshToken string
-	ExpiresAt    time.Time
-} {
-	var calls []struct {
-		RefreshToken string
-		ExpiresAt    time.Time
-	}
-	mock.lockFindValidRefreshToken.RLock()
-	calls = mock.calls.FindValidRefreshToken
-	mock.lockFindValidRefreshToken.RUnlock()
 	return calls
 }
 

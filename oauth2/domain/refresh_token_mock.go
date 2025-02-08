@@ -30,6 +30,9 @@ var _ RefreshToken = &RefreshTokenMock{}
 //			GetRefreshTokenFunc: func() string {
 //				panic("mock out the GetRefreshToken method")
 //			},
+//			IsExpiredFunc: func(now time.Time) bool {
+//				panic("mock out the IsExpired method")
+//			},
 //			IsNotFoundFunc: func() bool {
 //				panic("mock out the IsNotFound method")
 //			},
@@ -58,6 +61,9 @@ type RefreshTokenMock struct {
 	// GetRefreshTokenFunc mocks the GetRefreshToken method.
 	GetRefreshTokenFunc func() string
 
+	// IsExpiredFunc mocks the IsExpired method.
+	IsExpiredFunc func(now time.Time) bool
+
 	// IsNotFoundFunc mocks the IsNotFound method.
 	IsNotFoundFunc func() bool
 
@@ -81,6 +87,11 @@ type RefreshTokenMock struct {
 		// GetRefreshToken holds details about calls to the GetRefreshToken method.
 		GetRefreshToken []struct {
 		}
+		// IsExpired holds details about calls to the IsExpired method.
+		IsExpired []struct {
+			// Now is the now argument value.
+			Now time.Time
+		}
 		// IsNotFound holds details about calls to the IsNotFound method.
 		IsNotFound []struct {
 		}
@@ -97,6 +108,7 @@ type RefreshTokenMock struct {
 	lockGetAccessToken     sync.RWMutex
 	lockGetExpiresAt       sync.RWMutex
 	lockGetRefreshToken    sync.RWMutex
+	lockIsExpired          sync.RWMutex
 	lockIsNotFound         sync.RWMutex
 	lockSetNewExpiry       sync.RWMutex
 	lockSetNewRefreshToken sync.RWMutex
@@ -207,6 +219,38 @@ func (mock *RefreshTokenMock) GetRefreshTokenCalls() []struct {
 	mock.lockGetRefreshToken.RLock()
 	calls = mock.calls.GetRefreshToken
 	mock.lockGetRefreshToken.RUnlock()
+	return calls
+}
+
+// IsExpired calls IsExpiredFunc.
+func (mock *RefreshTokenMock) IsExpired(now time.Time) bool {
+	if mock.IsExpiredFunc == nil {
+		panic("RefreshTokenMock.IsExpiredFunc: method is nil but RefreshToken.IsExpired was just called")
+	}
+	callInfo := struct {
+		Now time.Time
+	}{
+		Now: now,
+	}
+	mock.lockIsExpired.Lock()
+	mock.calls.IsExpired = append(mock.calls.IsExpired, callInfo)
+	mock.lockIsExpired.Unlock()
+	return mock.IsExpiredFunc(now)
+}
+
+// IsExpiredCalls gets all the calls that were made to IsExpired.
+// Check the length with:
+//
+//	len(mockedRefreshToken.IsExpiredCalls())
+func (mock *RefreshTokenMock) IsExpiredCalls() []struct {
+	Now time.Time
+} {
+	var calls []struct {
+		Now time.Time
+	}
+	mock.lockIsExpired.RLock()
+	calls = mock.calls.IsExpired
+	mock.lockIsExpired.RUnlock()
 	return calls
 }
 

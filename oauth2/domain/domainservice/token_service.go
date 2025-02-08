@@ -1,8 +1,6 @@
 package domainservice
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
@@ -14,7 +12,7 @@ type TokenService interface {
 	StoreNewRefreshToken(accessToken string) (domain.RefreshToken, error)
 	FindToken(accessToken string) (domain.Token, error)
 	RevokeToken(accessToken string) error
-	FindValidRefreshToken(refreshToken string, expiresAt time.Time) (domain.RefreshToken, error)
+	FindRefreshToken(refreshToken string) (domain.RefreshToken, error)
 	RevokeRefreshToken(refreshToken string) error
 }
 
@@ -79,8 +77,8 @@ func (s *tokenService) RevokeToken(accessToken string) error {
 	return s.tokenRepo.RevokeToken(accessToken)
 }
 
-func (s *tokenService) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (domain.RefreshToken, error) {
-	return s.refreshTokenRepo.FindValidRefreshToken(refreshToken, expiresAt)
+func (s *tokenService) FindRefreshToken(refreshToken string) (domain.RefreshToken, error) {
+	return s.refreshTokenRepo.FindRefreshToken(refreshToken)
 }
 
 func (s *tokenService) RevokeRefreshToken(refreshToken string) error {

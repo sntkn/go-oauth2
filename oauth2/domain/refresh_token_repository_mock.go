@@ -5,7 +5,6 @@ package domain
 
 import (
 	"sync"
-	"time"
 )
 
 // Ensure, that RefreshTokenRepositoryMock does implement RefreshTokenRepository.
@@ -18,8 +17,8 @@ var _ RefreshTokenRepository = &RefreshTokenRepositoryMock{}
 //
 //		// make and configure a mocked RefreshTokenRepository
 //		mockedRefreshTokenRepository := &RefreshTokenRepositoryMock{
-//			FindValidRefreshTokenFunc: func(refreshToken string, expiresAt time.Time) (RefreshToken, error) {
-//				panic("mock out the FindValidRefreshToken method")
+//			FindRefreshTokenFunc: func(refreshToken string) (RefreshToken, error) {
+//				panic("mock out the FindRefreshToken method")
 //			},
 //			RevokeRefreshTokenFunc: func(refreshToken string) error {
 //				panic("mock out the RevokeRefreshToken method")
@@ -34,8 +33,8 @@ var _ RefreshTokenRepository = &RefreshTokenRepositoryMock{}
 //
 //	}
 type RefreshTokenRepositoryMock struct {
-	// FindValidRefreshTokenFunc mocks the FindValidRefreshToken method.
-	FindValidRefreshTokenFunc func(refreshToken string, expiresAt time.Time) (RefreshToken, error)
+	// FindRefreshTokenFunc mocks the FindRefreshToken method.
+	FindRefreshTokenFunc func(refreshToken string) (RefreshToken, error)
 
 	// RevokeRefreshTokenFunc mocks the RevokeRefreshToken method.
 	RevokeRefreshTokenFunc func(refreshToken string) error
@@ -45,12 +44,10 @@ type RefreshTokenRepositoryMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// FindValidRefreshToken holds details about calls to the FindValidRefreshToken method.
-		FindValidRefreshToken []struct {
+		// FindRefreshToken holds details about calls to the FindRefreshToken method.
+		FindRefreshToken []struct {
 			// RefreshToken is the refreshToken argument value.
 			RefreshToken string
-			// ExpiresAt is the expiresAt argument value.
-			ExpiresAt time.Time
 		}
 		// RevokeRefreshToken holds details about calls to the RevokeRefreshToken method.
 		RevokeRefreshToken []struct {
@@ -63,44 +60,40 @@ type RefreshTokenRepositoryMock struct {
 			T RefreshToken
 		}
 	}
-	lockFindValidRefreshToken sync.RWMutex
-	lockRevokeRefreshToken    sync.RWMutex
-	lockStoreRefreshToken     sync.RWMutex
+	lockFindRefreshToken   sync.RWMutex
+	lockRevokeRefreshToken sync.RWMutex
+	lockStoreRefreshToken  sync.RWMutex
 }
 
-// FindValidRefreshToken calls FindValidRefreshTokenFunc.
-func (mock *RefreshTokenRepositoryMock) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (RefreshToken, error) {
-	if mock.FindValidRefreshTokenFunc == nil {
-		panic("RefreshTokenRepositoryMock.FindValidRefreshTokenFunc: method is nil but RefreshTokenRepository.FindValidRefreshToken was just called")
+// FindRefreshToken calls FindRefreshTokenFunc.
+func (mock *RefreshTokenRepositoryMock) FindRefreshToken(refreshToken string) (RefreshToken, error) {
+	if mock.FindRefreshTokenFunc == nil {
+		panic("RefreshTokenRepositoryMock.FindRefreshTokenFunc: method is nil but RefreshTokenRepository.FindRefreshToken was just called")
 	}
 	callInfo := struct {
 		RefreshToken string
-		ExpiresAt    time.Time
 	}{
 		RefreshToken: refreshToken,
-		ExpiresAt:    expiresAt,
 	}
-	mock.lockFindValidRefreshToken.Lock()
-	mock.calls.FindValidRefreshToken = append(mock.calls.FindValidRefreshToken, callInfo)
-	mock.lockFindValidRefreshToken.Unlock()
-	return mock.FindValidRefreshTokenFunc(refreshToken, expiresAt)
+	mock.lockFindRefreshToken.Lock()
+	mock.calls.FindRefreshToken = append(mock.calls.FindRefreshToken, callInfo)
+	mock.lockFindRefreshToken.Unlock()
+	return mock.FindRefreshTokenFunc(refreshToken)
 }
 
-// FindValidRefreshTokenCalls gets all the calls that were made to FindValidRefreshToken.
+// FindRefreshTokenCalls gets all the calls that were made to FindRefreshToken.
 // Check the length with:
 //
-//	len(mockedRefreshTokenRepository.FindValidRefreshTokenCalls())
-func (mock *RefreshTokenRepositoryMock) FindValidRefreshTokenCalls() []struct {
+//	len(mockedRefreshTokenRepository.FindRefreshTokenCalls())
+func (mock *RefreshTokenRepositoryMock) FindRefreshTokenCalls() []struct {
 	RefreshToken string
-	ExpiresAt    time.Time
 } {
 	var calls []struct {
 		RefreshToken string
-		ExpiresAt    time.Time
 	}
-	mock.lockFindValidRefreshToken.RLock()
-	calls = mock.calls.FindValidRefreshToken
-	mock.lockFindValidRefreshToken.RUnlock()
+	mock.lockFindRefreshToken.RLock()
+	calls = mock.calls.FindRefreshToken
+	mock.lockFindRefreshToken.RUnlock()
 	return calls
 }
 
