@@ -1,9 +1,12 @@
 package domainservice
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
+	"github.com/sntkn/go-oauth2/oauth2/pkg/errors"
 )
 
 //go:generate go run github.com/matryer/moq -out token_service_mock.go . TokenService
@@ -14,6 +17,7 @@ type TokenService interface {
 	RevokeToken(accessToken string) error
 	FindRefreshToken(refreshToken string) (domain.RefreshToken, error)
 	RevokeRefreshToken(refreshToken string) error
+	FindTokenAndRefreshTokenByRefreshToken(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error)
 }
 
 func NewTokenService(
@@ -83,4 +87,24 @@ func (s *tokenService) FindRefreshToken(refreshToken string) (domain.RefreshToke
 
 func (s *tokenService) RevokeRefreshToken(refreshToken string) error {
 	return s.refreshTokenRepo.RevokeRefreshToken(refreshToken)
+}
+
+func (s *tokenService) FindTokenAndRefreshTokenByRefreshToken(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error) {
+	rt, err := s.refreshTokenRepo.FindRefreshToken(refreshToken)
+	if err != nil {
+		return nil, nil, errors.NewServiceErrorError(errors.ErrCodeInternalServer, err.Error())
+	}
+	if rt == nil {
+		return nil, nil, errors.NewServiceErrorError(errors.ErrCodeNotFound, "refresh token not found")
+	}
+	if rt.IsExpired(now) {
+		return nil, nil, errors.NewServiceErrorError(errors.ErrCodeForbidden, "refresh token has expired")
+	}
+
+	tkn, err := s.FindToken(rt.GetAccessToken())
+	if tkn == nil {
+		return nil, nil, errors.NewServiceErrorError(errors.ErrCodeNotFound, "token not found")
+	}
+
+	return tkn, rt, err
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"sync"
+	"time"
 )
 
 // Ensure, that TokenServiceMock does implement TokenService.
@@ -24,6 +25,9 @@ var _ TokenService = &TokenServiceMock{}
 //			},
 //			FindTokenFunc: func(accessToken string) (domain.Token, error) {
 //				panic("mock out the FindToken method")
+//			},
+//			FindTokenAndRefreshTokenByRefreshTokenFunc: func(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error) {
+//				panic("mock out the FindTokenAndRefreshTokenByRefreshToken method")
 //			},
 //			RevokeRefreshTokenFunc: func(refreshToken string) error {
 //				panic("mock out the RevokeRefreshToken method")
@@ -50,6 +54,9 @@ type TokenServiceMock struct {
 	// FindTokenFunc mocks the FindToken method.
 	FindTokenFunc func(accessToken string) (domain.Token, error)
 
+	// FindTokenAndRefreshTokenByRefreshTokenFunc mocks the FindTokenAndRefreshTokenByRefreshToken method.
+	FindTokenAndRefreshTokenByRefreshTokenFunc func(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error)
+
 	// RevokeRefreshTokenFunc mocks the RevokeRefreshToken method.
 	RevokeRefreshTokenFunc func(refreshToken string) error
 
@@ -73,6 +80,13 @@ type TokenServiceMock struct {
 		FindToken []struct {
 			// AccessToken is the accessToken argument value.
 			AccessToken string
+		}
+		// FindTokenAndRefreshTokenByRefreshToken holds details about calls to the FindTokenAndRefreshTokenByRefreshToken method.
+		FindTokenAndRefreshTokenByRefreshToken []struct {
+			// RefreshToken is the refreshToken argument value.
+			RefreshToken string
+			// Now is the now argument value.
+			Now time.Time
 		}
 		// RevokeRefreshToken holds details about calls to the RevokeRefreshToken method.
 		RevokeRefreshToken []struct {
@@ -99,12 +113,13 @@ type TokenServiceMock struct {
 			Scope string
 		}
 	}
-	lockFindRefreshToken     sync.RWMutex
-	lockFindToken            sync.RWMutex
-	lockRevokeRefreshToken   sync.RWMutex
-	lockRevokeToken          sync.RWMutex
-	lockStoreNewRefreshToken sync.RWMutex
-	lockStoreNewToken        sync.RWMutex
+	lockFindRefreshToken                       sync.RWMutex
+	lockFindToken                              sync.RWMutex
+	lockFindTokenAndRefreshTokenByRefreshToken sync.RWMutex
+	lockRevokeRefreshToken                     sync.RWMutex
+	lockRevokeToken                            sync.RWMutex
+	lockStoreNewRefreshToken                   sync.RWMutex
+	lockStoreNewToken                          sync.RWMutex
 }
 
 // FindRefreshToken calls FindRefreshTokenFunc.
@@ -168,6 +183,42 @@ func (mock *TokenServiceMock) FindTokenCalls() []struct {
 	mock.lockFindToken.RLock()
 	calls = mock.calls.FindToken
 	mock.lockFindToken.RUnlock()
+	return calls
+}
+
+// FindTokenAndRefreshTokenByRefreshToken calls FindTokenAndRefreshTokenByRefreshTokenFunc.
+func (mock *TokenServiceMock) FindTokenAndRefreshTokenByRefreshToken(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error) {
+	if mock.FindTokenAndRefreshTokenByRefreshTokenFunc == nil {
+		panic("TokenServiceMock.FindTokenAndRefreshTokenByRefreshTokenFunc: method is nil but TokenService.FindTokenAndRefreshTokenByRefreshToken was just called")
+	}
+	callInfo := struct {
+		RefreshToken string
+		Now          time.Time
+	}{
+		RefreshToken: refreshToken,
+		Now:          now,
+	}
+	mock.lockFindTokenAndRefreshTokenByRefreshToken.Lock()
+	mock.calls.FindTokenAndRefreshTokenByRefreshToken = append(mock.calls.FindTokenAndRefreshTokenByRefreshToken, callInfo)
+	mock.lockFindTokenAndRefreshTokenByRefreshToken.Unlock()
+	return mock.FindTokenAndRefreshTokenByRefreshTokenFunc(refreshToken, now)
+}
+
+// FindTokenAndRefreshTokenByRefreshTokenCalls gets all the calls that were made to FindTokenAndRefreshTokenByRefreshToken.
+// Check the length with:
+//
+//	len(mockedTokenService.FindTokenAndRefreshTokenByRefreshTokenCalls())
+func (mock *TokenServiceMock) FindTokenAndRefreshTokenByRefreshTokenCalls() []struct {
+	RefreshToken string
+	Now          time.Time
+} {
+	var calls []struct {
+		RefreshToken string
+		Now          time.Time
+	}
+	mock.lockFindTokenAndRefreshTokenByRefreshToken.RLock()
+	calls = mock.calls.FindTokenAndRefreshTokenByRefreshToken
+	mock.lockFindTokenAndRefreshTokenByRefreshToken.RUnlock()
 	return calls
 }
 
