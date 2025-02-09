@@ -25,27 +25,7 @@ func NewRefreshToken(p RefreshTokenParams) RefreshToken {
 	}
 }
 
-type StoreNewRefreshTokenParams struct {
-	AccessToken   string
-	AdditionalDay int
-	Repo          RefreshTokenRepository
-}
-
-func StoreNewRefreshToken(p StoreNewRefreshTokenParams) (RefreshToken, error) {
-	rtoken := NewRefreshToken(RefreshTokenParams{
-		AccessToken: p.AccessToken,
-	})
-	if err := rtoken.SetNewRefreshToken(); err != nil {
-		return nil, err
-	}
-	rtoken.SetNewExpiry(p.AdditionalDay)
-
-	if err := p.Repo.StoreRefreshToken(rtoken); err != nil {
-		return nil, err
-	}
-	return rtoken, nil
-}
-
+//go:generate go run github.com/matryer/moq -out refresh_token_mock.go . RefreshToken
 type RefreshToken interface {
 	IsNotFound() bool
 	GetRefreshToken() string
@@ -54,11 +34,13 @@ type RefreshToken interface {
 	Expiry() int64
 	SetNewRefreshToken() error
 	SetNewExpiry(additionalDays int)
+	IsExpired(now time.Time) bool
 }
 
+//go:generate go run github.com/matryer/moq -out refresh_token_repository_mock.go . RefreshTokenRepository
 type RefreshTokenRepository interface {
 	StoreRefreshToken(t RefreshToken) error
-	FindValidRefreshToken(refreshToken string, expiresAt time.Time) (RefreshToken, error)
+	FindRefreshToken(refreshToken string) (RefreshToken, error)
 	RevokeRefreshToken(refreshToken string) error
 }
 
@@ -86,6 +68,10 @@ func (t *refreshToken) GetExpiresAt() time.Time {
 
 func (t *refreshToken) Expiry() int64 {
 	return t.ExpiresAt.Unix()
+}
+
+func (t *refreshToken) IsExpired(now time.Time) bool {
+	return t.ExpiresAt.After(now)
 }
 
 func (t *refreshToken) SetNewRefreshToken() error {

@@ -8,10 +8,19 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
-type AuthorizationCodeParams struct {
+type StoreAuthorizationCodeParams struct {
 	Code        string
 	ClientID    uuid.UUID
 	UserID      uuid.UUID
+	Scope       string
+	RedirectURI string
+	ExpiresAt   time.Time
+}
+
+type AuthorizationCodeParams struct {
+	Code        string
+	ClientID    string
+	UserID      string
 	Scope       string
 	RedirectURI string
 	ExpiresAt   time.Time
@@ -19,19 +28,30 @@ type AuthorizationCodeParams struct {
 	UpdatedAt   time.Time
 }
 
-func NewAuthorizationCode(p AuthorizationCodeParams) AuthorizationCode {
+func NewAuthorizationCode(p AuthorizationCodeParams) (AuthorizationCode, error) {
+
+	clientID, err := uuid.Parse(p.ClientID)
+	if err != nil {
+		return nil, err
+	}
+	userID, err := uuid.Parse(p.UserID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &authorizationCode{
 		Code:        p.Code,
-		ClientID:    p.ClientID,
-		UserID:      p.UserID,
+		ClientID:    clientID,
+		UserID:      userID,
 		Scope:       p.Scope,
 		RedirectURI: p.RedirectURI,
 		ExpiresAt:   p.ExpiresAt,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
-	}
+	}, nil
 }
 
+//go:generate go run github.com/matryer/moq -out authorization_code_mock.go . AuthorizationCode
 type AuthorizationCode interface {
 	IsNotFound() bool
 	GetCode() string
@@ -44,9 +64,10 @@ type AuthorizationCode interface {
 	IsExpired(t time.Time) bool
 }
 
+//go:generate go run github.com/matryer/moq -out authorization_code_repository_mock.go . AuthorizationCodeRepository
 type AuthorizationCodeRepository interface {
 	FindAuthorizationCode(string) (AuthorizationCode, error)
-	StoreAuthorizationCode(AuthorizationCode) error
+	StoreAuthorizationCode(StoreAuthorizationCodeParams) (string, error)
 	FindValidAuthorizationCode(string, time.Time) (AuthorizationCode, error)
 	RevokeCode(code string) error
 }

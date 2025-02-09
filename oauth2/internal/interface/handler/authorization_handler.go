@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain"
+	"github.com/sntkn/go-oauth2/oauth2/domain/domainservice"
 	"github.com/sntkn/go-oauth2/oauth2/infrastructure/repository"
-	"github.com/sntkn/go-oauth2/oauth2/internal/common/accesstoken"
 	"github.com/sntkn/go-oauth2/oauth2/internal/common/session"
 	"github.com/sntkn/go-oauth2/oauth2/internal/usecase"
 	"github.com/sntkn/go-oauth2/oauth2/pkg/config"
@@ -19,8 +19,8 @@ func NewAuthorizationHandler(opt HandlerOption) *AuthorizationHandler {
 	codeRepo := repository.NewAuthorizationCodeRepository(opt.DB)
 	tokenRepo := repository.NewTokenRepository(opt.DB)
 	refreshTokenRepo := repository.NewRefreshTokenRepository(opt.DB)
-	tokenGen := accesstoken.NewTokenService()
-	uc := usecase.NewAuthorizationUsecase(clientRepo, codeRepo, tokenRepo, refreshTokenRepo, opt.Config, tokenGen)
+	tokenService := domainservice.NewTokenService(tokenRepo, refreshTokenRepo, opt.Config)
+	uc := usecase.NewAuthorizationUsecase(clientRepo, codeRepo, tokenService)
 	return &AuthorizationHandler{
 		uc:      uc,
 		session: opt.Session,

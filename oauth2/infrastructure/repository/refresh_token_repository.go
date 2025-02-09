@@ -34,14 +34,14 @@ func (r *RefreshTokenRepository) StoreRefreshToken(t domain.RefreshToken) error 
 	return errors.WithStack(err)
 }
 
-func (r *RefreshTokenRepository) FindValidRefreshToken(refreshToken string, expiresAt time.Time) (domain.RefreshToken, error) {
-	q := "SELECT access_token FROM oauth2_refresh_tokens WHERE domain = $1 AND expires_at > $2"
+func (r *RefreshTokenRepository) FindRefreshToken(refreshToken string) (domain.RefreshToken, error) {
+	q := "SELECT access_token FROM oauth2_refresh_tokens WHERE domain = $1"
 	var rtkn model.RefreshToken
 
-	err := r.db.Get(&rtkn, q, refreshToken, expiresAt)
+	err := r.db.Get(&rtkn, q, refreshToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return domain.NewRefreshToken(domain.RefreshTokenParams{}), nil
+			return nil, nil
 		}
 		return nil, errors.WithStack(err)
 	}
