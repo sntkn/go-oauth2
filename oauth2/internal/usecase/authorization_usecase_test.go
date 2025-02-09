@@ -340,3 +340,291 @@ func TestGenerateTokenByCode_RevokeCodeError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
 	assert.Equal(t, "RevokeCode error", err.(*errors.UsecaseError).Message)
 }
+
+func TestGenerateTokenByRefreshToken_Success(t *testing.T) {
+	mockTokenService := &domainservice.TokenServiceMock{
+		FindTokenAndRefreshTokenByRefreshTokenFunc: func(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error) {
+			return &domain.TokenMock{
+					GetAccessTokenFunc: func() string {
+						return "access_token"
+					},
+					GetClientIDFunc: func() uuid.UUID {
+						return uuid.New()
+					},
+					GetUserIDFunc: func() uuid.UUID {
+						return uuid.New()
+					},
+					GetScopeFunc: func() string {
+						return "scope"
+					},
+				}, &domain.RefreshTokenMock{
+					GetRefreshTokenFunc: func() string {
+						return "refresh_token"
+					},
+				}, nil
+		},
+		StoreNewTokenFunc: func(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+			return &domain.TokenMock{
+				GetAccessTokenFunc: func() string {
+					return "new_access_token"
+				},
+			}, nil
+		},
+		StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
+			return &domain.RefreshTokenMock{
+				GetRefreshTokenFunc: func() string {
+					return "new_refresh_token"
+				},
+			}, nil
+		},
+		RevokeTokenFunc: func(accessToken string) error {
+			return nil
+		},
+		RevokeRefreshTokenFunc: func(refreshToken string) error {
+			return nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, nil, mockTokenService)
+	token, rtoken, err := uc.GenerateTokenByRefreshToken("refresh_token")
+	require.NoError(t, err)
+	assert.Equal(t, "new_access_token", token.GetAccessToken())
+	assert.Equal(t, "new_refresh_token", rtoken.GetRefreshToken())
+}
+
+func TestGenerateTokenByRefreshToken_FindTokenAndRefreshTokenByRefreshTokenError(t *testing.T) {
+	mockTokenService := &domainservice.TokenServiceMock{
+		FindTokenAndRefreshTokenByRefreshTokenFunc: func(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error) {
+			return nil, nil, errors.NewServiceErrorError(errors.ErrCodeInternalServer, "FindTokenAndRefreshTokenByRefreshToken error")
+		},
+		StoreNewTokenFunc: func(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+			return &domain.TokenMock{
+				GetAccessTokenFunc: func() string {
+					return "new_access_token"
+				},
+			}, nil
+		},
+		StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
+			return &domain.RefreshTokenMock{
+				GetRefreshTokenFunc: func() string {
+					return "new_refresh_token"
+				},
+			}, nil
+		},
+		RevokeTokenFunc: func(accessToken string) error {
+			return nil
+		},
+		RevokeRefreshTokenFunc: func(refreshToken string) error {
+			return nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, nil, mockTokenService)
+	token, rtoken, err := uc.GenerateTokenByRefreshToken("refresh_token")
+	require.Error(t, err)
+	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
+	assert.Contains(t, err.(*errors.UsecaseError).Message, "FindTokenAndRefreshTokenByRefreshToken error")
+	assert.Nil(t, token)
+	assert.Nil(t, rtoken)
+}
+
+func TestGenerateTokenByRefreshToken_StoreNewTokenError(t *testing.T) {
+	mockTokenService := &domainservice.TokenServiceMock{
+		FindTokenAndRefreshTokenByRefreshTokenFunc: func(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error) {
+			return &domain.TokenMock{
+					GetAccessTokenFunc: func() string {
+						return "access_token"
+					},
+					GetClientIDFunc: func() uuid.UUID {
+						return uuid.New()
+					},
+					GetUserIDFunc: func() uuid.UUID {
+						return uuid.New()
+					},
+					GetScopeFunc: func() string {
+						return "scope"
+					},
+				}, &domain.RefreshTokenMock{
+					GetRefreshTokenFunc: func() string {
+						return "refresh_token"
+					},
+				}, nil
+		},
+		StoreNewTokenFunc: func(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+			return nil, errors.NewServiceErrorError(errors.ErrCodeInternalServer, "StoreNewToken error")
+		},
+		StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
+			return &domain.RefreshTokenMock{
+				GetRefreshTokenFunc: func() string {
+					return "new_refresh_token"
+				},
+			}, nil
+		},
+		RevokeTokenFunc: func(accessToken string) error {
+			return nil
+		},
+		RevokeRefreshTokenFunc: func(refreshToken string) error {
+			return nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, nil, mockTokenService)
+	token, rtoken, err := uc.GenerateTokenByRefreshToken("refresh_token")
+	require.Error(t, err)
+	assert.Equal(t, http.StatusInternalServerError, err.(*errors.UsecaseError).Code)
+	assert.Contains(t, err.(*errors.UsecaseError).Message, "StoreNewToken error")
+	assert.Nil(t, token)
+	assert.Nil(t, rtoken)
+}
+
+func TestGenerateTokenByRefreshToken_StoreNewRefreshTokenError(t *testing.T) {
+	mockTokenService := &domainservice.TokenServiceMock{
+		FindTokenAndRefreshTokenByRefreshTokenFunc: func(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error) {
+			return &domain.TokenMock{
+					GetAccessTokenFunc: func() string {
+						return "access_token"
+					},
+					GetClientIDFunc: func() uuid.UUID {
+						return uuid.New()
+					},
+					GetUserIDFunc: func() uuid.UUID {
+						return uuid.New()
+					},
+					GetScopeFunc: func() string {
+						return "scope"
+					},
+				}, &domain.RefreshTokenMock{
+					GetRefreshTokenFunc: func() string {
+						return "refresh_token"
+					},
+				}, nil
+		},
+		StoreNewTokenFunc: func(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+			return &domain.TokenMock{
+				GetAccessTokenFunc: func() string {
+					return "new_access_token"
+				},
+			}, nil
+		},
+		StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
+			return nil, errors.NewServiceErrorError(errors.ErrCodeInternalServer, "StoreNewRefreshToken error")
+		},
+		RevokeTokenFunc: func(accessToken string) error {
+			return nil
+		},
+		RevokeRefreshTokenFunc: func(refreshToken string) error {
+			return nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, nil, mockTokenService)
+	token, rtoken, err := uc.GenerateTokenByRefreshToken("refresh_token")
+	require.Error(t, err)
+	assert.Contains(t, err.(*errors.UsecaseError).Message, "StoreNewRefreshToken error")
+	assert.Nil(t, token)
+	assert.Nil(t, rtoken)
+}
+
+func TestGenerateTokenByRefreshToken_RevokeTokenError(t *testing.T) {
+	mockTokenService := &domainservice.TokenServiceMock{
+		FindTokenAndRefreshTokenByRefreshTokenFunc: func(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error) {
+			return &domain.TokenMock{
+					GetAccessTokenFunc: func() string {
+						return "access_token"
+					},
+					GetClientIDFunc: func() uuid.UUID {
+						return uuid.New()
+					},
+					GetUserIDFunc: func() uuid.UUID {
+						return uuid.New()
+					},
+					GetScopeFunc: func() string {
+						return "scope"
+					},
+				}, &domain.RefreshTokenMock{
+					GetRefreshTokenFunc: func() string {
+						return "refresh_token"
+					},
+				}, nil
+		},
+		StoreNewTokenFunc: func(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+			return &domain.TokenMock{
+				GetAccessTokenFunc: func() string {
+					return "new_access_token"
+				},
+			}, nil
+		},
+		StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
+			return &domain.RefreshTokenMock{
+				GetRefreshTokenFunc: func() string {
+					return "new_refresh_token"
+				},
+			}, nil
+		},
+		RevokeTokenFunc: func(accessToken string) error {
+			return errors.NewServiceErrorError(errors.ErrCodeInternalServer, "RevokeToken error")
+		},
+		RevokeRefreshTokenFunc: func(refreshToken string) error {
+			return nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, nil, mockTokenService)
+	token, rtoken, err := uc.GenerateTokenByRefreshToken("refresh_token")
+	require.Error(t, err)
+	assert.Contains(t, err.(*errors.UsecaseError).Message, "RevokeToken error")
+	assert.Nil(t, token)
+	assert.Nil(t, rtoken)
+}
+
+func TestGenerateTokenByRefreshToken_RevokeRefreshTokenError(t *testing.T) {
+	mockTokenService := &domainservice.TokenServiceMock{
+		FindTokenAndRefreshTokenByRefreshTokenFunc: func(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error) {
+			return &domain.TokenMock{
+					GetAccessTokenFunc: func() string {
+						return "access_token"
+					},
+					GetClientIDFunc: func() uuid.UUID {
+						return uuid.New()
+					},
+					GetUserIDFunc: func() uuid.UUID {
+						return uuid.New()
+					},
+					GetScopeFunc: func() string {
+						return "scope"
+					},
+				}, &domain.RefreshTokenMock{
+					GetRefreshTokenFunc: func() string {
+						return "refresh_token"
+					},
+				}, nil
+		},
+		StoreNewTokenFunc: func(clientID, UserID uuid.UUID, scope string) (domain.Token, error) {
+			return &domain.TokenMock{
+				GetAccessTokenFunc: func() string {
+					return "new_access_token"
+				},
+			}, nil
+		},
+		StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
+			return &domain.RefreshTokenMock{
+				GetRefreshTokenFunc: func() string {
+					return "new_refresh_token"
+				},
+			}, nil
+		},
+		RevokeTokenFunc: func(accessToken string) error {
+			return errors.NewServiceErrorError(errors.ErrCodeInternalServer, "RevokeRefreshToken error")
+		},
+		RevokeRefreshTokenFunc: func(refreshToken string) error {
+			return nil
+		},
+	}
+
+	uc := NewAuthorizationUsecase(nil, nil, mockTokenService)
+	token, rtoken, err := uc.GenerateTokenByRefreshToken("refresh_token")
+	require.Error(t, err)
+	assert.Contains(t, err.(*errors.UsecaseError).Message, "RevokeRefreshToken error")
+	assert.Nil(t, token)
+	assert.Nil(t, rtoken)
+}
