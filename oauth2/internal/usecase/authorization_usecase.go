@@ -123,7 +123,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 
 func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (domain.Token, domain.RefreshToken, error) {
 
-	tkn, rt, err := uc.tokenService.FindTokenAndRefreshTokenByRefreshToken(refreshToken, time.Now())
+	tkn, err := uc.tokenService.FindTokenByRefreshToken(refreshToken, time.Now())
 	if err != nil {
 		if serviceErr, ok := err.(*errors.ServiceError); ok {
 			return nil, nil, errors.NewUsecaseError(serviceErr.Code, serviceErr.Error())
@@ -149,7 +149,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	if err := uc.tokenService.RevokeRefreshToken(rt.GetRefreshToken()); err != nil {
+	if err := uc.tokenService.RevokeRefreshToken(refreshToken); err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 

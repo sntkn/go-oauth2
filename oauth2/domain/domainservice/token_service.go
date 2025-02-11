@@ -17,7 +17,7 @@ type TokenService interface {
 	RevokeToken(accessToken string) error
 	FindRefreshToken(refreshToken string) (domain.RefreshToken, error)
 	RevokeRefreshToken(refreshToken string) error
-	FindTokenAndRefreshTokenByRefreshToken(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error)
+	FindTokenByRefreshToken(refreshToken string, now time.Time) (domain.Token, error)
 }
 
 func NewTokenService(
@@ -89,22 +89,22 @@ func (s *tokenService) RevokeRefreshToken(refreshToken string) error {
 	return s.refreshTokenRepo.RevokeRefreshToken(refreshToken)
 }
 
-func (s *tokenService) FindTokenAndRefreshTokenByRefreshToken(refreshToken string, now time.Time) (domain.Token, domain.RefreshToken, error) {
+func (s *tokenService) FindTokenByRefreshToken(refreshToken string, now time.Time) (domain.Token, error) {
 	rt, err := s.refreshTokenRepo.FindRefreshToken(refreshToken)
 	if err != nil {
-		return nil, nil, errors.NewServiceErrorError(errors.ErrCodeInternalServer, err.Error())
+		return nil, errors.NewServiceErrorError(errors.ErrCodeInternalServer, err.Error())
 	}
 	if rt == nil {
-		return nil, nil, errors.NewServiceErrorError(errors.ErrCodeNotFound, "refresh token not found")
+		return nil, errors.NewServiceErrorError(errors.ErrCodeNotFound, "refresh token not found")
 	}
 	if rt.IsExpired(now) {
-		return nil, nil, errors.NewServiceErrorError(errors.ErrCodeForbidden, "refresh token has expired")
+		return nil, errors.NewServiceErrorError(errors.ErrCodeForbidden, "refresh token has expired")
 	}
 
 	tkn, err := s.FindToken(rt.GetAccessToken())
 	if tkn == nil {
-		return nil, nil, errors.NewServiceErrorError(errors.ErrCodeNotFound, "token not found")
+		return nil, errors.NewServiceErrorError(errors.ErrCodeNotFound, "token not found")
 	}
 
-	return tkn, rt, err
+	return tkn, err
 }
