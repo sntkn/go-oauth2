@@ -45,7 +45,13 @@ func (s *tokenService) StoreNewToken(clientID, UserID uuid.UUID, scope string) (
 		Scope:    scope,
 	})
 
-	if err := atoken.SetNewAccessToken(s.config.PrivateKey); err != nil {
+	var at domain.AccessToken
+	token, err := at.Generate(atoken, s.config.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := atoken.SetNewAccessToken(token); err != nil {
 		return nil, err
 	}
 

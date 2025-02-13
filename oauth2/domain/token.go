@@ -20,8 +20,9 @@ type TokenParams struct {
 }
 
 func NewToken(p TokenParams) Token {
+	atoken := AccessToken(p.AccessToken)
 	return &token{
-		AccessToken: p.AccessToken,
+		AccessToken: atoken,
 		ClientID:    p.ClientID,
 		UserID:      p.UserID,
 		Scope:       p.Scope,
@@ -50,7 +51,7 @@ type TokenRepository interface {
 }
 
 type token struct {
-	AccessToken string
+	AccessToken AccessToken
 	ClientID    uuid.UUID
 	UserID      uuid.UUID
 	Scope       string
@@ -62,7 +63,7 @@ func (t *token) IsNotFound() bool {
 }
 
 func (t *token) GetAccessToken() string {
-	return t.AccessToken
+	return t.AccessToken.String()
 }
 
 func (t *token) GetClientID() uuid.UUID {
@@ -81,13 +82,8 @@ func (t *token) GetExpiresAt() time.Time {
 	return t.ExpiresAt
 }
 
-func (t *token) SetNewAccessToken(privateKeyBase64 string) error {
-	newtoken, err := t.Generate(privateKeyBase64)
-	if err != nil {
-		return err
-	}
-
-	t.AccessToken = newtoken
+func (t *token) SetNewAccessToken(s string) error {
+	t.AccessToken = AccessToken(s)
 
 	return nil
 }
@@ -104,13 +100,23 @@ func (t *token) SetNewExpiry(additionalMin int) {
 	t.ExpiresAt = time.Now().Add(time.Duration(additionalMin) * time.Minute)
 }
 
-func (t *token) Generate(privateKeyBase64 string) (string, error) {
+type CustomClaims struct {
+	UserID    string `json:"user_id"`
+	ClientID  string `json:"client_id"`
+	Scope     string
+	ExpiresAt time.Time
+	jwt.StandardClaims
+}
+
+type AccessToken string
+
+func (a AccessToken) Generate(t Token, privateKeyBase64 string) (string, error) {
 	// JWTのペイロード（クレーム）を設定
 	claims := jwt.MapClaims{
-		"user_id":   t.UserID.String(),
-		"client_id": t.ClientID.String(),
-		"scope":     t.Scope,
-		"exp":       t.ExpiresAt.Unix(),
+		"user_id":   t.GetUserID().String(),
+		"client_id": t.GetClientID().String(),
+		"scope":     t.GetScope(),
+		"exp":       t.GetExpiresAt().Unix(),
 		"iat":       time.Now().Unix(),
 	}
 
@@ -133,22 +139,18 @@ func (t *token) Generate(privateKeyBase64 string) (string, error) {
 	return accessToken, nil
 }
 
-type CustomClaims struct {
-	UserID    string `json:"user_id"`
-	ClientID  string `json:"client_id"`
-	Scope     string
-	ExpiresAt time.Time
-	jwt.StandardClaims
+func (a AccessToken) String() string {
+	return string(a)
 }
 
-func (t *token) Parse(tokenStr string, publicKeyBase64 string) (*CustomClaims, error) {
+func (a AccessToken) Parse(publicKeyBase64 string) (*CustomClaims, error) {
 	publicKeyBytes, err := base64.StdEncoding.DecodeString(publicKeyBase64)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	// 公開鍵を使ってJWTをパース
-	parsedToken, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.Parse(a.String(), func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodEd25519); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
