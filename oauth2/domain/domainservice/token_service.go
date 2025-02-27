@@ -65,12 +65,17 @@ func (s *tokenService) StoreNewToken(clientID, UserID uuid.UUID, scope string) (
 }
 
 func (s *tokenService) StoreNewRefreshToken(accessToken string) (domain.RefreshToken, error) {
-	rtoken := domain.NewRefreshToken(domain.RefreshTokenParams{
-		AccessToken: accessToken,
-	})
-	if err := rtoken.SetNewRefreshToken(); err != nil {
+	var rt domain.RefreshTokenString
+	refreshToken, err := rt.Generate()
+	if err != nil {
 		return nil, err
 	}
+
+	rtoken := domain.NewRefreshToken(domain.RefreshTokenParams{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	})
+
 	rtoken.SetNewExpiry(s.config.AuthRefreshTokenExpiresDay)
 
 	if err := s.refreshTokenRepo.StoreRefreshToken(rtoken); err != nil {

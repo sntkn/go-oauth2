@@ -12,7 +12,7 @@ const (
 )
 
 type RefreshTokenParams struct {
-	RefreshToken string
+	RefreshToken RefreshTokenString
 	AccessToken  string
 	ExpiresAt    time.Time
 }
@@ -32,7 +32,6 @@ type RefreshToken interface {
 	GetAccessToken() string
 	GetExpiresAt() time.Time
 	Expiry() int64
-	SetNewRefreshToken() error
 	SetNewExpiry(additionalDays int)
 	IsExpired(now time.Time) bool
 }
@@ -45,7 +44,7 @@ type RefreshTokenRepository interface {
 }
 
 type refreshToken struct {
-	RefreshToken string
+	RefreshToken RefreshTokenString
 	AccessToken  string
 	ExpiresAt    time.Time
 }
@@ -55,7 +54,7 @@ func (t *refreshToken) IsNotFound() bool {
 }
 
 func (t *refreshToken) GetRefreshToken() string {
-	return t.RefreshToken
+	return t.RefreshToken.String()
 }
 
 func (t *refreshToken) GetAccessToken() string {
@@ -74,17 +73,21 @@ func (t *refreshToken) IsExpired(now time.Time) bool {
 	return t.ExpiresAt.After(now)
 }
 
-func (t *refreshToken) SetNewRefreshToken() error {
-	randomString, err := str.GenerateRandomString(randomStringLen)
-	if err != nil {
-		return err
-	}
-
-	t.RefreshToken = randomString
-
-	return nil
-}
-
 func (t *refreshToken) SetNewExpiry(additionalDays int) {
 	t.ExpiresAt = time.Now().Add(time.Duration(additionalDays) * day)
+}
+
+type RefreshTokenString string
+
+func (s RefreshTokenString) String() string {
+	return string(s)
+}
+
+func (s RefreshTokenString) Generate() (RefreshTokenString, error) {
+	randomString, err := str.GenerateRandomString(randomStringLen)
+	if err != nil {
+		return "", err
+	}
+
+	return RefreshTokenString(randomString), nil
 }
