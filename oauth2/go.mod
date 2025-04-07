@@ -1,6 +1,7 @@
 module github.com/sntkn/go-oauth2/oauth2
 
 go 1.24.0
+
 require (
 	github.com/alicebob/miniredis/v2 v2.34.0
 	github.com/caarlos0/env v3.5.0+incompatible
@@ -15,7 +16,7 @@ require (
 	github.com/matryer/moq v0.5.3
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
-	github.com/valkey-io/valkey-go v1.0.56
+	github.com/valkey-io/valkey-go v1.0.57
 	golang.org/x/crypto v0.36.0
 )
 
