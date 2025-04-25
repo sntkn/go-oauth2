@@ -13,8 +13,8 @@ require (
 	github.com/stretchr/testify v1.10.0
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gen v0.3.27
-	gorm.io/gorm v1.25.12
-	gorm.io/plugin/dbresolver v1.5.3
+	gorm.io/gorm v1.26.0
+	gorm.io/plugin/dbresolver v1.6.0
 )
 
 require (
