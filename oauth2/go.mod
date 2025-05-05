@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/alicebob/miniredis/v2 v2.34.0
 	github.com/caarlos0/env v3.5.0+incompatible
-	github.com/cockroachdb/errors v1.11.3
+	github.com/cockroachdb/errors v1.12.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-errors/errors v1.5.1
 	github.com/go-playground/validator/v10 v10.26.0
