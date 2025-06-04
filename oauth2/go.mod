@@ -3,7 +3,7 @@ module github.com/sntkn/go-oauth2/oauth2
 go 1.24.0
 
 require (
-	github.com/alicebob/miniredis/v2 v2.34.0
+	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/cockroachdb/errors v1.12.0
 	github.com/gin-gonic/gin v1.10.1
@@ -21,7 +21,6 @@ require (
 )
 
 require (
-	github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
