@@ -122,7 +122,6 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 }
 
 func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (domain.Token, domain.RefreshToken, error) {
-
 	tkn, err := uc.tokenService.FindTokenByRefreshToken(refreshToken, time.Now())
 	if err != nil {
 		if serviceErr, ok := err.(*errors.ServiceError); ok {

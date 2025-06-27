@@ -11,7 +11,6 @@ import (
 
 // テスト用の valkey サーバーをセットアップする関数
 func setupTest(t *testing.T) *Client {
-
 	cli, err := NewClient(context.Background(), Options{
 		Addr: []string{"127.0.0.1:6379"},
 	})
@@ -41,5 +40,5 @@ func TestKVSCli(t *testing.T) {
 
 	val, err = cli.Get(ctx, "testKey")
 	require.NoError(t, err)
-	assert.Equal(t, "", val)
+	assert.Empty(t, val)
 }
