@@ -29,7 +29,6 @@ type AuthorizationCodeParams struct {
 }
 
 func NewAuthorizationCode(p AuthorizationCodeParams) (AuthorizationCode, error) {
-
 	clientID, err := uuid.Parse(p.ClientID)
 	if err != nil {
 		return nil, err

@@ -39,9 +39,6 @@ var _ RefreshToken = &RefreshTokenMock{}
 //			SetNewExpiryFunc: func(additionalDays int)  {
 //				panic("mock out the SetNewExpiry method")
 //			},
-//			SetNewRefreshTokenFunc: func() error {
-//				panic("mock out the SetNewRefreshToken method")
-//			},
 //		}
 //
 //		// use mockedRefreshToken in code that requires RefreshToken
@@ -70,9 +67,6 @@ type RefreshTokenMock struct {
 	// SetNewExpiryFunc mocks the SetNewExpiry method.
 	SetNewExpiryFunc func(additionalDays int)
 
-	// SetNewRefreshTokenFunc mocks the SetNewRefreshToken method.
-	SetNewRefreshTokenFunc func() error
-
 	// calls tracks calls to the methods.
 	calls struct {
 		// Expiry holds details about calls to the Expiry method.
@@ -100,18 +94,14 @@ type RefreshTokenMock struct {
 			// AdditionalDays is the additionalDays argument value.
 			AdditionalDays int
 		}
-		// SetNewRefreshToken holds details about calls to the SetNewRefreshToken method.
-		SetNewRefreshToken []struct {
-		}
 	}
-	lockExpiry             sync.RWMutex
-	lockGetAccessToken     sync.RWMutex
-	lockGetExpiresAt       sync.RWMutex
-	lockGetRefreshToken    sync.RWMutex
-	lockIsExpired          sync.RWMutex
-	lockIsNotFound         sync.RWMutex
-	lockSetNewExpiry       sync.RWMutex
-	lockSetNewRefreshToken sync.RWMutex
+	lockExpiry          sync.RWMutex
+	lockGetAccessToken  sync.RWMutex
+	lockGetExpiresAt    sync.RWMutex
+	lockGetRefreshToken sync.RWMutex
+	lockIsExpired       sync.RWMutex
+	lockIsNotFound      sync.RWMutex
+	lockSetNewExpiry    sync.RWMutex
 }
 
 // Expiry calls ExpiryFunc.
@@ -310,32 +300,5 @@ func (mock *RefreshTokenMock) SetNewExpiryCalls() []struct {
 	mock.lockSetNewExpiry.RLock()
 	calls = mock.calls.SetNewExpiry
 	mock.lockSetNewExpiry.RUnlock()
-	return calls
-}
-
-// SetNewRefreshToken calls SetNewRefreshTokenFunc.
-func (mock *RefreshTokenMock) SetNewRefreshToken() error {
-	if mock.SetNewRefreshTokenFunc == nil {
-		panic("RefreshTokenMock.SetNewRefreshTokenFunc: method is nil but RefreshToken.SetNewRefreshToken was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockSetNewRefreshToken.Lock()
-	mock.calls.SetNewRefreshToken = append(mock.calls.SetNewRefreshToken, callInfo)
-	mock.lockSetNewRefreshToken.Unlock()
-	return mock.SetNewRefreshTokenFunc()
-}
-
-// SetNewRefreshTokenCalls gets all the calls that were made to SetNewRefreshToken.
-// Check the length with:
-//
-//	len(mockedRefreshToken.SetNewRefreshTokenCalls())
-func (mock *RefreshTokenMock) SetNewRefreshTokenCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockSetNewRefreshToken.RLock()
-	calls = mock.calls.SetNewRefreshToken
-	mock.lockSetNewRefreshToken.RUnlock()
 	return calls
 }

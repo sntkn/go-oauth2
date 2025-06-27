@@ -150,7 +150,7 @@ func (a AccessToken) Parse(publicKeyBase64 string) (*CustomClaims, error) {
 	}
 
 	// 公開鍵を使ってJWTをパース
-	parsedToken, err := jwt.Parse(a.String(), func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.Parse(a.String(), func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodEd25519); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}

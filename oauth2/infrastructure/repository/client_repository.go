@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -32,8 +33,13 @@ func (r *ClientRepository) FindClientByClientID(clientID uuid.UUID) (domain.Clie
 		return nil, errors.WithStack(err)
 	}
 
+	redirectURIs := []string{}
+	if c.RedirectURIs != "" {
+		redirectURIs = strings.Split(c.RedirectURIs, ",")
+	}
+
 	return domain.NewClient(domain.ClientParams{
 		ID:           c.ID,
-		RedirectURIs: c.RedirectURIs,
+		RedirectURIs: redirectURIs,
 	}), nil
 }

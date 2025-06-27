@@ -117,8 +117,7 @@ func ErrorLoggerMiddleware(logger *slog.Logger) gin.HandlerFunc {
 		c.Next() // 次のミドルウェアまたはハンドラを呼び出します
 
 		for _, err := range c.Errors {
-			logger.Error("errors occured", errors.LogStackTrace(err.Err))
+			logger.Error("errors occurred", errors.LogStackTrace(err.Err))
 		}
-
 	}
 }
