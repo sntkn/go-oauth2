@@ -9,7 +9,7 @@ import (
 type ClientParams struct {
 	ID           uuid.UUID
 	Name         string
-	RedirectURIs string
+	RedirectURIs []string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -38,7 +38,7 @@ type ClientRepository interface {
 type client struct {
 	ID           uuid.UUID
 	Name         string
-	RedirectURIs string
+	RedirectURIs []string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -48,6 +48,10 @@ func (c *client) IsNotFound() bool {
 }
 
 func (c *client) IsRedirectURIMatch(redirectURI string) bool {
-	// TODO: 複数のリダイレクトURIを持つ場合の対応
-	return c.RedirectURIs == redirectURI
+	for _, uri := range c.RedirectURIs {
+		if uri == redirectURI {
+			return true
+		}
+	}
+	return false
 }
