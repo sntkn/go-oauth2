@@ -15,7 +15,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/matryer/moq v0.5.3
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	github.com/valkey-io/valkey-go v1.0.64
 	golang.org/x/crypto v0.41.0
 )
