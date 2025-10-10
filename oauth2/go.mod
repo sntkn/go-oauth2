@@ -1,6 +1,6 @@
 module github.com/sntkn/go-oauth2/oauth2
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/alicebob/miniredis/v2 v2.35.0
@@ -13,7 +13,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/matryer/moq v0.5.3
+	github.com/matryer/moq v0.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.11.1
 	github.com/valkey-io/valkey-go v1.0.66
