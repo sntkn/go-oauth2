@@ -7,6 +7,7 @@ ENV_NAME = "develop"
 
 [tools]
 go = "1.25.0"
+golangci-lint = "2.6.2"
 node = "22.9.0"
 
 [tasks.setup]
