@@ -41,7 +41,11 @@ func (r *AuthorizationCodeRepository) FindAuthorizationCode(ctx context.Context,
 	})
 }
 
-func (r *AuthorizationCodeRepository) FindValidAuthorizationCode(ctx context.Context, code string, expiresAt time.Time) (domain.AuthorizationCode, error) {
+func (r *AuthorizationCodeRepository) FindValidAuthorizationCode(
+	ctx context.Context,
+	code string,
+	expiresAt time.Time,
+) (domain.AuthorizationCode, error) {
 	q := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at > $2"
 	var c model.AuthorizationCode
 

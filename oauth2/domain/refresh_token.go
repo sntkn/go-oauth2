@@ -84,7 +84,7 @@ func (s RefreshTokenString) String() string {
 	return string(s)
 }
 
-func (_ RefreshTokenString) Generate() (RefreshTokenString, error) {
+func (RefreshTokenString) Generate() (RefreshTokenString, error) {
 	randomString, err := str.GenerateRandomString(randomStringLen)
 	if err != nil {
 		return "", err

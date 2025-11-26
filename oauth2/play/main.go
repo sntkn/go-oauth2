@@ -51,6 +51,9 @@ func main() {
 
 	// publicKey := "gzTu3Klp5XYNl9qz8+8sh0wxWHWnFJgu8La+58IOP6k="
 
-	tt.Parse(token, pub)
+	_, err = tt.Parse(token, pub)
+	if err != nil {
+		panic(err)
+	}
 	// fmt.Println(, err)
 }

@@ -38,7 +38,10 @@ type AuthorizationUsecase struct {
 	tokenService domainservice.TokenService
 }
 
-func (uc *AuthorizationUsecase) Consent(ctx context.Context, clientID uuid.UUID) (domain.Client, error) {
+func (uc *AuthorizationUsecase) Consent(
+	ctx context.Context,
+	clientID uuid.UUID,
+) (domain.Client, error) {
 	client, err := uc.clientRepo.FindClientByClientID(ctx, clientID)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
@@ -59,7 +62,10 @@ type GenerateAuthorizationCodeParams struct {
 	Expires     int
 }
 
-func (uc *AuthorizationUsecase) GenerateAuthorizationCode(ctx context.Context, p GenerateAuthorizationCodeParams) (domain.AuthorizationCode, error) {
+func (uc *AuthorizationUsecase) GenerateAuthorizationCode(
+	ctx context.Context,
+	p GenerateAuthorizationCodeParams,
+) (domain.AuthorizationCode, error) {
 	randomString, err := domain.GenerateCode()
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
@@ -86,7 +92,10 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(ctx context.Context, p
 	return c, nil
 }
 
-func (uc *AuthorizationUsecase) GenerateTokenByCode(ctx context.Context, code string) (domain.Token, domain.RefreshToken, error) {
+func (uc *AuthorizationUsecase) GenerateTokenByCode(
+	ctx context.Context,
+	code string,
+) (domain.Token, domain.RefreshToken, error) {
 	c, err := uc.codeRepo.FindAuthorizationCode(ctx, code)
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
@@ -123,7 +132,10 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(ctx context.Context, code st
 	return atoken, rtoken, nil
 }
 
-func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(ctx context.Context, refreshToken string) (domain.Token, domain.RefreshToken, error) {
+func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(
+	ctx context.Context,
+	refreshToken string,
+) (domain.Token, domain.RefreshToken, error) {
 	tkn, err := uc.tokenService.FindTokenByRefreshToken(ctx, refreshToken, time.Now())
 	if err != nil {
 		if serviceErr, ok := err.(*errors.ServiceError); ok {

@@ -12,6 +12,8 @@ import (
 
 type Creator func(c *gin.Context) *Session
 
+const sessionExpirationSeconds = 3600
+
 //go:generate go run github.com/matryer/moq -out session_manager_mock.go . SessionManager
 type SessionManager interface {
 	NewSession(c *gin.Context) SessionClient
@@ -72,7 +74,7 @@ func (s *Session) GetSessionData(c *gin.Context, key string) (string, error) {
 }
 
 func (s *Session) SetSessionData(c *gin.Context, key string, input string) error {
-	return s.SessionStore.Set(c, s.fullKey(key), input, 3600)
+	return s.SessionStore.Set(c, s.fullKey(key), input, sessionExpirationSeconds)
 }
 
 func (s *Session) DelSessionData(c *gin.Context, key string) error {

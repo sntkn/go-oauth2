@@ -131,7 +131,7 @@ func (h *AuthorizationHandler) Token(c *gin.Context) {
 	var rtoken domain.RefreshToken
 	var err error
 
-	if err := c.BindJSON(&input); err != nil {
+	if err = c.BindJSON(&input); err != nil {
 		c.Error(errors.WithStack(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

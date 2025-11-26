@@ -111,7 +111,7 @@ type CustomClaims struct {
 
 type AccessToken string
 
-func (_ AccessToken) Generate(t Token, privateKeyBase64 string) (string, error) {
+func (AccessToken) Generate(t Token, privateKeyBase64 string) (string, error) {
 	// JWTのペイロード（クレーム）を設定
 	claims := jwt.MapClaims{
 		"user_id":   t.GetUserID().String(),
