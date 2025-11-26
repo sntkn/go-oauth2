@@ -27,6 +27,8 @@ jobs:
       - name: Compose Build & UP
         run: |
           docker compose up -d database kvs
+      - name: Log
+        run: docker compose logs database
 
       - name: Wait for Services
         run: ./docker/wait-for-services.sh
