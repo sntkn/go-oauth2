@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -65,10 +66,10 @@ type AuthorizationCode interface {
 
 //go:generate go run github.com/matryer/moq -out authorization_code_repository_mock.go . AuthorizationCodeRepository
 type AuthorizationCodeRepository interface {
-	FindAuthorizationCode(string) (AuthorizationCode, error)
-	StoreAuthorizationCode(StoreAuthorizationCodeParams) (string, error)
-	FindValidAuthorizationCode(string, time.Time) (AuthorizationCode, error)
-	RevokeCode(code string) error
+	FindAuthorizationCode(ctx context.Context, code string) (AuthorizationCode, error)
+	StoreAuthorizationCode(ctx context.Context, p StoreAuthorizationCodeParams) (string, error)
+	FindValidAuthorizationCode(ctx context.Context, code string, expiresAt time.Time) (AuthorizationCode, error)
+	RevokeCode(ctx context.Context, code string) error
 }
 
 type authorizationCode struct {

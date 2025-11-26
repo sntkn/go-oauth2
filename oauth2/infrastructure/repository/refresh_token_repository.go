@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -20,7 +21,7 @@ type RefreshTokenRepository struct {
 	db *sqlx.DB
 }
 
-func (r *RefreshTokenRepository) StoreRefreshToken(t domain.RefreshToken) error {
+func (r *RefreshTokenRepository) StoreRefreshToken(ctx context.Context, t domain.RefreshToken) error {
 	rtoken := &model.RefreshToken{
 		RefreshToken: t.GetRefreshToken(),
 		AccessToken:  t.GetAccessToken(),
@@ -30,15 +31,15 @@ func (r *RefreshTokenRepository) StoreRefreshToken(t domain.RefreshToken) error 
 	}
 	q := `INSERT INTO oauth2_refresh_tokens (domain, access_token, expires_at, created_at, updated_at)
 	VALUES (:domain, :access_token, :expires_at, :created_at, :updated_at)`
-	_, err := r.db.NamedExec(q, rtoken)
+	_, err := r.db.NamedExecContext(ctx, q, rtoken)
 	return errors.WithStack(err)
 }
 
-func (r *RefreshTokenRepository) FindRefreshToken(refreshToken string) (domain.RefreshToken, error) {
+func (r *RefreshTokenRepository) FindRefreshToken(ctx context.Context, refreshToken string) (domain.RefreshToken, error) {
 	q := "SELECT access_token FROM oauth2_refresh_tokens WHERE domain = $1"
 	var rtkn model.RefreshToken
 
-	err := r.db.Get(&rtkn, q, refreshToken)
+	err := r.db.GetContext(ctx, &rtkn, q, refreshToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -51,8 +52,8 @@ func (r *RefreshTokenRepository) FindRefreshToken(refreshToken string) (domain.R
 	}), nil
 }
 
-func (r *RefreshTokenRepository) RevokeRefreshToken(refreshToken string) error {
+func (r *RefreshTokenRepository) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
 	updateQuery := "UPDATE oauth2_refresh_tokens SET revoked_at = $1 WHERE domain = $2"
-	_, err := r.db.Exec(updateQuery, time.Now(), refreshToken)
+	_, err := r.db.ExecContext(ctx, updateQuery, time.Now(), refreshToken)
 	return errors.WithStack(err)
 }

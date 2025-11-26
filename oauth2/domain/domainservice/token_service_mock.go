@@ -4,6 +4,7 @@
 package domainservice
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"github.com/sntkn/go-oauth2/oauth2/domain"
 	"sync"
@@ -20,25 +21,25 @@ var _ TokenService = &TokenServiceMock{}
 //
 //		// make and configure a mocked TokenService
 //		mockedTokenService := &TokenServiceMock{
-//			FindRefreshTokenFunc: func(refreshToken string) (domain.RefreshToken, error) {
+//			FindRefreshTokenFunc: func(ctx context.Context, refreshToken string) (domain.RefreshToken, error) {
 //				panic("mock out the FindRefreshToken method")
 //			},
-//			FindTokenFunc: func(accessToken string) (domain.Token, error) {
+//			FindTokenFunc: func(ctx context.Context, accessToken string) (domain.Token, error) {
 //				panic("mock out the FindToken method")
 //			},
-//			FindTokenByRefreshTokenFunc: func(refreshToken string, now time.Time) (domain.Token, error) {
+//			FindTokenByRefreshTokenFunc: func(ctx context.Context, refreshToken string, now time.Time) (domain.Token, error) {
 //				panic("mock out the FindTokenByRefreshToken method")
 //			},
-//			RevokeRefreshTokenFunc: func(refreshToken string) error {
+//			RevokeRefreshTokenFunc: func(ctx context.Context, refreshToken string) error {
 //				panic("mock out the RevokeRefreshToken method")
 //			},
-//			RevokeTokenFunc: func(accessToken string) error {
+//			RevokeTokenFunc: func(ctx context.Context, accessToken string) error {
 //				panic("mock out the RevokeToken method")
 //			},
-//			StoreNewRefreshTokenFunc: func(accessToken string) (domain.RefreshToken, error) {
+//			StoreNewRefreshTokenFunc: func(ctx context.Context, accessToken string) (domain.RefreshToken, error) {
 //				panic("mock out the StoreNewRefreshToken method")
 //			},
-//			StoreNewTokenFunc: func(clientID uuid.UUID, UserID uuid.UUID, scope string) (domain.Token, error) {
+//			StoreNewTokenFunc: func(ctx context.Context, clientID uuid.UUID, UserID uuid.UUID, scope string) (domain.Token, error) {
 //				panic("mock out the StoreNewToken method")
 //			},
 //		}
@@ -49,40 +50,46 @@ var _ TokenService = &TokenServiceMock{}
 //	}
 type TokenServiceMock struct {
 	// FindRefreshTokenFunc mocks the FindRefreshToken method.
-	FindRefreshTokenFunc func(refreshToken string) (domain.RefreshToken, error)
+	FindRefreshTokenFunc func(ctx context.Context, refreshToken string) (domain.RefreshToken, error)
 
 	// FindTokenFunc mocks the FindToken method.
-	FindTokenFunc func(accessToken string) (domain.Token, error)
+	FindTokenFunc func(ctx context.Context, accessToken string) (domain.Token, error)
 
 	// FindTokenByRefreshTokenFunc mocks the FindTokenByRefreshToken method.
-	FindTokenByRefreshTokenFunc func(refreshToken string, now time.Time) (domain.Token, error)
+	FindTokenByRefreshTokenFunc func(ctx context.Context, refreshToken string, now time.Time) (domain.Token, error)
 
 	// RevokeRefreshTokenFunc mocks the RevokeRefreshToken method.
-	RevokeRefreshTokenFunc func(refreshToken string) error
+	RevokeRefreshTokenFunc func(ctx context.Context, refreshToken string) error
 
 	// RevokeTokenFunc mocks the RevokeToken method.
-	RevokeTokenFunc func(accessToken string) error
+	RevokeTokenFunc func(ctx context.Context, accessToken string) error
 
 	// StoreNewRefreshTokenFunc mocks the StoreNewRefreshToken method.
-	StoreNewRefreshTokenFunc func(accessToken string) (domain.RefreshToken, error)
+	StoreNewRefreshTokenFunc func(ctx context.Context, accessToken string) (domain.RefreshToken, error)
 
 	// StoreNewTokenFunc mocks the StoreNewToken method.
-	StoreNewTokenFunc func(clientID uuid.UUID, UserID uuid.UUID, scope string) (domain.Token, error)
+	StoreNewTokenFunc func(ctx context.Context, clientID uuid.UUID, UserID uuid.UUID, scope string) (domain.Token, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// FindRefreshToken holds details about calls to the FindRefreshToken method.
 		FindRefreshToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// RefreshToken is the refreshToken argument value.
 			RefreshToken string
 		}
 		// FindToken holds details about calls to the FindToken method.
 		FindToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
 		// FindTokenByRefreshToken holds details about calls to the FindTokenByRefreshToken method.
 		FindTokenByRefreshToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// RefreshToken is the refreshToken argument value.
 			RefreshToken string
 			// Now is the now argument value.
@@ -90,21 +97,29 @@ type TokenServiceMock struct {
 		}
 		// RevokeRefreshToken holds details about calls to the RevokeRefreshToken method.
 		RevokeRefreshToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// RefreshToken is the refreshToken argument value.
 			RefreshToken string
 		}
 		// RevokeToken holds details about calls to the RevokeToken method.
 		RevokeToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
 		// StoreNewRefreshToken holds details about calls to the StoreNewRefreshToken method.
 		StoreNewRefreshToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
 		// StoreNewToken holds details about calls to the StoreNewToken method.
 		StoreNewToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// ClientID is the clientID argument value.
 			ClientID uuid.UUID
 			// UserID is the UserID argument value.
@@ -123,19 +138,21 @@ type TokenServiceMock struct {
 }
 
 // FindRefreshToken calls FindRefreshTokenFunc.
-func (mock *TokenServiceMock) FindRefreshToken(refreshToken string) (domain.RefreshToken, error) {
+func (mock *TokenServiceMock) FindRefreshToken(ctx context.Context, refreshToken string) (domain.RefreshToken, error) {
 	if mock.FindRefreshTokenFunc == nil {
 		panic("TokenServiceMock.FindRefreshTokenFunc: method is nil but TokenService.FindRefreshToken was just called")
 	}
 	callInfo := struct {
+		Ctx          context.Context
 		RefreshToken string
 	}{
+		Ctx:          ctx,
 		RefreshToken: refreshToken,
 	}
 	mock.lockFindRefreshToken.Lock()
 	mock.calls.FindRefreshToken = append(mock.calls.FindRefreshToken, callInfo)
 	mock.lockFindRefreshToken.Unlock()
-	return mock.FindRefreshTokenFunc(refreshToken)
+	return mock.FindRefreshTokenFunc(ctx, refreshToken)
 }
 
 // FindRefreshTokenCalls gets all the calls that were made to FindRefreshToken.
@@ -143,9 +160,11 @@ func (mock *TokenServiceMock) FindRefreshToken(refreshToken string) (domain.Refr
 //
 //	len(mockedTokenService.FindRefreshTokenCalls())
 func (mock *TokenServiceMock) FindRefreshTokenCalls() []struct {
+	Ctx          context.Context
 	RefreshToken string
 } {
 	var calls []struct {
+		Ctx          context.Context
 		RefreshToken string
 	}
 	mock.lockFindRefreshToken.RLock()
@@ -155,19 +174,21 @@ func (mock *TokenServiceMock) FindRefreshTokenCalls() []struct {
 }
 
 // FindToken calls FindTokenFunc.
-func (mock *TokenServiceMock) FindToken(accessToken string) (domain.Token, error) {
+func (mock *TokenServiceMock) FindToken(ctx context.Context, accessToken string) (domain.Token, error) {
 	if mock.FindTokenFunc == nil {
 		panic("TokenServiceMock.FindTokenFunc: method is nil but TokenService.FindToken was just called")
 	}
 	callInfo := struct {
+		Ctx         context.Context
 		AccessToken string
 	}{
+		Ctx:         ctx,
 		AccessToken: accessToken,
 	}
 	mock.lockFindToken.Lock()
 	mock.calls.FindToken = append(mock.calls.FindToken, callInfo)
 	mock.lockFindToken.Unlock()
-	return mock.FindTokenFunc(accessToken)
+	return mock.FindTokenFunc(ctx, accessToken)
 }
 
 // FindTokenCalls gets all the calls that were made to FindToken.
@@ -175,9 +196,11 @@ func (mock *TokenServiceMock) FindToken(accessToken string) (domain.Token, error
 //
 //	len(mockedTokenService.FindTokenCalls())
 func (mock *TokenServiceMock) FindTokenCalls() []struct {
+	Ctx         context.Context
 	AccessToken string
 } {
 	var calls []struct {
+		Ctx         context.Context
 		AccessToken string
 	}
 	mock.lockFindToken.RLock()
@@ -187,21 +210,23 @@ func (mock *TokenServiceMock) FindTokenCalls() []struct {
 }
 
 // FindTokenByRefreshToken calls FindTokenByRefreshTokenFunc.
-func (mock *TokenServiceMock) FindTokenByRefreshToken(refreshToken string, now time.Time) (domain.Token, error) {
+func (mock *TokenServiceMock) FindTokenByRefreshToken(ctx context.Context, refreshToken string, now time.Time) (domain.Token, error) {
 	if mock.FindTokenByRefreshTokenFunc == nil {
 		panic("TokenServiceMock.FindTokenByRefreshTokenFunc: method is nil but TokenService.FindTokenByRefreshToken was just called")
 	}
 	callInfo := struct {
+		Ctx          context.Context
 		RefreshToken string
 		Now          time.Time
 	}{
+		Ctx:          ctx,
 		RefreshToken: refreshToken,
 		Now:          now,
 	}
 	mock.lockFindTokenByRefreshToken.Lock()
 	mock.calls.FindTokenByRefreshToken = append(mock.calls.FindTokenByRefreshToken, callInfo)
 	mock.lockFindTokenByRefreshToken.Unlock()
-	return mock.FindTokenByRefreshTokenFunc(refreshToken, now)
+	return mock.FindTokenByRefreshTokenFunc(ctx, refreshToken, now)
 }
 
 // FindTokenByRefreshTokenCalls gets all the calls that were made to FindTokenByRefreshToken.
@@ -209,10 +234,12 @@ func (mock *TokenServiceMock) FindTokenByRefreshToken(refreshToken string, now t
 //
 //	len(mockedTokenService.FindTokenByRefreshTokenCalls())
 func (mock *TokenServiceMock) FindTokenByRefreshTokenCalls() []struct {
+	Ctx          context.Context
 	RefreshToken string
 	Now          time.Time
 } {
 	var calls []struct {
+		Ctx          context.Context
 		RefreshToken string
 		Now          time.Time
 	}
@@ -223,19 +250,21 @@ func (mock *TokenServiceMock) FindTokenByRefreshTokenCalls() []struct {
 }
 
 // RevokeRefreshToken calls RevokeRefreshTokenFunc.
-func (mock *TokenServiceMock) RevokeRefreshToken(refreshToken string) error {
+func (mock *TokenServiceMock) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
 	if mock.RevokeRefreshTokenFunc == nil {
 		panic("TokenServiceMock.RevokeRefreshTokenFunc: method is nil but TokenService.RevokeRefreshToken was just called")
 	}
 	callInfo := struct {
+		Ctx          context.Context
 		RefreshToken string
 	}{
+		Ctx:          ctx,
 		RefreshToken: refreshToken,
 	}
 	mock.lockRevokeRefreshToken.Lock()
 	mock.calls.RevokeRefreshToken = append(mock.calls.RevokeRefreshToken, callInfo)
 	mock.lockRevokeRefreshToken.Unlock()
-	return mock.RevokeRefreshTokenFunc(refreshToken)
+	return mock.RevokeRefreshTokenFunc(ctx, refreshToken)
 }
 
 // RevokeRefreshTokenCalls gets all the calls that were made to RevokeRefreshToken.
@@ -243,9 +272,11 @@ func (mock *TokenServiceMock) RevokeRefreshToken(refreshToken string) error {
 //
 //	len(mockedTokenService.RevokeRefreshTokenCalls())
 func (mock *TokenServiceMock) RevokeRefreshTokenCalls() []struct {
+	Ctx          context.Context
 	RefreshToken string
 } {
 	var calls []struct {
+		Ctx          context.Context
 		RefreshToken string
 	}
 	mock.lockRevokeRefreshToken.RLock()
@@ -255,19 +286,21 @@ func (mock *TokenServiceMock) RevokeRefreshTokenCalls() []struct {
 }
 
 // RevokeToken calls RevokeTokenFunc.
-func (mock *TokenServiceMock) RevokeToken(accessToken string) error {
+func (mock *TokenServiceMock) RevokeToken(ctx context.Context, accessToken string) error {
 	if mock.RevokeTokenFunc == nil {
 		panic("TokenServiceMock.RevokeTokenFunc: method is nil but TokenService.RevokeToken was just called")
 	}
 	callInfo := struct {
+		Ctx         context.Context
 		AccessToken string
 	}{
+		Ctx:         ctx,
 		AccessToken: accessToken,
 	}
 	mock.lockRevokeToken.Lock()
 	mock.calls.RevokeToken = append(mock.calls.RevokeToken, callInfo)
 	mock.lockRevokeToken.Unlock()
-	return mock.RevokeTokenFunc(accessToken)
+	return mock.RevokeTokenFunc(ctx, accessToken)
 }
 
 // RevokeTokenCalls gets all the calls that were made to RevokeToken.
@@ -275,9 +308,11 @@ func (mock *TokenServiceMock) RevokeToken(accessToken string) error {
 //
 //	len(mockedTokenService.RevokeTokenCalls())
 func (mock *TokenServiceMock) RevokeTokenCalls() []struct {
+	Ctx         context.Context
 	AccessToken string
 } {
 	var calls []struct {
+		Ctx         context.Context
 		AccessToken string
 	}
 	mock.lockRevokeToken.RLock()
@@ -287,19 +322,21 @@ func (mock *TokenServiceMock) RevokeTokenCalls() []struct {
 }
 
 // StoreNewRefreshToken calls StoreNewRefreshTokenFunc.
-func (mock *TokenServiceMock) StoreNewRefreshToken(accessToken string) (domain.RefreshToken, error) {
+func (mock *TokenServiceMock) StoreNewRefreshToken(ctx context.Context, accessToken string) (domain.RefreshToken, error) {
 	if mock.StoreNewRefreshTokenFunc == nil {
 		panic("TokenServiceMock.StoreNewRefreshTokenFunc: method is nil but TokenService.StoreNewRefreshToken was just called")
 	}
 	callInfo := struct {
+		Ctx         context.Context
 		AccessToken string
 	}{
+		Ctx:         ctx,
 		AccessToken: accessToken,
 	}
 	mock.lockStoreNewRefreshToken.Lock()
 	mock.calls.StoreNewRefreshToken = append(mock.calls.StoreNewRefreshToken, callInfo)
 	mock.lockStoreNewRefreshToken.Unlock()
-	return mock.StoreNewRefreshTokenFunc(accessToken)
+	return mock.StoreNewRefreshTokenFunc(ctx, accessToken)
 }
 
 // StoreNewRefreshTokenCalls gets all the calls that were made to StoreNewRefreshToken.
@@ -307,9 +344,11 @@ func (mock *TokenServiceMock) StoreNewRefreshToken(accessToken string) (domain.R
 //
 //	len(mockedTokenService.StoreNewRefreshTokenCalls())
 func (mock *TokenServiceMock) StoreNewRefreshTokenCalls() []struct {
+	Ctx         context.Context
 	AccessToken string
 } {
 	var calls []struct {
+		Ctx         context.Context
 		AccessToken string
 	}
 	mock.lockStoreNewRefreshToken.RLock()
@@ -319,15 +358,17 @@ func (mock *TokenServiceMock) StoreNewRefreshTokenCalls() []struct {
 }
 
 // StoreNewToken calls StoreNewTokenFunc.
-func (mock *TokenServiceMock) StoreNewToken(clientID uuid.UUID, UserID uuid.UUID, scope string) (domain.Token, error) {
+func (mock *TokenServiceMock) StoreNewToken(ctx context.Context, clientID uuid.UUID, UserID uuid.UUID, scope string) (domain.Token, error) {
 	if mock.StoreNewTokenFunc == nil {
 		panic("TokenServiceMock.StoreNewTokenFunc: method is nil but TokenService.StoreNewToken was just called")
 	}
 	callInfo := struct {
+		Ctx      context.Context
 		ClientID uuid.UUID
 		UserID   uuid.UUID
 		Scope    string
 	}{
+		Ctx:      ctx,
 		ClientID: clientID,
 		UserID:   UserID,
 		Scope:    scope,
@@ -335,7 +376,7 @@ func (mock *TokenServiceMock) StoreNewToken(clientID uuid.UUID, UserID uuid.UUID
 	mock.lockStoreNewToken.Lock()
 	mock.calls.StoreNewToken = append(mock.calls.StoreNewToken, callInfo)
 	mock.lockStoreNewToken.Unlock()
-	return mock.StoreNewTokenFunc(clientID, UserID, scope)
+	return mock.StoreNewTokenFunc(ctx, clientID, UserID, scope)
 }
 
 // StoreNewTokenCalls gets all the calls that were made to StoreNewToken.
@@ -343,11 +384,13 @@ func (mock *TokenServiceMock) StoreNewToken(clientID uuid.UUID, UserID uuid.UUID
 //
 //	len(mockedTokenService.StoreNewTokenCalls())
 func (mock *TokenServiceMock) StoreNewTokenCalls() []struct {
+	Ctx      context.Context
 	ClientID uuid.UUID
 	UserID   uuid.UUID
 	Scope    string
 } {
 	var calls []struct {
+		Ctx      context.Context
 		ClientID uuid.UUID
 		UserID   uuid.UUID
 		Scope    string

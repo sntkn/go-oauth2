@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -20,7 +21,7 @@ type TokenRepository struct {
 	db *sqlx.DB
 }
 
-func (r *TokenRepository) StoreToken(accessToken domain.Token) error {
+func (r *TokenRepository) StoreToken(ctx context.Context, accessToken domain.Token) error {
 	m := &model.Token{
 		AccessToken: accessToken.GetAccessToken(),
 		ClientID:    accessToken.GetClientID(),
@@ -34,15 +35,15 @@ func (r *TokenRepository) StoreToken(accessToken domain.Token) error {
 		INSERT INTO oauth2_tokens (access_token, client_id, user_id, scope, expires_at, created_at, updated_at)
 		VALUES (:access_token, :client_id, :user_id, :scope, :expires_at, :created_at, :updated_at)
 	`
-	_, err := r.db.NamedExec(q, m)
+	_, err := r.db.NamedExecContext(ctx, q, m)
 	return errors.WithStack(err)
 }
 
-func (r *TokenRepository) FindToken(accessToken string) (domain.Token, error) {
+func (r *TokenRepository) FindToken(ctx context.Context, accessToken string) (domain.Token, error) {
 	q := "SELECT user_id, client_id, scope FROM oauth2_tokens WHERE access_token = $1"
 	var tkn model.Token
 
-	err := r.db.Get(&tkn, q, accessToken)
+	err := r.db.GetContext(ctx, &tkn, q, accessToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -56,8 +57,8 @@ func (r *TokenRepository) FindToken(accessToken string) (domain.Token, error) {
 	}), nil
 }
 
-func (r *TokenRepository) RevokeToken(accessToken string) error {
+func (r *TokenRepository) RevokeToken(ctx context.Context, accessToken string) error {
 	updateQuery := "UPDATE oauth2_tokens SET revoked_at = $1 WHERE access_token = $2"
-	_, err := r.db.Exec(updateQuery, time.Now(), accessToken)
+	_, err := r.db.ExecContext(ctx, updateQuery, time.Now(), accessToken)
 	return errors.WithStack(err)
 }

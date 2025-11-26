@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
@@ -38,9 +39,9 @@ type RefreshToken interface {
 
 //go:generate go run github.com/matryer/moq -out refresh_token_repository_mock.go . RefreshTokenRepository
 type RefreshTokenRepository interface {
-	StoreRefreshToken(t RefreshToken) error
-	FindRefreshToken(refreshToken string) (RefreshToken, error)
-	RevokeRefreshToken(refreshToken string) error
+	StoreRefreshToken(ctx context.Context, t RefreshToken) error
+	FindRefreshToken(ctx context.Context, refreshToken string) (RefreshToken, error)
+	RevokeRefreshToken(ctx context.Context, refreshToken string) error
 }
 
 type refreshToken struct {
@@ -83,7 +84,7 @@ func (s RefreshTokenString) String() string {
 	return string(s)
 }
 
-func (s RefreshTokenString) Generate() (RefreshTokenString, error) {
+func (_ RefreshTokenString) Generate() (RefreshTokenString, error) {
 	randomString, err := str.GenerateRandomString(randomStringLen)
 	if err != nil {
 		return "", err

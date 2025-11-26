@@ -4,6 +4,7 @@
 package domain
 
 import (
+	"context"
 	"sync"
 )
 
@@ -17,13 +18,13 @@ var _ TokenRepository = &TokenRepositoryMock{}
 //
 //		// make and configure a mocked TokenRepository
 //		mockedTokenRepository := &TokenRepositoryMock{
-//			FindTokenFunc: func(accessToken string) (Token, error) {
+//			FindTokenFunc: func(ctx context.Context, accessToken string) (Token, error) {
 //				panic("mock out the FindToken method")
 //			},
-//			RevokeTokenFunc: func(accessToken string) error {
+//			RevokeTokenFunc: func(ctx context.Context, accessToken string) error {
 //				panic("mock out the RevokeToken method")
 //			},
-//			StoreTokenFunc: func(token Token) error {
+//			StoreTokenFunc: func(ctx context.Context, token Token) error {
 //				panic("mock out the StoreToken method")
 //			},
 //		}
@@ -34,28 +35,34 @@ var _ TokenRepository = &TokenRepositoryMock{}
 //	}
 type TokenRepositoryMock struct {
 	// FindTokenFunc mocks the FindToken method.
-	FindTokenFunc func(accessToken string) (Token, error)
+	FindTokenFunc func(ctx context.Context, accessToken string) (Token, error)
 
 	// RevokeTokenFunc mocks the RevokeToken method.
-	RevokeTokenFunc func(accessToken string) error
+	RevokeTokenFunc func(ctx context.Context, accessToken string) error
 
 	// StoreTokenFunc mocks the StoreToken method.
-	StoreTokenFunc func(token Token) error
+	StoreTokenFunc func(ctx context.Context, token Token) error
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// FindToken holds details about calls to the FindToken method.
 		FindToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
 		// RevokeToken holds details about calls to the RevokeToken method.
 		RevokeToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
 		// StoreToken holds details about calls to the StoreToken method.
 		StoreToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// Token is the token argument value.
 			Token Token
 		}
@@ -66,19 +73,21 @@ type TokenRepositoryMock struct {
 }
 
 // FindToken calls FindTokenFunc.
-func (mock *TokenRepositoryMock) FindToken(accessToken string) (Token, error) {
+func (mock *TokenRepositoryMock) FindToken(ctx context.Context, accessToken string) (Token, error) {
 	if mock.FindTokenFunc == nil {
 		panic("TokenRepositoryMock.FindTokenFunc: method is nil but TokenRepository.FindToken was just called")
 	}
 	callInfo := struct {
+		Ctx         context.Context
 		AccessToken string
 	}{
+		Ctx:         ctx,
 		AccessToken: accessToken,
 	}
 	mock.lockFindToken.Lock()
 	mock.calls.FindToken = append(mock.calls.FindToken, callInfo)
 	mock.lockFindToken.Unlock()
-	return mock.FindTokenFunc(accessToken)
+	return mock.FindTokenFunc(ctx, accessToken)
 }
 
 // FindTokenCalls gets all the calls that were made to FindToken.
@@ -86,9 +95,11 @@ func (mock *TokenRepositoryMock) FindToken(accessToken string) (Token, error) {
 //
 //	len(mockedTokenRepository.FindTokenCalls())
 func (mock *TokenRepositoryMock) FindTokenCalls() []struct {
+	Ctx         context.Context
 	AccessToken string
 } {
 	var calls []struct {
+		Ctx         context.Context
 		AccessToken string
 	}
 	mock.lockFindToken.RLock()
@@ -98,19 +109,21 @@ func (mock *TokenRepositoryMock) FindTokenCalls() []struct {
 }
 
 // RevokeToken calls RevokeTokenFunc.
-func (mock *TokenRepositoryMock) RevokeToken(accessToken string) error {
+func (mock *TokenRepositoryMock) RevokeToken(ctx context.Context, accessToken string) error {
 	if mock.RevokeTokenFunc == nil {
 		panic("TokenRepositoryMock.RevokeTokenFunc: method is nil but TokenRepository.RevokeToken was just called")
 	}
 	callInfo := struct {
+		Ctx         context.Context
 		AccessToken string
 	}{
+		Ctx:         ctx,
 		AccessToken: accessToken,
 	}
 	mock.lockRevokeToken.Lock()
 	mock.calls.RevokeToken = append(mock.calls.RevokeToken, callInfo)
 	mock.lockRevokeToken.Unlock()
-	return mock.RevokeTokenFunc(accessToken)
+	return mock.RevokeTokenFunc(ctx, accessToken)
 }
 
 // RevokeTokenCalls gets all the calls that were made to RevokeToken.
@@ -118,9 +131,11 @@ func (mock *TokenRepositoryMock) RevokeToken(accessToken string) error {
 //
 //	len(mockedTokenRepository.RevokeTokenCalls())
 func (mock *TokenRepositoryMock) RevokeTokenCalls() []struct {
+	Ctx         context.Context
 	AccessToken string
 } {
 	var calls []struct {
+		Ctx         context.Context
 		AccessToken string
 	}
 	mock.lockRevokeToken.RLock()
@@ -130,19 +145,21 @@ func (mock *TokenRepositoryMock) RevokeTokenCalls() []struct {
 }
 
 // StoreToken calls StoreTokenFunc.
-func (mock *TokenRepositoryMock) StoreToken(token Token) error {
+func (mock *TokenRepositoryMock) StoreToken(ctx context.Context, token Token) error {
 	if mock.StoreTokenFunc == nil {
 		panic("TokenRepositoryMock.StoreTokenFunc: method is nil but TokenRepository.StoreToken was just called")
 	}
 	callInfo := struct {
+		Ctx   context.Context
 		Token Token
 	}{
+		Ctx:   ctx,
 		Token: token,
 	}
 	mock.lockStoreToken.Lock()
 	mock.calls.StoreToken = append(mock.calls.StoreToken, callInfo)
 	mock.lockStoreToken.Unlock()
-	return mock.StoreTokenFunc(token)
+	return mock.StoreTokenFunc(ctx, token)
 }
 
 // StoreTokenCalls gets all the calls that were made to StoreToken.
@@ -150,9 +167,11 @@ func (mock *TokenRepositoryMock) StoreToken(token Token) error {
 //
 //	len(mockedTokenRepository.StoreTokenCalls())
 func (mock *TokenRepositoryMock) StoreTokenCalls() []struct {
+	Ctx   context.Context
 	Token Token
 } {
 	var calls []struct {
+		Ctx   context.Context
 		Token Token
 	}
 	mock.lockStoreToken.RLock()

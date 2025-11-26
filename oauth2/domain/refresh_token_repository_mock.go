@@ -4,6 +4,7 @@
 package domain
 
 import (
+	"context"
 	"sync"
 )
 
@@ -17,13 +18,13 @@ var _ RefreshTokenRepository = &RefreshTokenRepositoryMock{}
 //
 //		// make and configure a mocked RefreshTokenRepository
 //		mockedRefreshTokenRepository := &RefreshTokenRepositoryMock{
-//			FindRefreshTokenFunc: func(refreshToken string) (RefreshToken, error) {
+//			FindRefreshTokenFunc: func(ctx context.Context, refreshToken string) (RefreshToken, error) {
 //				panic("mock out the FindRefreshToken method")
 //			},
-//			RevokeRefreshTokenFunc: func(refreshToken string) error {
+//			RevokeRefreshTokenFunc: func(ctx context.Context, refreshToken string) error {
 //				panic("mock out the RevokeRefreshToken method")
 //			},
-//			StoreRefreshTokenFunc: func(t RefreshToken) error {
+//			StoreRefreshTokenFunc: func(ctx context.Context, t RefreshToken) error {
 //				panic("mock out the StoreRefreshToken method")
 //			},
 //		}
@@ -34,28 +35,34 @@ var _ RefreshTokenRepository = &RefreshTokenRepositoryMock{}
 //	}
 type RefreshTokenRepositoryMock struct {
 	// FindRefreshTokenFunc mocks the FindRefreshToken method.
-	FindRefreshTokenFunc func(refreshToken string) (RefreshToken, error)
+	FindRefreshTokenFunc func(ctx context.Context, refreshToken string) (RefreshToken, error)
 
 	// RevokeRefreshTokenFunc mocks the RevokeRefreshToken method.
-	RevokeRefreshTokenFunc func(refreshToken string) error
+	RevokeRefreshTokenFunc func(ctx context.Context, refreshToken string) error
 
 	// StoreRefreshTokenFunc mocks the StoreRefreshToken method.
-	StoreRefreshTokenFunc func(t RefreshToken) error
+	StoreRefreshTokenFunc func(ctx context.Context, t RefreshToken) error
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// FindRefreshToken holds details about calls to the FindRefreshToken method.
 		FindRefreshToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// RefreshToken is the refreshToken argument value.
 			RefreshToken string
 		}
 		// RevokeRefreshToken holds details about calls to the RevokeRefreshToken method.
 		RevokeRefreshToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// RefreshToken is the refreshToken argument value.
 			RefreshToken string
 		}
 		// StoreRefreshToken holds details about calls to the StoreRefreshToken method.
 		StoreRefreshToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// T is the t argument value.
 			T RefreshToken
 		}
@@ -66,19 +73,21 @@ type RefreshTokenRepositoryMock struct {
 }
 
 // FindRefreshToken calls FindRefreshTokenFunc.
-func (mock *RefreshTokenRepositoryMock) FindRefreshToken(refreshToken string) (RefreshToken, error) {
+func (mock *RefreshTokenRepositoryMock) FindRefreshToken(ctx context.Context, refreshToken string) (RefreshToken, error) {
 	if mock.FindRefreshTokenFunc == nil {
 		panic("RefreshTokenRepositoryMock.FindRefreshTokenFunc: method is nil but RefreshTokenRepository.FindRefreshToken was just called")
 	}
 	callInfo := struct {
+		Ctx          context.Context
 		RefreshToken string
 	}{
+		Ctx:          ctx,
 		RefreshToken: refreshToken,
 	}
 	mock.lockFindRefreshToken.Lock()
 	mock.calls.FindRefreshToken = append(mock.calls.FindRefreshToken, callInfo)
 	mock.lockFindRefreshToken.Unlock()
-	return mock.FindRefreshTokenFunc(refreshToken)
+	return mock.FindRefreshTokenFunc(ctx, refreshToken)
 }
 
 // FindRefreshTokenCalls gets all the calls that were made to FindRefreshToken.
@@ -86,9 +95,11 @@ func (mock *RefreshTokenRepositoryMock) FindRefreshToken(refreshToken string) (R
 //
 //	len(mockedRefreshTokenRepository.FindRefreshTokenCalls())
 func (mock *RefreshTokenRepositoryMock) FindRefreshTokenCalls() []struct {
+	Ctx          context.Context
 	RefreshToken string
 } {
 	var calls []struct {
+		Ctx          context.Context
 		RefreshToken string
 	}
 	mock.lockFindRefreshToken.RLock()
@@ -98,19 +109,21 @@ func (mock *RefreshTokenRepositoryMock) FindRefreshTokenCalls() []struct {
 }
 
 // RevokeRefreshToken calls RevokeRefreshTokenFunc.
-func (mock *RefreshTokenRepositoryMock) RevokeRefreshToken(refreshToken string) error {
+func (mock *RefreshTokenRepositoryMock) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
 	if mock.RevokeRefreshTokenFunc == nil {
 		panic("RefreshTokenRepositoryMock.RevokeRefreshTokenFunc: method is nil but RefreshTokenRepository.RevokeRefreshToken was just called")
 	}
 	callInfo := struct {
+		Ctx          context.Context
 		RefreshToken string
 	}{
+		Ctx:          ctx,
 		RefreshToken: refreshToken,
 	}
 	mock.lockRevokeRefreshToken.Lock()
 	mock.calls.RevokeRefreshToken = append(mock.calls.RevokeRefreshToken, callInfo)
 	mock.lockRevokeRefreshToken.Unlock()
-	return mock.RevokeRefreshTokenFunc(refreshToken)
+	return mock.RevokeRefreshTokenFunc(ctx, refreshToken)
 }
 
 // RevokeRefreshTokenCalls gets all the calls that were made to RevokeRefreshToken.
@@ -118,9 +131,11 @@ func (mock *RefreshTokenRepositoryMock) RevokeRefreshToken(refreshToken string) 
 //
 //	len(mockedRefreshTokenRepository.RevokeRefreshTokenCalls())
 func (mock *RefreshTokenRepositoryMock) RevokeRefreshTokenCalls() []struct {
+	Ctx          context.Context
 	RefreshToken string
 } {
 	var calls []struct {
+		Ctx          context.Context
 		RefreshToken string
 	}
 	mock.lockRevokeRefreshToken.RLock()
@@ -130,19 +145,21 @@ func (mock *RefreshTokenRepositoryMock) RevokeRefreshTokenCalls() []struct {
 }
 
 // StoreRefreshToken calls StoreRefreshTokenFunc.
-func (mock *RefreshTokenRepositoryMock) StoreRefreshToken(t RefreshToken) error {
+func (mock *RefreshTokenRepositoryMock) StoreRefreshToken(ctx context.Context, t RefreshToken) error {
 	if mock.StoreRefreshTokenFunc == nil {
 		panic("RefreshTokenRepositoryMock.StoreRefreshTokenFunc: method is nil but RefreshTokenRepository.StoreRefreshToken was just called")
 	}
 	callInfo := struct {
-		T RefreshToken
+		Ctx context.Context
+		T   RefreshToken
 	}{
-		T: t,
+		Ctx: ctx,
+		T:   t,
 	}
 	mock.lockStoreRefreshToken.Lock()
 	mock.calls.StoreRefreshToken = append(mock.calls.StoreRefreshToken, callInfo)
 	mock.lockStoreRefreshToken.Unlock()
-	return mock.StoreRefreshTokenFunc(t)
+	return mock.StoreRefreshTokenFunc(ctx, t)
 }
 
 // StoreRefreshTokenCalls gets all the calls that were made to StoreRefreshToken.
@@ -150,10 +167,12 @@ func (mock *RefreshTokenRepositoryMock) StoreRefreshToken(t RefreshToken) error 
 //
 //	len(mockedRefreshTokenRepository.StoreRefreshTokenCalls())
 func (mock *RefreshTokenRepositoryMock) StoreRefreshTokenCalls() []struct {
-	T RefreshToken
+	Ctx context.Context
+	T   RefreshToken
 } {
 	var calls []struct {
-		T RefreshToken
+		Ctx context.Context
+		T   RefreshToken
 	}
 	mock.lockStoreRefreshToken.RLock()
 	calls = mock.calls.StoreRefreshToken

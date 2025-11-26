@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"crypto/ed25519"
 	"encoding/base64"
 	"fmt"
@@ -45,9 +46,9 @@ type Token interface {
 
 //go:generate go run github.com/matryer/moq -out token_repository_mock.go . TokenRepository
 type TokenRepository interface {
-	StoreToken(Token) error
-	FindToken(accessToken string) (Token, error)
-	RevokeToken(accessToken string) error
+	StoreToken(ctx context.Context, token Token) error
+	FindToken(ctx context.Context, accessToken string) (Token, error)
+	RevokeToken(ctx context.Context, accessToken string) error
 }
 
 type token struct {
@@ -110,7 +111,7 @@ type CustomClaims struct {
 
 type AccessToken string
 
-func (a AccessToken) Generate(t Token, privateKeyBase64 string) (string, error) {
+func (_ AccessToken) Generate(t Token, privateKeyBase64 string) (string, error) {
 	// JWTのペイロード（クレーム）を設定
 	claims := jwt.MapClaims{
 		"user_id":   t.GetUserID().String(),

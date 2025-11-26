@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,7 +33,7 @@ type Client interface {
 
 //go:generate go run github.com/matryer/moq -out client_repository_mock.go . ClientRepository
 type ClientRepository interface {
-	FindClientByClientID(clientID uuid.UUID) (Client, error)
+	FindClientByClientID(ctx context.Context, clientID uuid.UUID) (Client, error)
 }
 
 type client struct {

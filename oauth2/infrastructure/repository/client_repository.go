@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"strings"
 
@@ -21,11 +22,11 @@ type ClientRepository struct {
 	db *sqlx.DB
 }
 
-func (r *ClientRepository) FindClientByClientID(clientID uuid.UUID) (domain.Client, error) {
+func (r *ClientRepository) FindClientByClientID(ctx context.Context, clientID uuid.UUID) (domain.Client, error) {
 	q := "SELECT id, redirect_uris FROM oauth2_clients WHERE id = $1"
 	var c model.Client
 
-	err := r.db.Get(&c, q, &clientID)
+	err := r.db.GetContext(ctx, &c, q, &clientID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.NewClient(domain.ClientParams{}), nil

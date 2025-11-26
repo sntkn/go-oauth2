@@ -58,7 +58,7 @@ func (h *AuthorizationHandler) Consent(c *gin.Context) {
 	}
 
 	// クライアント情報を取得
-	client, err := h.uc.Consent(clientID)
+	client, err := h.uc.Consent(c.Request.Context(), clientID)
 	if err != nil {
 		handleError(c, sess, err)
 		return
@@ -96,7 +96,7 @@ func (h *AuthorizationHandler) PostConsent(c *gin.Context) {
 	}
 
 	// 同意画面のビジネスロジックを書く
-	code, err := h.uc.GenerateAuthorizationCode(usecase.GenerateAuthorizationCodeParams{
+	code, err := h.uc.GenerateAuthorizationCode(c.Request.Context(), usecase.GenerateAuthorizationCodeParams{
 		UserID:      authUser.UserID,
 		ClientID:    authUser.ClientID,
 		Scope:       authUser.Scope,
@@ -139,9 +139,9 @@ func (h *AuthorizationHandler) Token(c *gin.Context) {
 
 	switch input.GrantType {
 	case "authorization_code":
-		atoken, rtoken, err = h.uc.GenerateTokenByCode(input.Code)
+		atoken, rtoken, err = h.uc.GenerateTokenByCode(c.Request.Context(), input.Code)
 	case "refresh_token":
-		atoken, rtoken, err = h.uc.GenerateTokenByRefreshToken(input.RefreshToken)
+		atoken, rtoken, err = h.uc.GenerateTokenByRefreshToken(c.Request.Context(), input.RefreshToken)
 	default:
 		// ここには到達しない
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid grant type")})

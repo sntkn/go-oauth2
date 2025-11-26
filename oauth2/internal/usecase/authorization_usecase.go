@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -11,10 +12,10 @@ import (
 )
 
 type IAuthorizationUsecase interface {
-	Consent(uuid.UUID) (domain.Client, error)
-	GenerateAuthorizationCode(GenerateAuthorizationCodeParams) (domain.AuthorizationCode, error)
-	GenerateTokenByCode(string) (domain.Token, domain.RefreshToken, error)
-	GenerateTokenByRefreshToken(string) (domain.Token, domain.RefreshToken, error)
+	Consent(ctx context.Context, clientID uuid.UUID) (domain.Client, error)
+	GenerateAuthorizationCode(ctx context.Context, p GenerateAuthorizationCodeParams) (domain.AuthorizationCode, error)
+	GenerateTokenByCode(ctx context.Context, code string) (domain.Token, domain.RefreshToken, error)
+	GenerateTokenByRefreshToken(ctx context.Context, refreshToken string) (domain.Token, domain.RefreshToken, error)
 	// GenerateAuthorizationCode(user *model.User, client *model.Client, scopes []string) (*model.AuthorizationCode, error)
 	// ValidateAuthorizationCode(code string, clientID string) (*model.AuthorizationCode, error)
 }
@@ -37,8 +38,8 @@ type AuthorizationUsecase struct {
 	tokenService domainservice.TokenService
 }
 
-func (uc *AuthorizationUsecase) Consent(clientID uuid.UUID) (domain.Client, error) {
-	client, err := uc.clientRepo.FindClientByClientID(clientID)
+func (uc *AuthorizationUsecase) Consent(ctx context.Context, clientID uuid.UUID) (domain.Client, error) {
+	client, err := uc.clientRepo.FindClientByClientID(ctx, clientID)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -58,13 +59,13 @@ type GenerateAuthorizationCodeParams struct {
 	Expires     int
 }
 
-func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizationCodeParams) (domain.AuthorizationCode, error) {
+func (uc *AuthorizationUsecase) GenerateAuthorizationCode(ctx context.Context, p GenerateAuthorizationCodeParams) (domain.AuthorizationCode, error) {
 	randomString, err := domain.GenerateCode()
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	code, err := uc.codeRepo.StoreAuthorizationCode(domain.StoreAuthorizationCodeParams{
+	code, err := uc.codeRepo.StoreAuthorizationCode(ctx, domain.StoreAuthorizationCodeParams{
 		Code:        randomString,
 		Scope:       p.Scope,
 		RedirectURI: p.RedirectURI,
@@ -74,7 +75,7 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	c, err := uc.codeRepo.FindAuthorizationCode(code)
+	c, err := uc.codeRepo.FindAuthorizationCode(ctx, code)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -85,8 +86,8 @@ func (uc *AuthorizationUsecase) GenerateAuthorizationCode(p GenerateAuthorizatio
 	return c, nil
 }
 
-func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, domain.RefreshToken, error) {
-	c, err := uc.codeRepo.FindAuthorizationCode(code)
+func (uc *AuthorizationUsecase) GenerateTokenByCode(ctx context.Context, code string) (domain.Token, domain.RefreshToken, error) {
+	c, err := uc.codeRepo.FindAuthorizationCode(ctx, code)
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -100,6 +101,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 	}
 
 	atoken, err := uc.tokenService.StoreNewToken(
+		ctx,
 		c.GetClientID(),
 		c.GetUserID(),
 		c.GetScope(),
@@ -108,21 +110,21 @@ func (uc *AuthorizationUsecase) GenerateTokenByCode(code string) (domain.Token, 
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	rtoken, err := uc.tokenService.StoreNewRefreshToken(atoken.GetAccessToken())
+	rtoken, err := uc.tokenService.StoreNewRefreshToken(ctx, atoken.GetAccessToken())
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
 	// revoke code
-	if err := uc.codeRepo.RevokeCode(code); err != nil {
+	if err := uc.codeRepo.RevokeCode(ctx, code); err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
 	return atoken, rtoken, nil
 }
 
-func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string) (domain.Token, domain.RefreshToken, error) {
-	tkn, err := uc.tokenService.FindTokenByRefreshToken(refreshToken, time.Now())
+func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(ctx context.Context, refreshToken string) (domain.Token, domain.RefreshToken, error) {
+	tkn, err := uc.tokenService.FindTokenByRefreshToken(ctx, refreshToken, time.Now())
 	if err != nil {
 		if serviceErr, ok := err.(*errors.ServiceError); ok {
 			return nil, nil, errors.NewUsecaseError(serviceErr.Code, serviceErr.Error())
@@ -131,6 +133,7 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 	}
 
 	atoken, err := uc.tokenService.StoreNewToken(
+		ctx,
 		tkn.GetClientID(),
 		tkn.GetUserID(),
 		tkn.GetScope(),
@@ -139,16 +142,16 @@ func (uc *AuthorizationUsecase) GenerateTokenByRefreshToken(refreshToken string)
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	rtoken, err := uc.tokenService.StoreNewRefreshToken(atoken.GetAccessToken())
+	rtoken, err := uc.tokenService.StoreNewRefreshToken(ctx, atoken.GetAccessToken())
 	if err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	if err := uc.tokenService.RevokeToken(tkn.GetAccessToken()); err != nil {
+	if err := uc.tokenService.RevokeToken(ctx, tkn.GetAccessToken()); err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
-	if err := uc.tokenService.RevokeRefreshToken(refreshToken); err != nil {
+	if err := uc.tokenService.RevokeRefreshToken(ctx, refreshToken); err != nil {
 		return nil, nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
 
