@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -17,9 +18,15 @@ func main() {
 		log.Fatal("could not get env:", err)
 	}
 
+	// バリデーション：int -> uint16 の変換前に範囲チェック
+	if cfg.DBPort < 0 || cfg.DBPort > math.MaxUint16 {
+		log.Fatalf("invalid DBPort: %d (must be 0..%d)", cfg.DBPort, math.MaxUint16)
+	}
+	dbPort := uint16(cfg.DBPort)
+
 	dbConfig := &db.DBConfig{
 		Host:     cfg.DBHost,
-		Port:     uint16(cfg.DBPort),
+		Port:     dbPort,
 		User:     cfg.DBUser,
 		Password: cfg.DBPassword,
 		DBName:   cfg.DBName,

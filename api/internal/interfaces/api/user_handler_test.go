@@ -89,7 +89,7 @@ func TestGetUserExists(t *testing.T) {
 
 	assert.Equal(t, "success", response.Status)
 
-	data, ok := response.Data.(map[string]interface{})
+	data, ok := response.Data.(map[string]any)
 	require.True(t, ok)
 
 	assert.Equal(t, testID.String(), data["id"])
