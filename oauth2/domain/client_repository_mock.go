@@ -4,6 +4,7 @@
 package domain
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"sync"
 )
@@ -18,7 +19,7 @@ var _ ClientRepository = &ClientRepositoryMock{}
 //
 //		// make and configure a mocked ClientRepository
 //		mockedClientRepository := &ClientRepositoryMock{
-//			FindClientByClientIDFunc: func(clientID uuid.UUID) (Client, error) {
+//			FindClientByClientIDFunc: func(ctx context.Context, clientID uuid.UUID) (Client, error) {
 //				panic("mock out the FindClientByClientID method")
 //			},
 //		}
@@ -29,12 +30,14 @@ var _ ClientRepository = &ClientRepositoryMock{}
 //	}
 type ClientRepositoryMock struct {
 	// FindClientByClientIDFunc mocks the FindClientByClientID method.
-	FindClientByClientIDFunc func(clientID uuid.UUID) (Client, error)
+	FindClientByClientIDFunc func(ctx context.Context, clientID uuid.UUID) (Client, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// FindClientByClientID holds details about calls to the FindClientByClientID method.
 		FindClientByClientID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// ClientID is the clientID argument value.
 			ClientID uuid.UUID
 		}
@@ -43,19 +46,21 @@ type ClientRepositoryMock struct {
 }
 
 // FindClientByClientID calls FindClientByClientIDFunc.
-func (mock *ClientRepositoryMock) FindClientByClientID(clientID uuid.UUID) (Client, error) {
+func (mock *ClientRepositoryMock) FindClientByClientID(ctx context.Context, clientID uuid.UUID) (Client, error) {
 	if mock.FindClientByClientIDFunc == nil {
 		panic("ClientRepositoryMock.FindClientByClientIDFunc: method is nil but ClientRepository.FindClientByClientID was just called")
 	}
 	callInfo := struct {
+		Ctx      context.Context
 		ClientID uuid.UUID
 	}{
+		Ctx:      ctx,
 		ClientID: clientID,
 	}
 	mock.lockFindClientByClientID.Lock()
 	mock.calls.FindClientByClientID = append(mock.calls.FindClientByClientID, callInfo)
 	mock.lockFindClientByClientID.Unlock()
-	return mock.FindClientByClientIDFunc(clientID)
+	return mock.FindClientByClientIDFunc(ctx, clientID)
 }
 
 // FindClientByClientIDCalls gets all the calls that were made to FindClientByClientID.
@@ -63,9 +68,11 @@ func (mock *ClientRepositoryMock) FindClientByClientID(clientID uuid.UUID) (Clie
 //
 //	len(mockedClientRepository.FindClientByClientIDCalls())
 func (mock *ClientRepositoryMock) FindClientByClientIDCalls() []struct {
+	Ctx      context.Context
 	ClientID uuid.UUID
 } {
 	var calls []struct {
+		Ctx      context.Context
 		ClientID uuid.UUID
 	}
 	mock.lockFindClientByClientID.RLock()

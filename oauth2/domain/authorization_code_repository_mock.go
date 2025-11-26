@@ -4,6 +4,7 @@
 package domain
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -18,16 +19,16 @@ var _ AuthorizationCodeRepository = &AuthorizationCodeRepositoryMock{}
 //
 //		// make and configure a mocked AuthorizationCodeRepository
 //		mockedAuthorizationCodeRepository := &AuthorizationCodeRepositoryMock{
-//			FindAuthorizationCodeFunc: func(s string) (AuthorizationCode, error) {
+//			FindAuthorizationCodeFunc: func(ctx context.Context, code string) (AuthorizationCode, error) {
 //				panic("mock out the FindAuthorizationCode method")
 //			},
-//			FindValidAuthorizationCodeFunc: func(s string, timeMoqParam time.Time) (AuthorizationCode, error) {
+//			FindValidAuthorizationCodeFunc: func(ctx context.Context, code string, expiresAt time.Time) (AuthorizationCode, error) {
 //				panic("mock out the FindValidAuthorizationCode method")
 //			},
-//			RevokeCodeFunc: func(code string) error {
+//			RevokeCodeFunc: func(ctx context.Context, code string) error {
 //				panic("mock out the RevokeCode method")
 //			},
-//			StoreAuthorizationCodeFunc: func(storeAuthorizationCodeParams StoreAuthorizationCodeParams) (string, error) {
+//			StoreAuthorizationCodeFunc: func(ctx context.Context, p StoreAuthorizationCodeParams) (string, error) {
 //				panic("mock out the StoreAuthorizationCode method")
 //			},
 //		}
@@ -38,40 +39,48 @@ var _ AuthorizationCodeRepository = &AuthorizationCodeRepositoryMock{}
 //	}
 type AuthorizationCodeRepositoryMock struct {
 	// FindAuthorizationCodeFunc mocks the FindAuthorizationCode method.
-	FindAuthorizationCodeFunc func(s string) (AuthorizationCode, error)
+	FindAuthorizationCodeFunc func(ctx context.Context, code string) (AuthorizationCode, error)
 
 	// FindValidAuthorizationCodeFunc mocks the FindValidAuthorizationCode method.
-	FindValidAuthorizationCodeFunc func(s string, timeMoqParam time.Time) (AuthorizationCode, error)
+	FindValidAuthorizationCodeFunc func(ctx context.Context, code string, expiresAt time.Time) (AuthorizationCode, error)
 
 	// RevokeCodeFunc mocks the RevokeCode method.
-	RevokeCodeFunc func(code string) error
+	RevokeCodeFunc func(ctx context.Context, code string) error
 
 	// StoreAuthorizationCodeFunc mocks the StoreAuthorizationCode method.
-	StoreAuthorizationCodeFunc func(storeAuthorizationCodeParams StoreAuthorizationCodeParams) (string, error)
+	StoreAuthorizationCodeFunc func(ctx context.Context, p StoreAuthorizationCodeParams) (string, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// FindAuthorizationCode holds details about calls to the FindAuthorizationCode method.
 		FindAuthorizationCode []struct {
-			// S is the s argument value.
-			S string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Code is the code argument value.
+			Code string
 		}
 		// FindValidAuthorizationCode holds details about calls to the FindValidAuthorizationCode method.
 		FindValidAuthorizationCode []struct {
-			// S is the s argument value.
-			S string
-			// TimeMoqParam is the timeMoqParam argument value.
-			TimeMoqParam time.Time
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Code is the code argument value.
+			Code string
+			// ExpiresAt is the expiresAt argument value.
+			ExpiresAt time.Time
 		}
 		// RevokeCode holds details about calls to the RevokeCode method.
 		RevokeCode []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// Code is the code argument value.
 			Code string
 		}
 		// StoreAuthorizationCode holds details about calls to the StoreAuthorizationCode method.
 		StoreAuthorizationCode []struct {
-			// StoreAuthorizationCodeParams is the storeAuthorizationCodeParams argument value.
-			StoreAuthorizationCodeParams StoreAuthorizationCodeParams
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// P is the p argument value.
+			P StoreAuthorizationCodeParams
 		}
 	}
 	lockFindAuthorizationCode      sync.RWMutex
@@ -81,19 +90,21 @@ type AuthorizationCodeRepositoryMock struct {
 }
 
 // FindAuthorizationCode calls FindAuthorizationCodeFunc.
-func (mock *AuthorizationCodeRepositoryMock) FindAuthorizationCode(s string) (AuthorizationCode, error) {
+func (mock *AuthorizationCodeRepositoryMock) FindAuthorizationCode(ctx context.Context, code string) (AuthorizationCode, error) {
 	if mock.FindAuthorizationCodeFunc == nil {
 		panic("AuthorizationCodeRepositoryMock.FindAuthorizationCodeFunc: method is nil but AuthorizationCodeRepository.FindAuthorizationCode was just called")
 	}
 	callInfo := struct {
-		S string
+		Ctx  context.Context
+		Code string
 	}{
-		S: s,
+		Ctx:  ctx,
+		Code: code,
 	}
 	mock.lockFindAuthorizationCode.Lock()
 	mock.calls.FindAuthorizationCode = append(mock.calls.FindAuthorizationCode, callInfo)
 	mock.lockFindAuthorizationCode.Unlock()
-	return mock.FindAuthorizationCodeFunc(s)
+	return mock.FindAuthorizationCodeFunc(ctx, code)
 }
 
 // FindAuthorizationCodeCalls gets all the calls that were made to FindAuthorizationCode.
@@ -101,10 +112,12 @@ func (mock *AuthorizationCodeRepositoryMock) FindAuthorizationCode(s string) (Au
 //
 //	len(mockedAuthorizationCodeRepository.FindAuthorizationCodeCalls())
 func (mock *AuthorizationCodeRepositoryMock) FindAuthorizationCodeCalls() []struct {
-	S string
+	Ctx  context.Context
+	Code string
 } {
 	var calls []struct {
-		S string
+		Ctx  context.Context
+		Code string
 	}
 	mock.lockFindAuthorizationCode.RLock()
 	calls = mock.calls.FindAuthorizationCode
@@ -113,21 +126,23 @@ func (mock *AuthorizationCodeRepositoryMock) FindAuthorizationCodeCalls() []stru
 }
 
 // FindValidAuthorizationCode calls FindValidAuthorizationCodeFunc.
-func (mock *AuthorizationCodeRepositoryMock) FindValidAuthorizationCode(s string, timeMoqParam time.Time) (AuthorizationCode, error) {
+func (mock *AuthorizationCodeRepositoryMock) FindValidAuthorizationCode(ctx context.Context, code string, expiresAt time.Time) (AuthorizationCode, error) {
 	if mock.FindValidAuthorizationCodeFunc == nil {
 		panic("AuthorizationCodeRepositoryMock.FindValidAuthorizationCodeFunc: method is nil but AuthorizationCodeRepository.FindValidAuthorizationCode was just called")
 	}
 	callInfo := struct {
-		S            string
-		TimeMoqParam time.Time
+		Ctx       context.Context
+		Code      string
+		ExpiresAt time.Time
 	}{
-		S:            s,
-		TimeMoqParam: timeMoqParam,
+		Ctx:       ctx,
+		Code:      code,
+		ExpiresAt: expiresAt,
 	}
 	mock.lockFindValidAuthorizationCode.Lock()
 	mock.calls.FindValidAuthorizationCode = append(mock.calls.FindValidAuthorizationCode, callInfo)
 	mock.lockFindValidAuthorizationCode.Unlock()
-	return mock.FindValidAuthorizationCodeFunc(s, timeMoqParam)
+	return mock.FindValidAuthorizationCodeFunc(ctx, code, expiresAt)
 }
 
 // FindValidAuthorizationCodeCalls gets all the calls that were made to FindValidAuthorizationCode.
@@ -135,12 +150,14 @@ func (mock *AuthorizationCodeRepositoryMock) FindValidAuthorizationCode(s string
 //
 //	len(mockedAuthorizationCodeRepository.FindValidAuthorizationCodeCalls())
 func (mock *AuthorizationCodeRepositoryMock) FindValidAuthorizationCodeCalls() []struct {
-	S            string
-	TimeMoqParam time.Time
+	Ctx       context.Context
+	Code      string
+	ExpiresAt time.Time
 } {
 	var calls []struct {
-		S            string
-		TimeMoqParam time.Time
+		Ctx       context.Context
+		Code      string
+		ExpiresAt time.Time
 	}
 	mock.lockFindValidAuthorizationCode.RLock()
 	calls = mock.calls.FindValidAuthorizationCode
@@ -149,19 +166,21 @@ func (mock *AuthorizationCodeRepositoryMock) FindValidAuthorizationCodeCalls() [
 }
 
 // RevokeCode calls RevokeCodeFunc.
-func (mock *AuthorizationCodeRepositoryMock) RevokeCode(code string) error {
+func (mock *AuthorizationCodeRepositoryMock) RevokeCode(ctx context.Context, code string) error {
 	if mock.RevokeCodeFunc == nil {
 		panic("AuthorizationCodeRepositoryMock.RevokeCodeFunc: method is nil but AuthorizationCodeRepository.RevokeCode was just called")
 	}
 	callInfo := struct {
+		Ctx  context.Context
 		Code string
 	}{
+		Ctx:  ctx,
 		Code: code,
 	}
 	mock.lockRevokeCode.Lock()
 	mock.calls.RevokeCode = append(mock.calls.RevokeCode, callInfo)
 	mock.lockRevokeCode.Unlock()
-	return mock.RevokeCodeFunc(code)
+	return mock.RevokeCodeFunc(ctx, code)
 }
 
 // RevokeCodeCalls gets all the calls that were made to RevokeCode.
@@ -169,9 +188,11 @@ func (mock *AuthorizationCodeRepositoryMock) RevokeCode(code string) error {
 //
 //	len(mockedAuthorizationCodeRepository.RevokeCodeCalls())
 func (mock *AuthorizationCodeRepositoryMock) RevokeCodeCalls() []struct {
+	Ctx  context.Context
 	Code string
 } {
 	var calls []struct {
+		Ctx  context.Context
 		Code string
 	}
 	mock.lockRevokeCode.RLock()
@@ -181,19 +202,21 @@ func (mock *AuthorizationCodeRepositoryMock) RevokeCodeCalls() []struct {
 }
 
 // StoreAuthorizationCode calls StoreAuthorizationCodeFunc.
-func (mock *AuthorizationCodeRepositoryMock) StoreAuthorizationCode(storeAuthorizationCodeParams StoreAuthorizationCodeParams) (string, error) {
+func (mock *AuthorizationCodeRepositoryMock) StoreAuthorizationCode(ctx context.Context, p StoreAuthorizationCodeParams) (string, error) {
 	if mock.StoreAuthorizationCodeFunc == nil {
 		panic("AuthorizationCodeRepositoryMock.StoreAuthorizationCodeFunc: method is nil but AuthorizationCodeRepository.StoreAuthorizationCode was just called")
 	}
 	callInfo := struct {
-		StoreAuthorizationCodeParams StoreAuthorizationCodeParams
+		Ctx context.Context
+		P   StoreAuthorizationCodeParams
 	}{
-		StoreAuthorizationCodeParams: storeAuthorizationCodeParams,
+		Ctx: ctx,
+		P:   p,
 	}
 	mock.lockStoreAuthorizationCode.Lock()
 	mock.calls.StoreAuthorizationCode = append(mock.calls.StoreAuthorizationCode, callInfo)
 	mock.lockStoreAuthorizationCode.Unlock()
-	return mock.StoreAuthorizationCodeFunc(storeAuthorizationCodeParams)
+	return mock.StoreAuthorizationCodeFunc(ctx, p)
 }
 
 // StoreAuthorizationCodeCalls gets all the calls that were made to StoreAuthorizationCode.
@@ -201,10 +224,12 @@ func (mock *AuthorizationCodeRepositoryMock) StoreAuthorizationCode(storeAuthori
 //
 //	len(mockedAuthorizationCodeRepository.StoreAuthorizationCodeCalls())
 func (mock *AuthorizationCodeRepositoryMock) StoreAuthorizationCodeCalls() []struct {
-	StoreAuthorizationCodeParams StoreAuthorizationCodeParams
+	Ctx context.Context
+	P   StoreAuthorizationCodeParams
 } {
 	var calls []struct {
-		StoreAuthorizationCodeParams StoreAuthorizationCodeParams
+		Ctx context.Context
+		P   StoreAuthorizationCodeParams
 	}
 	mock.lockStoreAuthorizationCode.RLock()
 	calls = mock.calls.StoreAuthorizationCode

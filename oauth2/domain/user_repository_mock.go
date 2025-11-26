@@ -4,6 +4,7 @@
 package domain
 
 import (
+	"context"
 	"sync"
 )
 
@@ -17,7 +18,7 @@ var _ UserRepository = &UserRepositoryMock{}
 //
 //		// make and configure a mocked UserRepository
 //		mockedUserRepository := &UserRepositoryMock{
-//			FindUserByEmailFunc: func(email string) (User, error) {
+//			FindUserByEmailFunc: func(ctx context.Context, email string) (User, error) {
 //				panic("mock out the FindUserByEmail method")
 //			},
 //		}
@@ -28,12 +29,14 @@ var _ UserRepository = &UserRepositoryMock{}
 //	}
 type UserRepositoryMock struct {
 	// FindUserByEmailFunc mocks the FindUserByEmail method.
-	FindUserByEmailFunc func(email string) (User, error)
+	FindUserByEmailFunc func(ctx context.Context, email string) (User, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// FindUserByEmail holds details about calls to the FindUserByEmail method.
 		FindUserByEmail []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// Email is the email argument value.
 			Email string
 		}
@@ -42,19 +45,21 @@ type UserRepositoryMock struct {
 }
 
 // FindUserByEmail calls FindUserByEmailFunc.
-func (mock *UserRepositoryMock) FindUserByEmail(email string) (User, error) {
+func (mock *UserRepositoryMock) FindUserByEmail(ctx context.Context, email string) (User, error) {
 	if mock.FindUserByEmailFunc == nil {
 		panic("UserRepositoryMock.FindUserByEmailFunc: method is nil but UserRepository.FindUserByEmail was just called")
 	}
 	callInfo := struct {
+		Ctx   context.Context
 		Email string
 	}{
+		Ctx:   ctx,
 		Email: email,
 	}
 	mock.lockFindUserByEmail.Lock()
 	mock.calls.FindUserByEmail = append(mock.calls.FindUserByEmail, callInfo)
 	mock.lockFindUserByEmail.Unlock()
-	return mock.FindUserByEmailFunc(email)
+	return mock.FindUserByEmailFunc(ctx, email)
 }
 
 // FindUserByEmailCalls gets all the calls that were made to FindUserByEmail.
@@ -62,9 +67,11 @@ func (mock *UserRepositoryMock) FindUserByEmail(email string) (User, error) {
 //
 //	len(mockedUserRepository.FindUserByEmailCalls())
 func (mock *UserRepositoryMock) FindUserByEmailCalls() []struct {
+	Ctx   context.Context
 	Email string
 } {
 	var calls []struct {
+		Ctx   context.Context
 		Email string
 	}
 	mock.lockFindUserByEmail.RLock()

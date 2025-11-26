@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"io"
 
+	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 )
 
 func GenerateRandomString(length int) (string, error) {

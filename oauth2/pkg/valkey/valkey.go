@@ -22,7 +22,7 @@ type Client struct {
 	cli valkey.Client
 }
 
-func NewClient(ctx context.Context, o Options) (*Client, error) {
+func NewClient(_ context.Context, o Options) (*Client, error) {
 	client, err := valkey.NewClient(valkey.ClientOption{
 		InitAddress: o.Addr,
 	})

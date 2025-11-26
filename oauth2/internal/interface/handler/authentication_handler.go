@@ -54,7 +54,7 @@ func (h *AuthenticationHandler) Entry(c *gin.Context) {
 		return
 	}
 
-	_, err = h.uc.AuthenticateClient(clientID, sign.RedirectURI)
+	_, err = h.uc.AuthenticateClient(c.Request.Context(), clientID, sign.RedirectURI)
 	if err != nil {
 		handleError(c, sess, err)
 		return
@@ -126,7 +126,7 @@ func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 		return
 	}
 
-	user, err := h.uc.AuthenticateUser(input.Email, input.Password)
+	user, err := h.uc.AuthenticateUser(c.Request.Context(), input.Email, input.Password)
 
 	if err != nil {
 		handleError(c, sess, err)

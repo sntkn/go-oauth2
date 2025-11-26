@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
@@ -19,11 +20,11 @@ type UserRepository struct {
 	db *sqlx.DB
 }
 
-func (r *UserRepository) FindUserByEmail(email string) (domain.User, error) {
+func (r *UserRepository) FindUserByEmail(ctx context.Context, email string) (domain.User, error) {
 	q := "SELECT id, email, password FROM users WHERE email = $1"
 	var u model.User
 
-	err := r.db.Get(&u, q, email)
+	err := r.db.GetContext(ctx, &u, q, email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.NewUser(domain.UserParams{}), nil

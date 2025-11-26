@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -20,12 +21,12 @@ type AuthorizationCodeRepository struct {
 	db *sqlx.DB
 }
 
-func (r *AuthorizationCodeRepository) FindAuthorizationCode(code string) (domain.AuthorizationCode, error) {
+func (r *AuthorizationCodeRepository) FindAuthorizationCode(ctx context.Context, code string) (domain.AuthorizationCode, error) {
 	q := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL"
 
 	var c model.AuthorizationCode
 
-	err := r.db.Get(&c, q, code)
+	err := r.db.GetContext(ctx, &c, q, code)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -40,11 +41,15 @@ func (r *AuthorizationCodeRepository) FindAuthorizationCode(code string) (domain
 	})
 }
 
-func (r *AuthorizationCodeRepository) FindValidAuthorizationCode(code string, expiresAt time.Time) (domain.AuthorizationCode, error) {
+func (r *AuthorizationCodeRepository) FindValidAuthorizationCode(
+	ctx context.Context,
+	code string,
+	expiresAt time.Time,
+) (domain.AuthorizationCode, error) {
 	q := "SELECT user_id, client_id, scope, expires_at FROM oauth2_codes WHERE code = $1 AND revoked_at IS NULL AND expires_at > $2"
 	var c model.AuthorizationCode
 
-	err := r.db.Get(&c, q, code, expiresAt)
+	err := r.db.GetContext(ctx, &c, q, code, expiresAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -59,7 +64,7 @@ func (r *AuthorizationCodeRepository) FindValidAuthorizationCode(code string, ex
 	})
 }
 
-func (r *AuthorizationCodeRepository) StoreAuthorizationCode(p domain.StoreAuthorizationCodeParams) (string, error) {
+func (r *AuthorizationCodeRepository) StoreAuthorizationCode(ctx context.Context, p domain.StoreAuthorizationCodeParams) (string, error) {
 	m := &model.AuthorizationCode{
 		Code:        p.Code,
 		ClientID:    p.ClientID,
@@ -77,7 +82,7 @@ func (r *AuthorizationCodeRepository) StoreAuthorizationCode(p domain.StoreAutho
 				(:code, :client_id, :user_id, :scope, :redirect_uri, :expires_at, :created_at, :updated_at)
 	`
 
-	_, err := r.db.NamedExec(q, m)
+	_, err := r.db.NamedExecContext(ctx, q, m)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -86,8 +91,8 @@ func (r *AuthorizationCodeRepository) StoreAuthorizationCode(p domain.StoreAutho
 	return p.Code, nil
 }
 
-func (r *AuthorizationCodeRepository) RevokeCode(code string) error {
+func (r *AuthorizationCodeRepository) RevokeCode(ctx context.Context, code string) error {
 	updateQuery := "UPDATE oauth2_codes SET revoked_at = $1 WHERE code = $2"
-	_, err := r.db.Exec(updateQuery, time.Now(), code)
+	_, err := r.db.ExecContext(ctx, updateQuery, time.Now(), code)
 	return errors.WithStack(err)
 }

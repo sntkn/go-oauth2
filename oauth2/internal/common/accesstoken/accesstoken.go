@@ -33,7 +33,7 @@ type TokenParams struct {
 	ExpiresAt time.Time
 }
 
-func (t *Token) Generate(p *TokenParams, privateKeyBase64 string) (string, error) {
+func (*Token) Generate(p *TokenParams, privateKeyBase64 string) (string, error) {
 	// JWTのペイロード（クレーム）を設定
 	claims := jwt.MapClaims{
 		"user_id":   p.UserID.String(),
@@ -70,7 +70,7 @@ type CustomClaims struct {
 	jwt.StandardClaims
 }
 
-func (t *Token) Parse(tokenStr string, publicKeyBase64 string) (*CustomClaims, error) {
+func (*Token) Parse(tokenStr string, publicKeyBase64 string) (*CustomClaims, error) {
 	publicKeyBytes, err := base64.StdEncoding.DecodeString(publicKeyBase64)
 	if err != nil {
 		return nil, errors.WithStack(err)

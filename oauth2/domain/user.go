@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,7 +37,7 @@ type User interface {
 
 //go:generate go run github.com/matryer/moq -out user_repository_mock.go . UserRepository
 type UserRepository interface {
-	FindUserByEmail(email string) (User, error)
+	FindUserByEmail(ctx context.Context, email string) (User, error)
 }
 
 type user struct {

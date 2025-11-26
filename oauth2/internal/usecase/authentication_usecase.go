@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -16,8 +17,8 @@ func NewAuthenticationUsecase(userRepo domain.UserRepository, clientRepo domain.
 }
 
 type IAuthenticationUsecase interface {
-	AuthenticateUser(email, password string) (domain.User, error)
-	AuthenticateClient(clientID uuid.UUID, redirectURI string) (domain.Client, error)
+	AuthenticateUser(ctx context.Context, email, password string) (domain.User, error)
+	AuthenticateClient(ctx context.Context, clientID uuid.UUID, redirectURI string) (domain.Client, error)
 }
 
 type AuthenticationUsecase struct {
@@ -25,8 +26,8 @@ type AuthenticationUsecase struct {
 	clientRepo domain.ClientRepository
 }
 
-func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirectURI string) (domain.Client, error) {
-	client, err := uc.clientRepo.FindClientByClientID(clientID)
+func (uc *AuthenticationUsecase) AuthenticateClient(ctx context.Context, clientID uuid.UUID, redirectURI string) (domain.Client, error) {
+	client, err := uc.clientRepo.FindClientByClientID(ctx, clientID)
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
 	}
@@ -44,9 +45,9 @@ func (uc *AuthenticationUsecase) AuthenticateClient(clientID uuid.UUID, redirect
 	return client, nil
 }
 
-func (uc *AuthenticationUsecase) AuthenticateUser(email, password string) (domain.User, error) {
+func (uc *AuthenticationUsecase) AuthenticateUser(ctx context.Context, email, password string) (domain.User, error) {
 	// validate user credentials
-	user, err := uc.userRepo.FindUserByEmail(email)
+	user, err := uc.userRepo.FindUserByEmail(ctx, email)
 
 	if err != nil {
 		return nil, errors.NewUsecaseError(http.StatusInternalServerError, err.Error())
