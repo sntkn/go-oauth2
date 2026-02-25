@@ -3,7 +3,7 @@ module github.com/sntkn/go-oauth2/oauth2
 go 1.25
 
 require (
-	github.com/alicebob/miniredis/v2 v2.36.1
+	github.com/alicebob/miniredis/v2 v2.37.0
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/cockroachdb/errors v1.12.0
 	github.com/gin-gonic/gin v1.11.0
