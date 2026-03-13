@@ -1,6 +1,6 @@
 module github.com/sntkn/go-oauth2/api
 
-go 1.25.0
+go 1.26.1
 
 require (
 	github.com/caarlos0/env v3.5.0+incompatible
