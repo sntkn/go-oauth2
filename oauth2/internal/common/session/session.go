@@ -58,9 +58,45 @@ type SessionClient interface {
 	SetSessionData(c *gin.Context, key string, input string) error
 	DelSessionData(c *gin.Context, key string) error
 	PullSessionData(c *gin.Context, key string) (string, error)
-	GetNamedSessionData(c *gin.Context, key string, t any) error
-	SetNamedSessionData(c *gin.Context, key string, v any) error
-	FlushNamedSessionData(c *gin.Context, key string, t any) error
+}
+
+// Load retrieves typed session data.
+func Load[T any](c *gin.Context, s SessionClient, key string) (T, bool, error) {
+	var zero T
+	data, err := s.GetSessionData(c, key)
+	if err != nil {
+		return zero, false, err
+	}
+	if len(data) == 0 {
+		return zero, false, nil
+	}
+	var value T
+	if err := json.Unmarshal([]byte(data), &value); err != nil {
+		return zero, false, errors.WithStack(err)
+	}
+	return value, true, nil
+}
+
+// Save stores typed session data.
+func Save[T any](c *gin.Context, s SessionClient, key string, value T) error {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return s.SetSessionData(c, key, string(payload))
+}
+
+// Pop loads and deletes typed session data in a single call.
+func Pop[T any](c *gin.Context, s SessionClient, key string) (T, bool, error) {
+	value, ok, err := Load[T](c, s, key)
+	if err != nil || !ok {
+		return value, ok, err
+	}
+	if err := s.DelSessionData(c, key); err != nil {
+		var zero T
+		return zero, false, err
+	}
+	return value, true, nil
 }
 
 // セッションIDを生成する関数
@@ -97,38 +133,6 @@ func (s *Session) PullSessionData(c *gin.Context, key string) (string, error) {
 	}
 
 	return v, nil
-}
-
-func (s *Session) GetNamedSessionData(c *gin.Context, key string, t any) error {
-	str, err := s.GetSessionData(c, key)
-	if err != nil {
-		return err
-	}
-	if len(str) == 0 {
-		return nil
-	}
-	if err = json.Unmarshal([]byte(str), &t); err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
-}
-
-func (s *Session) SetNamedSessionData(c *gin.Context, key string, v any) error {
-	d, err := json.Marshal(v)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return s.SetSessionData(c, key, string(d))
-}
-
-func (s *Session) FlushNamedSessionData(c *gin.Context, key string, t any) error {
-	if err := s.GetNamedSessionData(c, key, t); err != nil {
-		return err
-	}
-	if err := s.DelSessionData(c, key); err != nil {
-		return err
-	}
-	return nil
 }
 
 // func GetSessionDataToType[T any](s *Session, c *gin.Context, key string, t T) (T, error) {

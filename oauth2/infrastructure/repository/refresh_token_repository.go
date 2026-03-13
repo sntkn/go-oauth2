@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -36,20 +35,23 @@ func (r *RefreshTokenRepository) StoreRefreshToken(ctx context.Context, t domain
 }
 
 func (r *RefreshTokenRepository) FindRefreshToken(ctx context.Context, refreshToken string) (domain.RefreshToken, error) {
-	q := "SELECT access_token FROM oauth2_refresh_tokens WHERE domain = $1"
-	var rtkn model.RefreshToken
-
-	err := r.db.GetContext(ctx, &rtkn, q, refreshToken)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, errors.WithStack(err)
+	q := "SELECT access_token, expires_at FROM oauth2_refresh_tokens WHERE domain = $1"
+	mapper := func(rt model.RefreshToken) (domain.RefreshToken, error) {
+		return domain.NewRefreshToken(domain.RefreshTokenParams{
+			RefreshToken: domain.RefreshTokenString(refreshToken),
+			AccessToken:  rt.AccessToken,
+			ExpiresAt:    rt.ExpiresAt,
+		}), nil
 	}
 
-	return domain.NewRefreshToken(domain.RefreshTokenParams{
-		AccessToken: rtkn.AccessToken,
-	}), nil
+	refresh, ok, err := fetchAndMap[model.RefreshToken, domain.RefreshToken](ctx, r.db, q, mapper, refreshToken)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, nil
+	}
+	return refresh, nil
 }
 
 func (r *RefreshTokenRepository) RevokeRefreshToken(ctx context.Context, refreshToken string) error {

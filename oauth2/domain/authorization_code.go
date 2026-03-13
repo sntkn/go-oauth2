@@ -9,6 +9,10 @@ import (
 	"github.com/sntkn/go-oauth2/oauth2/pkg/str"
 )
 
+type uuidLike interface {
+	~string | uuid.UUID
+}
+
 type StoreAuthorizationCodeParams struct {
 	Code        string
 	ClientID    uuid.UUID
@@ -18,10 +22,10 @@ type StoreAuthorizationCodeParams struct {
 	ExpiresAt   time.Time
 }
 
-type AuthorizationCodeParams struct {
+type AuthorizationCodeParams[T uuidLike] struct {
 	Code        string
-	ClientID    string
-	UserID      string
+	ClientID    T
+	UserID      T
 	Scope       string
 	RedirectURI string
 	ExpiresAt   time.Time
@@ -29,25 +33,25 @@ type AuthorizationCodeParams struct {
 	UpdatedAt   time.Time
 }
 
-func NewAuthorizationCode(p AuthorizationCodeParams) (AuthorizationCode, error) {
-	clientID, err := uuid.Parse(p.ClientID)
+func NewAuthorizationCode[T uuidLike](p AuthorizationCodeParams[T]) (AuthorizationCode, error) {
+	clientID, err := castUUID(p.ClientID)
 	if err != nil {
 		return nil, err
 	}
-	userID, err := uuid.Parse(p.UserID)
+	userID, err := castUUID(p.UserID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &authorizationCode{
-		Code:        p.Code,
-		ClientID:    clientID,
-		UserID:      userID,
-		Scope:       p.Scope,
-		RedirectURI: p.RedirectURI,
-		ExpiresAt:   p.ExpiresAt,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
+		code:        p.Code,
+		clientID:    clientID,
+		userID:      userID,
+		scope:       p.Scope,
+		redirectURI: p.RedirectURI,
+		expiresAt:   p.ExpiresAt,
+		createdAt:   p.CreatedAt,
+		updatedAt:   p.UpdatedAt,
 	}, nil
 }
 
@@ -73,54 +77,65 @@ type AuthorizationCodeRepository interface {
 }
 
 type authorizationCode struct {
-	Code     string
-	ClientID uuid.UUID
-	UserID   uuid.UUID
-	Scope    string
+	code     string
+	clientID uuid.UUID
+	userID   uuid.UUID
+	scope    string
 	// Scopes      []string
-	RedirectURI string
-	ExpiresAt   time.Time
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	redirectURI string
+	expiresAt   time.Time
+	createdAt   time.Time
+	updatedAt   time.Time
 }
 
 func (a *authorizationCode) IsNotFound() bool {
-	return a.Code == ""
+	return a.code == ""
 }
 
 func (a *authorizationCode) GetCode() string {
-	return a.Code
+	return a.code
 }
 
 func (a *authorizationCode) GetClientID() uuid.UUID {
-	return a.ClientID
+	return a.clientID
 }
 
 func (a *authorizationCode) GetUserID() uuid.UUID {
-	return a.UserID
+	return a.userID
 }
 
 func (a *authorizationCode) GetScope() string {
-	return a.Scope
+	return a.scope
 }
 
 func (a *authorizationCode) GetRedirectURI() string {
-	return a.RedirectURI
+	return a.redirectURI
 }
 
 func (a *authorizationCode) GetExpiresAt() time.Time {
-	return a.ExpiresAt
+	return a.expiresAt
 }
 
 func (a *authorizationCode) GenerateRedirectURIWithCode() string {
-	return fmt.Sprintf("%s?code=%s", a.RedirectURI, a.Code)
+	return fmt.Sprintf("%s?code=%s", a.redirectURI, a.code)
 }
 
 func (a *authorizationCode) IsExpired(t time.Time) bool {
-	return t.After(a.ExpiresAt)
+	return t.After(a.expiresAt)
 }
 
 func GenerateCode() (string, error) {
 	randomStringLen := 32
 	return str.GenerateRandomString(randomStringLen)
+}
+
+func castUUID[T uuidLike](v T) (uuid.UUID, error) {
+	switch val := any(v).(type) {
+	case string:
+		return uuid.Parse(val)
+	case uuid.UUID:
+		return val, nil
+	default:
+		return uuid.Nil, fmt.Errorf("unsupported uuid type %T", v)
+	}
 }

@@ -20,9 +20,9 @@ type RefreshTokenParams struct {
 
 func NewRefreshToken(p RefreshTokenParams) RefreshToken {
 	return &refreshToken{
-		RefreshToken: p.RefreshToken,
-		AccessToken:  p.AccessToken,
-		ExpiresAt:    p.ExpiresAt,
+		refreshToken: p.RefreshToken,
+		accessToken:  p.AccessToken,
+		expiresAt:    p.ExpiresAt,
 	}
 }
 
@@ -45,37 +45,37 @@ type RefreshTokenRepository interface {
 }
 
 type refreshToken struct {
-	RefreshToken RefreshTokenString
-	AccessToken  string
-	ExpiresAt    time.Time
+	refreshToken RefreshTokenString
+	accessToken  string
+	expiresAt    time.Time
 }
 
 func (t *refreshToken) IsNotFound() bool {
-	return t.RefreshToken == ""
+	return t.refreshToken == ""
 }
 
 func (t *refreshToken) GetRefreshToken() string {
-	return t.RefreshToken.String()
+	return t.refreshToken.String()
 }
 
 func (t *refreshToken) GetAccessToken() string {
-	return t.AccessToken
+	return t.accessToken
 }
 
 func (t *refreshToken) GetExpiresAt() time.Time {
-	return t.ExpiresAt
+	return t.expiresAt
 }
 
 func (t *refreshToken) Expiry() int64 {
-	return t.ExpiresAt.Unix()
+	return t.expiresAt.Unix()
 }
 
 func (t *refreshToken) IsExpired(now time.Time) bool {
-	return t.ExpiresAt.After(now)
+	return t.expiresAt.After(now)
 }
 
 func (t *refreshToken) SetNewExpiry(additionalDays int) {
-	t.ExpiresAt = time.Now().Add(time.Duration(additionalDays) * day)
+	t.expiresAt = time.Now().Add(time.Duration(additionalDays) * day)
 }
 
 type RefreshTokenString string

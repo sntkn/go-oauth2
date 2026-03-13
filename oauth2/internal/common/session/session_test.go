@@ -98,108 +98,69 @@ func TestPullSessionData(t *testing.T) {
 	assert.Equal(t, "testValue", value)
 }
 
-func TestGetNamedSessionData(t *testing.T) {
-	type TestStruct struct {
-		Name  string
-		Value int
+func TestLoadSavePopTypedSessionData(t *testing.T) {
+	type payload struct {
+		Name string
+		Age  int
 	}
 
-	input := TestStruct{
-		Name:  "test",
-		Value: 42,
-	}
+	t.Run("Load returns typed data", func(t *testing.T) {
+		input := payload{Name: "john", Age: 10}
+		encoded, err := json.Marshal(input)
+		require.NoError(t, err)
 
-	data, err := json.Marshal(input)
-	require.NoError(t, err)
+		mockValkey := &valkey.ClientIFMock{
+			GetFunc: func(_ context.Context, _ string) (string, error) {
+				return string(encoded), nil
+			},
+		}
 
-	mockValkey := &valkey.ClientIFMock{
-		GetFunc: func(_ context.Context, _ string) (string, error) {
-			return string(data), nil
-		},
-	}
+		sess := &Session{SessionID: "sid", SessionStore: mockValkey}
+		c := setupTestContext()
 
-	c := setupTestContext()
+		actual, ok, err := Load[payload](c, sess, "typed")
+		require.NoError(t, err)
+		assert.True(t, ok)
+		assert.Equal(t, input, actual)
+	})
 
-	session := &Session{
-		SessionID:    "sessionID",
-		SessionStore: mockValkey,
-	}
+	t.Run("Save marshals typed payload", func(t *testing.T) {
+		input := payload{Name: "mike", Age: 20}
+		mockValkey := &valkey.ClientIFMock{
+			SetFunc: func(_ context.Context, _ string, value string, _ int64) error {
+				var decoded payload
+				require.NoError(t, json.Unmarshal([]byte(value), &decoded))
+				assert.Equal(t, input, decoded)
+				return nil
+			},
+		}
 
-	var output TestStruct
+		sess := &Session{SessionID: "sid", SessionStore: mockValkey}
+		c := setupTestContext()
 
-	// Test GetSessionData
-	err = session.GetNamedSessionData(c, "testKey", &output)
-	require.NoError(t, err)
-	assert.Equal(t, input, output)
-}
+		require.NoError(t, Save(c, sess, "typed", input))
+	})
 
-func TestSetNamedSessionData(t *testing.T) {
-	type TestStruct struct {
-		Name  string
-		Value int
-	}
+	t.Run("Pop loads and deletes", func(t *testing.T) {
+		input := payload{Name: "doe", Age: 30}
+		encoded, err := json.Marshal(input)
+		require.NoError(t, err)
 
-	input := TestStruct{
-		Name:  "test",
-		Value: 42,
-	}
+		mockValkey := &valkey.ClientIFMock{
+			GetFunc: func(_ context.Context, _ string) (string, error) {
+				return string(encoded), nil
+			},
+			DelFunc: func(_ context.Context, _ string) error {
+				return nil
+			},
+		}
 
-	data, err := json.Marshal(input)
-	require.NoError(t, err)
+		sess := &Session{SessionID: "sid", SessionStore: mockValkey}
+		c := setupTestContext()
 
-	mockValkey := &valkey.ClientIFMock{
-		SetFunc: func(_ context.Context, _ string, _ string, _ int64) error {
-			return nil
-		},
-	}
-
-	c := setupTestContext()
-
-	session := &Session{
-		SessionID:    "sessionID",
-		SessionStore: mockValkey,
-	}
-
-	// Test SetSessionData
-	err = session.SetNamedSessionData(c, "testKey", data)
-	require.NoError(t, err)
-}
-
-func TestFlushNamedSessionData(t *testing.T) {
-	t.Parallel()
-
-	type TestStruct struct {
-		Name  string
-		Value int
-	}
-
-	input := TestStruct{
-		Name:  "test",
-		Value: 42,
-	}
-
-	data, err := json.Marshal(input)
-	require.NoError(t, err)
-
-	mockValkey := &valkey.ClientIFMock{
-		GetFunc: func(_ context.Context, _ string) (string, error) {
-			return string(data), nil
-		},
-		DelFunc: func(_ context.Context, _ string) error {
-			return nil
-		},
-	}
-
-	c := setupTestContext()
-
-	session := &Session{
-		SessionID:    "sessionID",
-		SessionStore: mockValkey,
-	}
-
-	var output TestStruct
-
-	err = session.FlushNamedSessionData(c, "testKey", &output)
-	require.NoError(t, err)
-	assert.Equal(t, input, output)
+		actual, ok, err := Pop[payload](c, sess, "typed")
+		require.NoError(t, err)
+		assert.True(t, ok)
+		assert.Equal(t, input, actual)
+	})
 }

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -41,20 +40,22 @@ func (r *TokenRepository) StoreToken(ctx context.Context, accessToken domain.Tok
 
 func (r *TokenRepository) FindToken(ctx context.Context, accessToken string) (domain.Token, error) {
 	q := "SELECT user_id, client_id, scope FROM oauth2_tokens WHERE access_token = $1"
-	var tkn model.Token
-
-	err := r.db.GetContext(ctx, &tkn, q, accessToken)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, errors.WithStack(err)
+	mapper := func(tkn model.Token) (domain.Token, error) {
+		return domain.NewToken(domain.TokenParams{
+			UserID:   tkn.UserID,
+			ClientID: tkn.ClientID,
+			Scope:    tkn.Scope,
+		}), nil
 	}
-	return domain.NewToken(domain.TokenParams{
-		UserID:   tkn.UserID,
-		ClientID: tkn.ClientID,
-		Scope:    tkn.Scope,
-	}), nil
+
+	token, ok, err := fetchAndMap[model.Token, domain.Token](ctx, r.db, q, mapper, accessToken)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, nil
+	}
+	return token, nil
 }
 
 func (r *TokenRepository) RevokeToken(ctx context.Context, accessToken string) error {

@@ -21,20 +21,11 @@ var _ SessionClient = &SessionClientMock{}
 //			DelSessionDataFunc: func(c *gin.Context, key string) error {
 //				panic("mock out the DelSessionData method")
 //			},
-//			FlushNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-//				panic("mock out the FlushNamedSessionData method")
-//			},
-//			GetNamedSessionDataFunc: func(c *gin.Context, key string, t any) error {
-//				panic("mock out the GetNamedSessionData method")
-//			},
 //			GetSessionDataFunc: func(c *gin.Context, key string) (string, error) {
 //				panic("mock out the GetSessionData method")
 //			},
 //			PullSessionDataFunc: func(c *gin.Context, key string) (string, error) {
 //				panic("mock out the PullSessionData method")
-//			},
-//			SetNamedSessionDataFunc: func(c *gin.Context, key string, v any) error {
-//				panic("mock out the SetNamedSessionData method")
 //			},
 //			SetSessionDataFunc: func(c *gin.Context, key string, input string) error {
 //				panic("mock out the SetSessionData method")
@@ -49,20 +40,11 @@ type SessionClientMock struct {
 	// DelSessionDataFunc mocks the DelSessionData method.
 	DelSessionDataFunc func(c *gin.Context, key string) error
 
-	// FlushNamedSessionDataFunc mocks the FlushNamedSessionData method.
-	FlushNamedSessionDataFunc func(c *gin.Context, key string, t any) error
-
-	// GetNamedSessionDataFunc mocks the GetNamedSessionData method.
-	GetNamedSessionDataFunc func(c *gin.Context, key string, t any) error
-
 	// GetSessionDataFunc mocks the GetSessionData method.
 	GetSessionDataFunc func(c *gin.Context, key string) (string, error)
 
 	// PullSessionDataFunc mocks the PullSessionData method.
 	PullSessionDataFunc func(c *gin.Context, key string) (string, error)
-
-	// SetNamedSessionDataFunc mocks the SetNamedSessionData method.
-	SetNamedSessionDataFunc func(c *gin.Context, key string, v any) error
 
 	// SetSessionDataFunc mocks the SetSessionData method.
 	SetSessionDataFunc func(c *gin.Context, key string, input string) error
@@ -75,24 +57,6 @@ type SessionClientMock struct {
 			C *gin.Context
 			// Key is the key argument value.
 			Key string
-		}
-		// FlushNamedSessionData holds details about calls to the FlushNamedSessionData method.
-		FlushNamedSessionData []struct {
-			// C is the c argument value.
-			C *gin.Context
-			// Key is the key argument value.
-			Key string
-			// T is the t argument value.
-			T any
-		}
-		// GetNamedSessionData holds details about calls to the GetNamedSessionData method.
-		GetNamedSessionData []struct {
-			// C is the c argument value.
-			C *gin.Context
-			// Key is the key argument value.
-			Key string
-			// T is the t argument value.
-			T any
 		}
 		// GetSessionData holds details about calls to the GetSessionData method.
 		GetSessionData []struct {
@@ -108,15 +72,6 @@ type SessionClientMock struct {
 			// Key is the key argument value.
 			Key string
 		}
-		// SetNamedSessionData holds details about calls to the SetNamedSessionData method.
-		SetNamedSessionData []struct {
-			// C is the c argument value.
-			C *gin.Context
-			// Key is the key argument value.
-			Key string
-			// V is the v argument value.
-			V any
-		}
 		// SetSessionData holds details about calls to the SetSessionData method.
 		SetSessionData []struct {
 			// C is the c argument value.
@@ -127,13 +82,10 @@ type SessionClientMock struct {
 			Input string
 		}
 	}
-	lockDelSessionData        sync.RWMutex
-	lockFlushNamedSessionData sync.RWMutex
-	lockGetNamedSessionData   sync.RWMutex
-	lockGetSessionData        sync.RWMutex
-	lockPullSessionData       sync.RWMutex
-	lockSetNamedSessionData   sync.RWMutex
-	lockSetSessionData        sync.RWMutex
+	lockDelSessionData  sync.RWMutex
+	lockGetSessionData  sync.RWMutex
+	lockPullSessionData sync.RWMutex
+	lockSetSessionData  sync.RWMutex
 }
 
 // DelSessionData calls DelSessionDataFunc.
@@ -169,86 +121,6 @@ func (mock *SessionClientMock) DelSessionDataCalls() []struct {
 	mock.lockDelSessionData.RLock()
 	calls = mock.calls.DelSessionData
 	mock.lockDelSessionData.RUnlock()
-	return calls
-}
-
-// FlushNamedSessionData calls FlushNamedSessionDataFunc.
-func (mock *SessionClientMock) FlushNamedSessionData(c *gin.Context, key string, t any) error {
-	if mock.FlushNamedSessionDataFunc == nil {
-		panic("SessionClientMock.FlushNamedSessionDataFunc: method is nil but SessionClient.FlushNamedSessionData was just called")
-	}
-	callInfo := struct {
-		C   *gin.Context
-		Key string
-		T   any
-	}{
-		C:   c,
-		Key: key,
-		T:   t,
-	}
-	mock.lockFlushNamedSessionData.Lock()
-	mock.calls.FlushNamedSessionData = append(mock.calls.FlushNamedSessionData, callInfo)
-	mock.lockFlushNamedSessionData.Unlock()
-	return mock.FlushNamedSessionDataFunc(c, key, t)
-}
-
-// FlushNamedSessionDataCalls gets all the calls that were made to FlushNamedSessionData.
-// Check the length with:
-//
-//	len(mockedSessionClient.FlushNamedSessionDataCalls())
-func (mock *SessionClientMock) FlushNamedSessionDataCalls() []struct {
-	C   *gin.Context
-	Key string
-	T   any
-} {
-	var calls []struct {
-		C   *gin.Context
-		Key string
-		T   any
-	}
-	mock.lockFlushNamedSessionData.RLock()
-	calls = mock.calls.FlushNamedSessionData
-	mock.lockFlushNamedSessionData.RUnlock()
-	return calls
-}
-
-// GetNamedSessionData calls GetNamedSessionDataFunc.
-func (mock *SessionClientMock) GetNamedSessionData(c *gin.Context, key string, t any) error {
-	if mock.GetNamedSessionDataFunc == nil {
-		panic("SessionClientMock.GetNamedSessionDataFunc: method is nil but SessionClient.GetNamedSessionData was just called")
-	}
-	callInfo := struct {
-		C   *gin.Context
-		Key string
-		T   any
-	}{
-		C:   c,
-		Key: key,
-		T:   t,
-	}
-	mock.lockGetNamedSessionData.Lock()
-	mock.calls.GetNamedSessionData = append(mock.calls.GetNamedSessionData, callInfo)
-	mock.lockGetNamedSessionData.Unlock()
-	return mock.GetNamedSessionDataFunc(c, key, t)
-}
-
-// GetNamedSessionDataCalls gets all the calls that were made to GetNamedSessionData.
-// Check the length with:
-//
-//	len(mockedSessionClient.GetNamedSessionDataCalls())
-func (mock *SessionClientMock) GetNamedSessionDataCalls() []struct {
-	C   *gin.Context
-	Key string
-	T   any
-} {
-	var calls []struct {
-		C   *gin.Context
-		Key string
-		T   any
-	}
-	mock.lockGetNamedSessionData.RLock()
-	calls = mock.calls.GetNamedSessionData
-	mock.lockGetNamedSessionData.RUnlock()
 	return calls
 }
 
@@ -321,46 +193,6 @@ func (mock *SessionClientMock) PullSessionDataCalls() []struct {
 	mock.lockPullSessionData.RLock()
 	calls = mock.calls.PullSessionData
 	mock.lockPullSessionData.RUnlock()
-	return calls
-}
-
-// SetNamedSessionData calls SetNamedSessionDataFunc.
-func (mock *SessionClientMock) SetNamedSessionData(c *gin.Context, key string, v any) error {
-	if mock.SetNamedSessionDataFunc == nil {
-		panic("SessionClientMock.SetNamedSessionDataFunc: method is nil but SessionClient.SetNamedSessionData was just called")
-	}
-	callInfo := struct {
-		C   *gin.Context
-		Key string
-		V   any
-	}{
-		C:   c,
-		Key: key,
-		V:   v,
-	}
-	mock.lockSetNamedSessionData.Lock()
-	mock.calls.SetNamedSessionData = append(mock.calls.SetNamedSessionData, callInfo)
-	mock.lockSetNamedSessionData.Unlock()
-	return mock.SetNamedSessionDataFunc(c, key, v)
-}
-
-// SetNamedSessionDataCalls gets all the calls that were made to SetNamedSessionData.
-// Check the length with:
-//
-//	len(mockedSessionClient.SetNamedSessionDataCalls())
-func (mock *SessionClientMock) SetNamedSessionDataCalls() []struct {
-	C   *gin.Context
-	Key string
-	V   any
-} {
-	var calls []struct {
-		C   *gin.Context
-		Key string
-		V   any
-	}
-	mock.lockSetNamedSessionData.RLock()
-	calls = mock.calls.SetNamedSessionData
-	mock.lockSetNamedSessionData.RUnlock()
 	return calls
 }
 

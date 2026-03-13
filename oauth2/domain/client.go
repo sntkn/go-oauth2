@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,10 +50,5 @@ func (c *client) IsNotFound() bool {
 }
 
 func (c *client) IsRedirectURIMatch(redirectURI string) bool {
-	for _, uri := range c.RedirectURIs {
-		if uri == redirectURI {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.RedirectURIs, redirectURI)
 }

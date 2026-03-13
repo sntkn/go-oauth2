@@ -61,7 +61,7 @@ func (h *AuthenticationHandler) Entry(c *gin.Context) {
 	}
 
 	// セッションデータを書き込む
-	if err := sess.SetNamedSessionData(c, "sign", &sign); err != nil {
+	if err := session.Save(c, sess, "sign", sign); err != nil {
 		c.Error(err)
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
@@ -82,20 +82,19 @@ func (h *AuthenticationHandler) Signin(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
-	var sign EntrySign
-	var form SessionSigninForm
-
-	if err := sess.GetNamedSessionData(c, "sign", &sign); err != nil {
+	sign, ok, err := session.Load[EntrySign](c, sess, "sign")
+	if err != nil {
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	if sign.ClientID == "" {
+	if !ok || sign.ClientID == "" {
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": "invalid client_id"})
 		return
 	}
 
-	if err := sess.FlushNamedSessionData(c, "signin_form", &form); err != nil {
+	form, _, err := session.Pop[SessionSigninForm](c, sess, "signin_form")
+	if err != nil {
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
@@ -110,7 +109,11 @@ type PostSigninInput struct {
 func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 	sess := h.session.NewSession(c)
 	var input PostSigninInput
-	var sign EntrySign
+	sign, _, err := session.Load[EntrySign](c, sess, "sign")
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
+		return
+	}
 
 	if err := c.ShouldBind(&input); err != nil {
 		if flashErr := flashmessage.AddMessage(c, sess, "error", err.Error()); flashErr != nil {
@@ -121,17 +124,12 @@ func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 		return
 	}
 
-	if err := sess.GetNamedSessionData(c, "sign", &sign); err != nil {
-		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": err.Error()})
-		return
-	}
-
 	user, err := h.uc.AuthenticateUser(c.Request.Context(), input.Email, input.Password)
 
 	if err != nil {
 		handleError(c, sess, err)
 		// サインインフォームをセッションに保存
-		if err := sess.SetNamedSessionData(c, "signin_form", SigninForm{
+		if err := session.Save(c, sess, "signin_form", SigninForm{
 			Email: input.Email,
 		}); err != nil {
 			c.Error(errors.WithStack(err))
@@ -154,7 +152,7 @@ func (h *AuthenticationHandler) PostSignin(c *gin.Context) {
 	}
 
 	// ログイン状態をセッションに保存
-	if err := sess.SetNamedSessionData(c, "login", AuthedUser{
+	if err := session.Save(c, sess, "login", AuthedUser{
 		Email:       input.Email,
 		UserID:      user.GetID().String(),
 		ClientID:    sign.ClientID,

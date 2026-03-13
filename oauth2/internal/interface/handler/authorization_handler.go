@@ -38,15 +38,15 @@ func (h *AuthorizationHandler) Consent(c *gin.Context) {
 	sess := h.session.NewSession(c)
 
 	// ログインセッションを取得
-	var authUser AuthedUser
-	if err := sess.GetNamedSessionData(c, "login", &authUser); err != nil {
+	authUser, ok, err := session.Load[AuthedUser](c, sess, "login")
+	if err != nil {
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	// ログインしていない場合は400エラー
-	if authUser.ClientID == "" {
+	if !ok || authUser.ClientID == "" {
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": "client not found"})
 		return
 	}
@@ -77,15 +77,15 @@ func (h *AuthorizationHandler) PostConsent(c *gin.Context) {
 	var concentForm ConcentForm
 
 	// ログインセッションを取得
-	var authUser AuthedUser
-	if err := sess.GetNamedSessionData(c, "login", &authUser); err != nil {
+	authUser, ok, err := session.Load[AuthedUser](c, sess, "login")
+	if err != nil {
 		c.Error(errors.WithStack(err))
 		c.HTML(http.StatusInternalServerError, "500.html", gin.H{"error": err.Error()})
 		return
 	}
 
 	// ログインしていない場合は400エラー
-	if authUser.ClientID == "" {
+	if !ok || authUser.ClientID == "" {
 		c.HTML(http.StatusBadRequest, "400.html", gin.H{"error": "client not found"})
 		return
 	}

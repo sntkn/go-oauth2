@@ -20,18 +20,18 @@ type Messages struct {
 }
 
 func getFlashMessages(c *gin.Context, s session.SessionClient) (Messages, error) {
-	var messages Messages
-	if err := s.GetNamedSessionData(c, "flashMessage", &messages); err != nil {
-		return messages, err
+	messages, ok, err := session.Load[Messages](c, s, "flashMessage")
+	if err != nil {
+		return Messages{}, err
+	}
+	if !ok {
+		return Messages{}, nil
 	}
 	return messages, nil
 }
 
 func setFlashMessages(c *gin.Context, s session.SessionClient, messages Messages) error {
-	if err := s.SetNamedSessionData(c, "flashMessage", messages); err != nil {
-		return err
-	}
-	return nil
+	return session.Save(c, s, "flashMessage", messages)
 }
 
 func AddMessage(c *gin.Context, s session.SessionClient, t MessageType, message string) error {
@@ -53,14 +53,12 @@ func AddMessage(c *gin.Context, s session.SessionClient, t MessageType, message 
 }
 
 func Flash(c *gin.Context, s session.SessionClient) (*Messages, error) {
-	messages, err := getFlashMessages(c, s)
+	messages, ok, err := session.Pop[Messages](c, s, "flashMessage")
 	if err != nil {
 		return nil, err
 	}
-
-	if err := setFlashMessages(c, s, Messages{}); err != nil {
-		return nil, err
+	if !ok {
+		return &Messages{}, nil
 	}
-
 	return &messages, nil
 }
