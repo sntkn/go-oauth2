@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/sntkn/go-oauth2/api/config"
 	"github.com/sntkn/go-oauth2/api/internal/infrastructure/db"
 	"github.com/sntkn/go-oauth2/api/internal/infrastructure/db/model"
@@ -41,15 +41,18 @@ func setupTestDB(t *testing.T) (*gorm.DB, func()) {
 	return tx, func() { tx.Rollback() }
 }
 
-func setupEchoContext(method, path string, params map[string]string) (echo.Context, *httptest.ResponseRecorder) {
+func setupEchoContext(method, path string, params map[string]string) (*echo.Context, *httptest.ResponseRecorder) {
 	e := echo.New()
 	req := httptest.NewRequest(method, path, nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	for key, value := range params {
-		c.SetParamNames(key)
-		c.SetParamValues(value)
+	if len(params) > 0 {
+		pathValues := make(echo.PathValues, 0, len(params))
+		for key, value := range params {
+			pathValues = append(pathValues, echo.PathValue{Name: key, Value: value})
+		}
+		c.SetPathValues(pathValues)
 	}
 
 	return c, rec

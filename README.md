@@ -8,7 +8,7 @@
 
 ## api
 
-- labstack/echo/v4
+- labstack/echo/v5
 - gorm
 - go-errors/errors
 

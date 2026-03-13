@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-errors/errors"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type Response struct {
@@ -13,7 +13,7 @@ type Response struct {
 	Data    any    `json:"data"`
 }
 
-func APIResponse(c echo.Context, code int, message any) error {
+func APIResponse(c *echo.Context, code int, message any) error {
 	switch code {
 	case http.StatusOK:
 		return sendSuccessResponse(c, code, message)
@@ -24,7 +24,7 @@ func APIResponse(c echo.Context, code int, message any) error {
 	}
 }
 
-func sendSuccessResponse(c echo.Context, code int, data any) error {
+func sendSuccessResponse(c *echo.Context, code int, data any) error {
 	response := Response{
 		Status:  "success",
 		Message: "",
@@ -33,7 +33,7 @@ func sendSuccessResponse(c echo.Context, code int, data any) error {
 	return c.JSON(code, response)
 }
 
-func sendErrorResponse(c echo.Context, code int, message any) error {
+func sendErrorResponse(c *echo.Context, code int, message any) error {
 	err, ok := message.(*errors.Error)
 	if !ok {
 		return c.JSON(http.StatusInternalServerError, "could not bind error")

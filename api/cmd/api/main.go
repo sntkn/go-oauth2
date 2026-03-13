@@ -4,8 +4,8 @@ import (
 	"log"
 	"math"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 	"github.com/sntkn/go-oauth2/api/config"
 	"github.com/sntkn/go-oauth2/api/internal/infrastructure/db"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces"
@@ -39,7 +39,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.RequestID())
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 	e.Use(middleware.Gzip())
@@ -49,5 +49,7 @@ func main() {
 	routes.Setup(e, injections)
 
 	// Start the server
-	e.Logger.Fatal(e.Start(":18080"))
+	if err := e.Start(":18080"); err != nil {
+		e.Logger.Error("failed to start server", "error", err)
+	}
 }

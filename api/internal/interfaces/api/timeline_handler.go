@@ -7,7 +7,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces"
 	"github.com/sntkn/go-oauth2/api/internal/interfaces/response"
 	"github.com/sntkn/go-oauth2/api/internal/modules/timeline"
@@ -50,7 +50,7 @@ func NewTimelineHandler(injections *interfaces.Injections) *TimelineHandler {
 	}
 }
 
-func (h *TimelineHandler) GetRecentlyTimeline(c echo.Context) error {
+func (h *TimelineHandler) GetRecentlyTimeline(c *echo.Context) error {
 	params := new(GetRecentlyTimelineParams)
 	if err := c.Bind(params); err != nil {
 		return response.APIResponse(c, http.StatusBadRequest, errors.Wrap("Invalid parameters", 0))
