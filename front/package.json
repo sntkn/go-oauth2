@@ -12,7 +12,7 @@
   "dependencies": {
     "connect-redis": "^9.0.0",
     "express-session": "^1.19.0",
-    "ioredis": "^5.10.0",
+    "ioredis": "^5.10.1",
     "next": "^16.2.0",
     "next-app-session": "^1.0.7",
     "react": "^19.2.4",
