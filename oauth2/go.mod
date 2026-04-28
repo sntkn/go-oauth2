@@ -5,7 +5,7 @@ go 1.26.1
 require (
 	github.com/alicebob/miniredis/v2 v2.37.0
 	github.com/caarlos0/env v3.5.0+incompatible
-	github.com/cockroachdb/errors v1.12.0
+	github.com/cockroachdb/errors v1.13.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-errors/errors v1.5.1
 	github.com/go-playground/validator/v10 v10.30.2
@@ -30,7 +30,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
-	github.com/getsentry/sentry-go v0.27.0 // indirect
+	github.com/getsentry/sentry-go v0.46.0 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
