@@ -14,6 +14,8 @@ updates:
         applies-to: version-updates
         update-types:
           - "patch"
+    cooldown:
+      default-days: 7
   - package-ecosystem: gomod
     directory: api/
     schedule:
@@ -23,6 +25,8 @@ updates:
         applies-to: version-updates
         update-types:
           - "patch"
+    cooldown:
+      default-days: 7
   - package-ecosystem: gomod
     directory: client/
     schedule:
@@ -32,6 +36,8 @@ updates:
         applies-to: version-updates
         update-types:
           - "patch"
+    cooldown:
+      default-days: 7
   - package-ecosystem: npm
     directory: front/
     schedule:
@@ -42,11 +48,17 @@ updates:
         update-types:
           - "patch"
           - "minor"
+    cooldown:
+      default-days: 7
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7

@@ -43,6 +43,6 @@ jobs:
     needs: [lint, test, build-and-push]
     runs-on: ubuntu-latest
     steps:
-    - uses: Kesin11/actions-timeline@v3
+    - uses: Kesin11/actions-timeline@44c9c178ffb2fb1d9859614a3ffa79ccfb77565e # v3.1.0
       with:
         github-token: ${{ github.token }}
