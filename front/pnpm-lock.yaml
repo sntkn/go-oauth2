@@ -31,31 +31,31 @@ importers:
         version: 19.2.6(react@19.2.6)
     devDependencies:
       '@types/node':
-        specifier: ^25
+        specifier: ^25.6.2
         version: 25.6.2
       '@types/react':
-        specifier: ^19
+        specifier: ^19.2.14
         version: 19.2.14
       '@types/react-dom':
-        specifier: ^19
+        specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
       autoprefixer:
-        specifier: ^10
+        specifier: ^10.5.0
         version: 10.5.0(postcss@8.5.14)
       eslint:
-        specifier: ^9
+        specifier: ^9.39.2
         version: 9.39.2
       eslint-config-next:
         specifier: ^16.2.6
         version: 16.2.6(@typescript-eslint/parser@8.59.3(eslint@9.39.2)(typescript@6.0.3))(eslint@9.39.2)(typescript@6.0.3)
       postcss:
-        specifier: ^8
+        specifier: ^8.5.14
         version: 8.5.14
       tailwindcss:
-        specifier: ^4
+        specifier: ^4.3.0
         version: 4.3.0
       typescript:
-        specifier: ^6
+        specifier: ^6.0.3
         version: 6.0.3
 
 packages:
