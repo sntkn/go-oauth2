@@ -8,7 +8,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/jinzhu/copier v0.4.0
-	github.com/labstack/echo-jwt/v5 v5.0.1
+	github.com/labstack/echo-jwt/v5 v5.0.2
 	github.com/labstack/echo/v5 v5.3.0
 	github.com/stretchr/testify v1.11.1
 	gorm.io/driver/postgres v1.6.0
