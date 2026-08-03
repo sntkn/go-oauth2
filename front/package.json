@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "connect-redis": "^9.0.0",
+    "connect-redis": "^10.0.0",
     "express-session": "^1.19.0",
     "ioredis": "^5.11.1",
     "next": "^16.2.12",
