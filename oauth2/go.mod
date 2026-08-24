@@ -14,8 +14,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/matryer/moq v0.7.1
-	github.com/stretchr/testify v1.12.0
-	github.com/valkey-io/valkey-go v1.0.76
+	github.com/stretchr/testify v1.12.1
+	github.com/valkey-io/valkey-go v1.0.77
 	golang.org/x/crypto v0.55.0
 )
 
@@ -53,6 +53,7 @@ require (
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
@@ -61,5 +62,4 @@ require (
 	golang.org/x/text v0.41.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
