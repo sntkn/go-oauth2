@@ -12,7 +12,7 @@ require (
 	github.com/labstack/echo/v5 v5.3.1
 	github.com/stretchr/testify v1.12.1
 	gorm.io/driver/postgres v1.6.2
-	gorm.io/gen v0.3.28
+	gorm.io/gen v0.3.29
 	gorm.io/gorm v1.31.2
 	gorm.io/plugin/dbresolver v1.6.2
 )
