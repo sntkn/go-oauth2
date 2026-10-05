@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/labstack/echo-jwt/v5 v5.0.2
-	github.com/labstack/echo/v5 v5.3.1
+	github.com/labstack/echo/v5 v5.4.0
 	github.com/stretchr/testify v1.12.1
 	gorm.io/driver/postgres v1.6.3
 	gorm.io/gen v0.3.29
